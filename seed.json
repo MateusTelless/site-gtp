@@ -1,0 +1,238 @@
+{
+  "cursos": [
+    {
+      "id": "soldado-pm",
+      "title": "Soldado PMESP",
+      "visible": true,
+      "fields": {
+        "Metodologia": "Preparação online e gravada para Soldado da Polícia Militar do Estado de São Paulo.",
+        "Início": "Início imediato",
+        "Dias e horários": "",
+        "Link Hotmart": "https://pay.hotmart.com/K55441423L?off=hijqbrmg",
+        "Tipo de curso": "recorded",
+        "Nome curto": "Soldado PMESP",
+        "Encerramento": "",
+        "Imagem do produto": "",
+        "Texto alternativo da imagem": "",
+        "Preço e parcelamento": "",
+        "O que está incluído": "",
+        "WhatsApp de matrícula": ""
+      }
+    },
+    {
+      "id": "apmbb",
+      "title": "APMBB · Barro Branco",
+      "visible": true,
+      "fields": {
+        "Metodologia": "A preparação para Oficial da Polícia Militar de São Paulo, direto da nossa sala de aula.",
+        "Início": "29 set 2026",
+        "Dias e horários": "8h às 11h20 ou 19h às 22h20",
+        "Link Hotmart": "https://pay.hotmart.com/G58658618I?off=o98hlsh1",
+        "Tipo de curso": "live",
+        "Nome curto": "APMBB",
+        "Encerramento": "25/06/2027",
+        "Imagem do produto": "",
+        "Texto alternativo da imagem": "",
+        "Preço e parcelamento": "",
+        "O que está incluído": "",
+        "WhatsApp de matrícula": ""
+      }
+    },
+    {
+      "id": "epcar",
+      "title": "EPCAR & Colégio Naval",
+      "visible": true,
+      "fields": {
+        "Metodologia": "Construa sua base para os concursos da Aeronáutica e da Marinha.",
+        "Início": "29 set 2026",
+        "Dias e horários": "14h30 às 18h35",
+        "Link Hotmart": "https://pay.hotmart.com/J84437037Q?off=mvu6pfmc&bid=1791300976527",
+        "Tipo de curso": "live",
+        "Nome curto": "EPCAR / CN",
+        "Encerramento": "26/06/2027",
+        "Imagem do produto": "",
+        "Texto alternativo da imagem": "",
+        "Preço e parcelamento": "",
+        "O que está incluído": "",
+        "WhatsApp de matrícula": ""
+      }
+    },
+    {
+      "id": "espcex",
+      "title": "EsPCEx",
+      "visible": true,
+      "fields": {
+        "Metodologia": "Um caminho de preparação para quem sonha com a carreira no Exército.",
+        "Início": "03 nov 2026",
+        "Dias e horários": "8h às 12h05",
+        "Link Hotmart": "https://pay.hotmart.com/W64598861Y?off=0mkou0px&bid=1791300916351",
+        "Tipo de curso": "live",
+        "Nome curto": "EsPCEx",
+        "Encerramento": "10/09/2027",
+        "Imagem do produto": "",
+        "Texto alternativo da imagem": "",
+        "Preço e parcelamento": "",
+        "O que está incluído": "",
+        "WhatsApp de matrícula": ""
+      }
+    },
+    {
+      "id": "matematica",
+      "title": "Matemática para APMBB",
+      "visible": true,
+      "fields": {
+        "Metodologia": "Fortaleça sua base e aprofunde os estudos de Matemática no seu ritmo.",
+        "Início": "Prazo conforme o curso",
+        "Dias e horários": "",
+        "Link Hotmart": "https://pay.hotmart.com/B99176376H?bid=1763406142342&off=0wr98yqn",
+        "Tipo de curso": "recorded",
+        "Nome curto": "Matemática",
+        "Encerramento": "",
+        "Imagem do produto": "/curso-gravado-matematica.png",
+        "Texto alternativo da imagem": "GETEPE — curso gravado de Matemática — Mestre Joselias",
+        "Preço e parcelamento": "",
+        "O que está incluído": "",
+        "WhatsApp de matrícula": ""
+      }
+    },
+    {
+      "id": "biologia",
+      "title": "Biologia para APMBB",
+      "visible": true,
+      "fields": {
+        "Metodologia": "Organize sua preparação em Biologia com aulas gravadas e materiais de apoio.",
+        "Início": "Prazo conforme o curso",
+        "Dias e horários": "",
+        "Link Hotmart": "https://pay.hotmart.com/S96674331R?off=q6r3otkf",
+        "Tipo de curso": "recorded",
+        "Nome curto": "Biologia",
+        "Encerramento": "",
+        "Imagem do produto": "/curso-gravado-biologia.png",
+        "Texto alternativo da imagem": "GETEPE — curso gravado de Biologia — Mestre Okuma",
+        "Preço e parcelamento": "",
+        "O que está incluído": "",
+        "WhatsApp de matrícula": ""
+      }
+    },
+    {
+      "id": "portugues",
+      "title": "Gramática para APMBB",
+      "visible": true,
+      "fields": {
+        "Metodologia": "Estude Gramática com foco na sua preparação para APMBB.",
+        "Início": "Prazo conforme o curso",
+        "Dias e horários": "",
+        "Nome curto": "Gramática",
+        "Link Hotmart": "https://pay.hotmart.com/X103103953Y?off=bqf3vg34",
+        "Tipo de curso": "recorded",
+        "Encerramento": "",
+        "Imagem do produto": "/curso-gravado-gramatica.png",
+        "Texto alternativo da imagem": "GETEPE — curso gravado de Gramática — Mestre Fernando",
+        "Preço e parcelamento": "",
+        "O que está incluído": "",
+        "WhatsApp de matrícula": ""
+      }
+    }
+  ],
+  "__grammarCourseV1": true,
+  "__courseDestinationsV2": true,
+  "__soldadoEnrollmentV1": true,
+  "carrossel": [
+    {
+      "id": "slide-0",
+      "title": "APMBB · Barro Branco",
+      "visible": true,
+      "fields": {
+        "Chamada superior": "NOVA TURMA · INÍCIO EM 12/01",
+        "Descrição": "Preparação presencial e online. Escolha sua modalidade e consulte horários, valores e materiais com a equipe.",
+        "Texto do botão": "Mais informações",
+        "Destino do botão": "#informacoes/apmbb-janeiro",
+        "Imagem": "/carrossel-apmbb-janeiro.png",
+        "Texto alternativo": "GETEPE — nova turma APMBB · Barro Branco, início em 12/01, presencial e online.",
+        "Formato": "banner"
+      }
+    },
+    {
+      "id": "slide-1",
+      "title": "EsPCEx · ESA · EEAR",
+      "visible": true,
+      "fields": {
+        "Chamada superior": "NOVA TURMA · INÍCIO EM 12/01",
+        "Descrição": "Preparação presencial e online. Escolha sua modalidade e consulte horários, valores e materiais com a equipe.",
+        "Texto do botão": "Mais informações",
+        "Destino do botão": "#informacoes/espcex-janeiro",
+        "Imagem": "/carrossel-espcex-janeiro.png",
+        "Texto alternativo": "GETEPE — nova turma EsPCEx · ESA · EEAR, início em 12/01, presencial e online.",
+        "Formato": "banner"
+      }
+    },
+    {
+      "id": "slide-2",
+      "title": "Venha fazer parte do nosso time de aprovados!",
+      "visible": true,
+      "fields": {
+        "Chamada superior": "APROVADOS · NOSSA HISTÓRIA",
+        "Descrição": "Conheça as turmas do GETEPE e prepare-se para sua carreira militar.",
+        "Texto do botão": "Conhecer as turmas",
+        "Destino do botão": "#cursos",
+        "Imagem": "/carrossel-aprovados-tratados.png",
+        "Texto alternativo": "Venha fazer parte do nosso time de aprovados! Treze alunos do GETEPE, identificados por nome e instituição: EPCAr, EsPCEx, APMBB, AFA, ESA e Colégio Naval.",
+        "Formato": "banner"
+      }
+    }
+  ],
+  "apostilas": [
+    {
+      "id": "apmbb-caderno-01",
+      "title": "APMBB · Caderno 01",
+      "visible": true,
+      "fields": {
+        "Descrição": "Curso APMBB · Extensivo",
+        "Imagem": "https://cdn.awsli.com.br/300x300/1981/1981431/produto/403214711/d75609cfa69f466ca5b728413db49d98-ngk1gqlhk0.png",
+        "Link de compra": "https://www.lojavirtualgetepe.com.br/curso-apmbb-extensivo-caderno-01",
+        "Texto alternativo": "Capa de APMBB · Caderno 01",
+        "Turma": "apmbb"
+      }
+    },
+    {
+      "id": "apmbb-caderno-02",
+      "title": "APMBB · Caderno 02",
+      "visible": true,
+      "fields": {
+        "Descrição": "Curso APMBB · Extensivo",
+        "Imagem": "https://cdn.awsli.com.br/300x300/1981/1981431/produto/403215062/67cd3ce7c7a9427aaad7ecb1ab9a87e0-8y3uvvo97o.png",
+        "Link de compra": "https://www.lojavirtualgetepe.com.br/curso-apmbb-extensivo-caderno-02",
+        "Texto alternativo": "Capa de APMBB · Caderno 02",
+        "Turma": "apmbb"
+      }
+    },
+    {
+      "id": "apmbb-caderno-03",
+      "title": "APMBB · Caderno 03",
+      "visible": true,
+      "fields": {
+        "Descrição": "Curso APMBB · Extensivo",
+        "Imagem": "https://cdn.awsli.com.br/300x300/1981/1981431/produto/403215119/c4c3c32d166e42edb863fb6cf33e74f0-n8x6gex9bc.png",
+        "Link de compra": "https://www.lojavirtualgetepe.com.br/curso-apmbb-extensivo-caderno-03",
+        "Texto alternativo": "Capa de APMBB · Caderno 03",
+        "Turma": "apmbb"
+      }
+    },
+    {
+      "id": "gramatica",
+      "title": "Caderno de Gramática",
+      "visible": true,
+      "fields": {
+        "Descrição": "Apostila de Gramática para complementar seus estudos.",
+        "Imagem": "https://cdn.awsli.com.br/300x300/1981/1981431/produto/142650010/getepe_loja_virtual---arte-capas-294je7wec9.png",
+        "Link de compra": "https://www.lojavirtualgetepe.com.br/caderno-semana-0-gramatica",
+        "Texto alternativo": "Capa de Caderno de Gramática",
+        "Turma": "gramatica"
+      }
+    }
+  ],
+  "__storeCatalogV1": true,
+  "__grammarCategoryV3": true,
+  "__siteEditorVersion": 2,
+  "provas": []
+}

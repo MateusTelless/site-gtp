@@ -1,0 +1,23 @@
+body>header.search-header{display:flex;flex-wrap:wrap;gap:18px 28px;align-items:center}
+.search-header>.brand{flex-shrink:0}
+.search-header>nav{width:100%;display:flex;flex-wrap:wrap;justify-content:center;gap:12px 25px}
+.site-search{position:relative;flex:1;max-width:540px;min-width:180px;margin-left:auto;color:#172b40;z-index:50}
+.search-field{display:flex;align-items:center;border:1px solid #cdd7e1;background:#f3f6f9;border-radius:8px;overflow:hidden}
+.search-field:focus-within{outline:2px solid #a9772a;outline-offset:2px}
+.search-field input{min-width:0;width:100%;border:0;outline:none;background:transparent;padding:13px 15px;color:#172b40;font:inherit;font-size:16px}
+.search-field button{display:grid;place-items:center;flex-shrink:0;width:46px;height:46px;border:0;background:transparent;color:#10283f}
+.search-field button:hover{background:#e3eaf1}
+.search-field svg{width:22px;height:22px}
+.search-results{position:absolute;top:calc(100% + 9px);left:0;right:0;background:#fff;border:1px solid #dce2e8;border-radius:8px;box-shadow:0 12px 32px #10283f26;max-height:min(440px,65dvh);overflow:auto;text-align:left}
+.search-results[hidden]{display:none}
+.search-status{padding:14px 16px;margin:0;font-size:13px;color:#637184;line-height:1.5}
+.search-results ul{list-style:none;margin:0;padding:0 6px 6px}
+.search-results a{display:block;padding:10px;border-radius:5px;font-size:15px;font-weight:600;line-height:1.5;letter-spacing:0}
+.search-results a:hover,.search-results a:focus{background:#edf2f8;color:#10283f;outline-offset:-2px}
+.search-results small{display:block;font-size:12px;font-weight:400;color:#637184}
+@media(max-width:600px){body>header.search-header{padding:18px 20px;gap:15px}.search-header>.brand{font-size:22px}.site-search{max-width:none;flex-basis:100%;min-width:0}.search-header>nav{justify-content:flex-start;gap:10px 18px}.search-results{max-height:55dvh}}
+/* Keep all primary navigation links on one desktop row. */
+@media(min-width:1100px){
+ .search-header>nav{flex-wrap:nowrap;gap:0;justify-content:space-between}
+ .search-header>nav>a{flex:0 0 auto;white-space:nowrap;padding:0 10px}
+}

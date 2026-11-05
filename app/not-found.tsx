@@ -1,0 +1,1 @@
+export default function NotFound(){return <main style={{maxWidth:760,margin:'80px auto',padding:24,fontFamily:'Arial,sans-serif',color:'#062457'}}><p>GETEPE · CURSO GENERAL TELLES PIRES</p><h1>Página não encontrada</h1><p>Este endereço pode ter mudado. Encontre os cursos, apostilas e canais de atendimento na página inicial.</p><a href="/">Voltar ao site GETEPE →</a></main>}

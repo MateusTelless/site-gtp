@@ -1,0 +1,31 @@
+const fs=require('fs'),assert=require('node:assert/strict'),nodeCrypto=require('node:crypto'),{stripTypeScriptTypes}=require('node:module'),{DatabaseSync}=require('node:sqlite');
+const db=new DatabaseSync(':memory:');for(const f of fs.readdirSync('drizzle').filter(f=>f.endsWith('.sql')))db.exec(fs.readFileSync('drizzle/'+f,'utf8'));
+const statement=(sql,args=[])=>({bind(...v){return statement(sql,v)},async first(){return db.prepare(sql).get(...args)||null},async run(){const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes)}}}});
+const DB={prepare:statement,async batch(ss){db.exec('BEGIN');try{const results=[];for(const s of ss)results.push(await s.run());db.exec('COMMIT');return results}catch(e){db.exec('ROLLBACK');throw e}}};
+const env={DB,AUTH_PROVIDER:'password',ADMIN_SETUP_TOKEN:'test-token-not-for-production',ADMIN_SETUP_EMAIL:'owner@example.test',ADMIN_SETUP_EXPIRES:new Date(Date.now()+60000).toISOString()};
+const source=stripTypeScriptTypes(fs.readFileSync('app/password-auth.ts','utf8').replace(/^import .*;\r?\n/gm,'').replace(/export /g,''));
+const {passwordAction,passwordIdentity}=new Function('env','scrypt','randomBytes','createHash','timingSafeEqual',source+';return {passwordAction,passwordIdentity}')(env,nodeCrypto.scrypt,nodeCrypto.randomBytes,nodeCrypto.createHash,nodeCrypto.timingSafeEqual);
+const req=(path,data,cookie='',origin='https://getepe.test')=>new Request('https://getepe.test/api/auth/'+path,{method:'POST',headers:{origin,cookie,'Content-Type':'application/json'},body:JSON.stringify(data)});
+const action=async(path,data,cookie,origin)=>{try{return await passwordAction(req(path,data,cookie,origin),'auth/'+path)}catch(e){return Response.json({error:e.message},{status:e.status||500})}};
+const cookies=r=>r.headers.get('set-cookie').split(';')[0];
+(async()=>{
+const password='Only-a-test-password-2026!',base={username:'mateustelles2011@hotmail.com',password,token:env.ADMIN_SETUP_TOKEN};
+assert.equal((await action('setup',{...base,token:'bad'})).status,403);
+assert.equal((await action('setup',base,'','https://evil.test')).status,403);
+assert.equal((await action('setup',{...base,password:'short'})).status,400);
+const setup=await action('setup',base);assert.equal(setup.status,200,await setup.clone().text());let cookie=cookies(setup);assert.match(setup.headers.get('set-cookie'),/HttpOnly; SameSite=Strict; Max-Age=28800; Secure/);
+assert.equal((await action('setup',base)).status,409);assert.equal((await passwordIdentity(req('login',{},cookie))).email,'owner@example.test');
+assert.equal(await passwordIdentity(req('login',{},'__Host-getepe_admin='+'a'.repeat(64))),null);
+assert.notEqual(db.prepare('SELECT password_hash FROM admin_users').get().password_hash,password);assert.ok(!db.prepare('SELECT id FROM admin_sessions').get().id.includes(cookie.split('=')[1]));
+assert.equal((await action('login',{username:'mateustelles2011@hotmail.com',password:'wrong'})).status,401);assert.equal((await action('login',{username:'unknown',password})).status,401);
+await action('logout',{},cookie);assert.equal(await passwordIdentity(req('login',{},cookie)),null);
+let login=await action('login',{username:'mateustelles2011@hotmail.com',password});assert.equal(login.status,200);cookie=cookies(login);
+const changed=await action('change-password',{current:password,password:'Another-test-password-2026!'},cookie);assert.equal(changed.status,200);assert.equal(await passwordIdentity(req('login',{},cookie)),null);cookie=cookies(changed);
+db.prepare('UPDATE admin_sessions SET expires=0').run();assert.equal(await passwordIdentity(req('login',{},cookie)),null);
+db.exec('DELETE FROM limits');env.ADMIN_RESET_TOKEN='test-recovery-token';env.ADMIN_RESET_USERNAME='mateustelles2011@hotmail.com';env.ADMIN_RESET_EXPIRES=new Date(Date.now()+60000).toISOString();
+const recovery={username:'mateustelles2011@hotmail.com',password:'Recovered-test-password-2026!',token:env.ADMIN_RESET_TOKEN};const recovered=await action('recover',recovery);assert.equal(recovered.status,200);assert.equal((await action('recover',recovery)).status,409);
+env.ADMIN_RESET_EXPIRES=new Date(0).toISOString();assert.equal((await action('recover',recovery)).status,403);
+db.exec('DELETE FROM limits');for(let i=0;i<10;i++)await action('login',{username:'blocked',password:'bad'});assert.equal((await action('login',{username:'blocked',password:'bad'})).status,429);
+console.log('PASS: password hashing, private cookies, login, invalid credentials, setup token/single use, CSRF, logout, expiry, session revocation, password change, recovery and rate limiting.');db.close();
+})().catch(e=>{console.error(e);process.exitCode=1});
+

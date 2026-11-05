@@ -1,0 +1,9 @@
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+export const content = sqliteTable('content', {id:text('id').primaryKey(),body:text('body').notNull(),revision:integer('revision').notNull().default(0),updatedAt:text('updated_at').notNull(),author:text('author').notNull()});
+export const versions = sqliteTable('versions', {id:text('id').primaryKey(),body:text('body').notNull(),createdAt:text('created_at').notNull(),author:text('author').notNull(),note:text('note').notNull()});
+export const contacts = sqliteTable('contacts', {id:text('id').primaryKey(),email:text('email').notNull().unique(),name:text('name').notNull(),interests:text('interests').notNull(),consent:text('consent').notNull(),createdAt:text('created_at').notNull(),status:text('status').notNull(),wixId:text('wix_id'),syncError:text('sync_error')});
+export const limits = sqliteTable('limits', {id:text('id').primaryKey(),count:integer('count').notNull().default(0),expires:integer('expires').notNull()});
+export const media = sqliteTable('media', {id:text('id').primaryKey(),name:text('name').notNull(),mime:text('mime').notNull(),size:integer('size').notNull(),createdAt:text('created_at').notNull()});
+export const adminUsers = sqliteTable('admin_users', {id:text('id').primaryKey(),username:text('username').notNull().unique(),email:text('email').notNull(),passwordHash:text('password_hash').notNull(),active:integer('active').notNull().default(1)});
+export const adminSessions = sqliteTable('admin_sessions', {id:text('id').primaryKey(),userId:text('user_id').notNull(),expires:integer('expires').notNull()});
+export const adminUsedTokens = sqliteTable('admin_used_tokens', {id:text('id').primaryKey()});
