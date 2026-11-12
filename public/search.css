@@ -21,3 +21,8 @@ body>header.search-header{display:flex;flex-wrap:wrap;gap:18px 28px;align-items:
  .search-header>nav{flex-wrap:nowrap;gap:0;justify-content:space-between}
  .search-header>nav>a{flex:0 0 auto;white-space:nowrap;padding:0 10px}
 }
+
+/* Keep history and every other destination available at all widths. */
+body>header.search-header>nav{display:flex;flex-wrap:nowrap;justify-content:center;gap:0;min-width:0;overflow-x:auto;padding-bottom:5px}
+body>header.search-header>nav>a{display:block;flex:1 0 auto;text-align:center;white-space:nowrap;font-size:clamp(10px,1.05vw,13px);padding:4px clamp(4px,.6vw,9px)}
+@media(max-width:480px){body>header.search-header>nav{justify-content:flex-start}body>header.search-header>nav>a{font-size:12px;padding:7px 10px}}

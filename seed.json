@@ -168,15 +168,15 @@
     },
     {
       "id": "slide-2",
-      "title": "Venha fazer parte do nosso time de aprovados!",
+      "title": "Cursos gravados por matéria",
       "visible": true,
       "fields": {
-        "Chamada superior": "APROVADOS · NOSSA HISTÓRIA",
-        "Descrição": "Conheça as turmas do GETEPE e prepare-se para sua carreira militar.",
-        "Texto do botão": "Conhecer as turmas",
-        "Destino do botão": "#cursos",
-        "Imagem": "/carrossel-aprovados-tratados.png",
-        "Texto alternativo": "Venha fazer parte do nosso time de aprovados! Treze alunos do GETEPE, identificados por nome e instituição: EPCAr, EsPCEx, APMBB, AFA, ESA e Colégio Naval.",
+        "Chamada superior": "CURSOS GRAVADOS · POR MATÉRIA",
+        "Descrição": "Estude no seu ritmo. Gramática com Mestre Fernando, Matemática com Mestre Joselias e Biologia com Mestre Okuma.",
+        "Texto do botão": "Conhecer os cursos gravados",
+        "Destino do botão": "#gravados",
+        "Imagem": "/carrossel-cursos-gravados.png",
+        "Texto alternativo": "GETEPE — cursos gravados por matéria: Gramática com Mestre Fernando, Matemática com Mestre Joselias e Biologia com Mestre Okuma. Estude no seu ritmo.",
         "Formato": "banner"
       }
     }
