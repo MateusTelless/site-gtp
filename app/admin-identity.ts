@@ -19,7 +19,8 @@ export async function verifyAccessToken(token:string,issuer:string,audience:stri
 export async function getAdminIdentity(req:Request){
  const config=env as unknown as AccessEnv;
  if(config.AUTH_PROVIDER==='password')return passwordIdentity(req);
- if(!config.AUTH_PROVIDER||config.AUTH_PROVIDER==='sites'){
+ // Sem AUTH_PROVIDER definido, ninguém entra: os cabeçalhos oai-authenticated-* só são confiáveis atrás da plataforma Sites.
+ if(config.AUTH_PROVIDER==='sites'){
   // Route handlers carry the identity supplied by Sites dispatch on their Request.
   const userId=req.headers.get('oai-authenticated-user-id'),email=req.headers.get('oai-authenticated-user-email');
   if(userId&&email)return {userId,email,displayName:email,fullName:null};

@@ -18,6 +18,10 @@ npm run dev
 ```
 
 Abra o endereço que aparecer no terminal (normalmente http://localhost:5173).
+
+No Windows, use uma pasta de caminho curto (por exemplo `C:\site-gtp`). Em pastas muito longas, a instalação do `esbuild` falha pelo limite de 260 caracteres de caminho.
+
+Para entrar no painel local com a conta simulada, crie o arquivo `.dev.vars` (ignorado pelo Git) com `AUTH_PROVIDER=sites` e `ADMIN_EMAILS=seedy@sites.test`. Sem `AUTH_PROVIDER`, o painel fica fechado. O banco local começa vazio: aplique as migrações de `drizzle/` no D1 local antes de testar formulários (newsletter e aula teste).
 A instalação baixa as dependências e requer internet. O teste local usa dados e configurações locais; não leva a conta administrativa do site publicado. Consulte LOGIN-ADMIN.md para configuração de acesso. Os comandos desta cópia ainda precisam ser validados no novo computador.
 
 ## O que acompanha esta cópia

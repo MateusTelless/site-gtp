@@ -2,11 +2,11 @@
 
 Atualizado em 23/10/2026.
 
-O modo `AUTH_PROVIDER=password` oferece login próprio em `/admin`. O usuário escolhe seu nome de acesso e sua senha; o e-mail de contato inicial é mateustelles2011@hotmail.com. Não existe cadastro público de administradores. Não envie senhas nesta conversa.
+O modo `AUTH_PROVIDER=password` oferece login próprio em `/admin`. O usuário escolhe seu nome de acesso e sua senha; o e-mail de contato inicial é o definido em `ADMIN_SETUP_EMAIL` (configuração privada da hospedagem). Não existe cadastro público de administradores. Não envie senhas nesta conversa.
 
 ## Primeiro acesso
 
-1. Na configuração privada da hospedagem, definir `AUTH_PROVIDER=password`, `ADMIN_EMAILS` contendo o e-mail autorizado e `ADMIN_SETUP_EMAIL` com esse e-mail.
+1. Na configuração privada da hospedagem, definir `AUTH_PROVIDER=password`, `ADMIN_EMAILS` contendo o e-mail autorizado e `ADMIN_SETUP_EMAIL` com esse e-mail. As duas variáveis são obrigatórias: sem `AUTH_PROVIDER` ou sem `ADMIN_EMAILS`, o painel fica fechado para todos.
 2. Gerar um segredo aleatório de 32 bytes para `ADMIN_SETUP_TOKEN` e uma data futura ISO para `ADMIN_SETUP_EXPIRES` (preferencialmente 24 horas). Guardar como segredo, nunca no código ou em arquivos públicos.
 3. Publicar a versão com as migrações do banco e essa configuração.
 4. Abrir reservadamente `/admin#configurar=TOKEN` no endereço HTTPS. A pessoa escolhe o usuário e uma senha de 14 a 128 caracteres diretamente no formulário. O token sai da barra de endereço ao carregar e só permite a criação da primeira conta.
@@ -18,6 +18,7 @@ O formulário não cria a conta apenas com um e-mail. A conta só existe depois 
 
 - Em `/admin`, informar usuário e senha. A sessão dura até oito horas; usar **Sair da conta** ao terminar.
 - **Alterar senha** exige a senha atual e encerra as outras sessões.
+- Limites de tentativa (janela de 15 minutos): até 30 tentativas por endereço IP e até 10 senhas erradas por usuário a partir do mesmo IP. Logins corretos não contam para o bloqueio.
 - Se esquecer a senha, o responsável pela hospedagem deve confirmar a identidade e gerar um novo segredo em `ADMIN_RESET_TOKEN`, informar o usuário exato (minúsculo) em `ADMIN_RESET_USERNAME` e uma validade curta em `ADMIN_RESET_EXPIRES`. Após aplicar a configuração, entregar reservadamente `/admin#recuperar=TOKEN`. O convite funciona uma vez. Remover as variáveis depois do uso.
 - Recuperação automática por e-mail e gestão de várias contas/perfis ainda não foram implementadas. O envio de e-mails depende de um serviço configurado.
 

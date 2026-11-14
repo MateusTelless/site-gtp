@@ -15,6 +15,13 @@
       "when": 1792755286559,
       "tag": "0001_loud_white_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794617156433,
+      "tag": "0002_trial_requests",
+      "breakpoints": true
     }
   ]
 }

@@ -11,7 +11,7 @@ export async function GET(req:Request){
  const signOut=config.AUTH_PROVIDER==='password'?'#sair':independent?'/cdn-cgi/access/logout':'/signout-with-chatgpt?return_to=/admin';
  const user=await getAdminIdentity(req);
  const dev=process.env.NODE_ENV==='development'&&user?.userId==='local_seedy'&&user?.email==='seedy@sites.test';
- const allowed=user&&(dev||(config.ADMIN_EMAILS||'juliabemaia05@gmail.com').toLowerCase().split(',').map(x=>x.trim()).includes(user.email.toLowerCase()));
+ const allowed=user&&(dev||(config.ADMIN_EMAILS||'').toLowerCase().split(',').map(x=>x.trim()).filter(Boolean).includes(user.email.toLowerCase()));
  if(allowed){const change=config.AUTH_PROVIDER==='password'?'<button type="button" data-password-change>Alterar senha</button>':'';const dialog='<dialog id="password-dialog"><form id="password-change"><h2>Alterar senha</h2><label>Senha atual<input name="current" type="password" autocomplete="current-password" required maxlength="128"></label><label>Nova senha (mínimo de 14 caracteres)<input name="password" type="password" autocomplete="new-password" required minlength="14" maxlength="128"></label><label>Confirme a nova senha<input name="confirm" type="password" autocomplete="new-password" required minlength="14" maxlength="128"></label><p role="status"></p><button type="button" data-password-close>Fechar</button><button class="primary" type="submit">Salvar nova senha</button></form></dialog>';return new Response(shell.replace('__SIGNOUT__',signOut).replace('__PASSWORD_CHANGE__',change).replace('</body>',dialog+'</body>'),{headers})}
  if(config.AUTH_PROVIDER==='password')return new Response(passwordLogin,{status:200,headers});
  const denied=!!user;
