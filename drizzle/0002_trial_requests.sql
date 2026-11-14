@@ -5,5 +5,6 @@ CREATE TABLE `trial_requests` (
 	`phone` text NOT NULL,
 	`course` text NOT NULL,
 	`created_at` text NOT NULL,
-	`status` text DEFAULT 'novo' NOT NULL
+	`status` text DEFAULT 'novo' NOT NULL,
+	`sheet_status` text DEFAULT 'desligada' NOT NULL
 );

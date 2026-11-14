@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "b39a9035-a180-4c9a-8b10-56028c5ea3aa",
+  "id": "022c078e-0dba-4b74-a36b-626882d35528",
   "prevId": "c553046e-fc32-49ea-88b7-100ae1592cdc",
   "tables": {
     "admin_sessions": {
@@ -362,6 +362,14 @@
           "notNull": true,
           "autoincrement": false,
           "default": "'novo'"
+        },
+        "sheet_status": {
+          "name": "sheet_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'desligada'"
         }
       },
       "indexes": {},

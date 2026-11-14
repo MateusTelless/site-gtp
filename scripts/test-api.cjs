@@ -52,6 +52,16 @@ assert.equal((await call('admin/aula-teste')).status,401);
 user={userId:'owner',email:'owner@example.test',displayName:'Equipe'};let trials=(await (await call('admin/aula-teste')).json()).requests;assert.equal(trials.length,1,'honeypot gravou');assert.equal(trials[0].phone,'11912345678');assert.equal(trials[0].course,'matematica');assert.equal(trials[0].name,'Pessoa Teste');
 user=null;db.exec('DELETE FROM limits');for(let i=0;i<5;i++)assert.equal((await call('aula-teste','POST',trial)).status,200);assert.equal((await call('aula-teste','POST',trial)).status,429);
 user={userId:'owner',email:'owner@example.test',displayName:'Equipe'};await call('admin/aula-teste','DELETE',{id:trials[0].id});assert.equal((await (await call('admin/aula-teste')).json()).requests.length,5);
+// Integração com a planilha: desligada por padrão, envia os dados com a chave, e falhas não afetam o visitante.
+assert.equal((await (await call('admin/aula-teste')).json()).requests[0].sheet_status,'desligada');
+const realFetch=globalThis.fetch,sent=[];apiEnv.SHEETS_WEBHOOK_URL='https://script.google.com/macros/s/AKfy-test_1/exec';apiEnv.SHEETS_WEBHOOK_SECRET='chave-de-teste';
+globalThis.fetch=async(url,opts)=>{sent.push({url,body:JSON.parse(opts.body)});return new Response(JSON.stringify({ok:true}),{headers:{'Content-Type':'application/json'}})};
+user=null;db.exec('DELETE FROM limits');assert.equal((await call('aula-teste','POST',{...trial,nome:'João  da Silva',curso:'biologia'})).status,200);
+assert.equal(sent.length,1);assert.equal(sent[0].url,apiEnv.SHEETS_WEBHOOK_URL);assert.deepEqual({...sent[0].body,data:undefined},{data:undefined,nome:'João da Silva',email:'aluno@example.test',telefone:'(11) 91234-5678',curso:'Biologia para APMBB',secret:'chave-de-teste'});
+globalThis.fetch=async()=>{throw new TypeError('rede fora')};assert.equal((await call('aula-teste','POST',trial)).status,200,'falha da planilha chegou ao visitante');
+apiEnv.SHEETS_WEBHOOK_URL='https://evil.test/coleta';assert.equal((await call('aula-teste','POST',trial)).status,200);assert.equal(sent.length,1,'enviou para URL fora do Apps Script');
+globalThis.fetch=realFetch;delete apiEnv.SHEETS_WEBHOOK_URL;delete apiEnv.SHEETS_WEBHOOK_SECRET;
+user={userId:'owner',email:'owner@example.test',displayName:'Equipe'};assert.deepEqual((await (await call('admin/aula-teste')).json()).requests.slice(0,3).map(r=>r.sheet_status).sort(),['enviado','erro','erro']);
 // Sem ADMIN_EMAILS ninguém é administrador (não existe e-mail padrão no código).
 delete apiEnv.ADMIN_EMAILS;assert.equal((await call('admin/state')).status,403);apiEnv.ADMIN_EMAILS='owner@example.test';
 // Conteúdo publicado antigo é atualizado na leitura (datas e botão do destaque), sem sobrescrever edições.
