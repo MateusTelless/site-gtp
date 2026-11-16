@@ -4,6 +4,9 @@ Legenda: **[você]** = só você consegue fazer · **[eu]** = eu faço · **[jun
 
 O Secullum continua funcionando normalmente até a etapa 7. Nada aqui desliga a catraca antes da hora.
 
+**Aluno novo até a troca:** cadastre a digital como hoje (menu da catraca, número, dedo 3 vezes) e, no painel, abra a
+ficha do aluno → **Definir número da catraca** → digite **o mesmo número**. Assim ele continua passando depois da troca.
+
 ---
 
 ## Etapa 1 · Colocar o site novo no ar
@@ -64,15 +67,21 @@ precisa recadastrar o dedo.
 1. Fechar o Secullum e parar o serviço dele. A catraca fica sem controle durante o teste.
 2. Rodar a ponte na janela: `PonteCatraca.exe --console`.
 3. Testar com 3 pessoas: uma em dia (deve aparecer "LIBERADO / nome"), uma bloqueada ("VER NA RECEPCAO") e uma sem cadastro.
-4. Me mandar o arquivo de log do dia: `dados\logs\AAAA-MM-DD.log`.
-5. **Volta ao normal:** fechar a ponte e abrir o Secullum de novo.
+4. Testar o **cadastro pelo menu da catraca** com a ponte ligada: abrir o menu, digitar um número novo, pôr o dedo 3 vezes,
+   e conferir se depois esse dedo aparece com o número certo. Se o menu não abrir com a ponte ligada, eu habilito
+   pela configuração (`PermitirCadastroInnerBioVerid`) ou faço o cadastro pelo painel.
+5. Me mandar o arquivo de log do dia: `dados\logs\AAAA-MM-DD.log`.
+6. **Volta ao normal:** fechar a ponte e abrir o Secullum de novo.
 
 O log confirma os códigos que a documentação deixou em aberto (digital, giro e tempo de liberação).
 
 ## Etapa 6 · O que eu desenvolvo depois do teste
 
 - **[eu]** Ajustes que o log do teste mostrar.
-- **[eu]** **Cadastro de digital pelo painel**: a recepção clica em "Cadastrar digital", o aluno põe o dedo duas vezes no leitor e a ponte grava a digital com o número dele.
+- **Cadastro de digital continua igual ao de hoje**: no menu da catraca, digitar o número do aluno e ele põe o dedo 3 vezes.
+  A diferença é que o número vem da ficha do aluno no painel ("Definir número da catraca").
+  - **[eu]** (opcional) a ponte confere na catraca quem já tem digital e marca "biometria cadastrada" no painel sozinha.
+  - **[eu]** (só se o menu não funcionar com a ponte ligada) cadastro de digital iniciado pelo painel.
 - **[eu]** **Importação do Secullum**: liga cada pessoa do Secullum ao aluno do painel (pelo CPF ou pelo nome) e preenche o número antigo, para quem já tem digital continuar passando.
 - **[eu]** Cópia de segurança das digitais no PC do curso, para restaurar a catraca se ela for trocada ou resetada.
 
