@@ -43,7 +43,7 @@ namespace PonteCatraca
             Log.Info("Ponte da catraca " + Versao + " iniciando (modo " + cfg.modoCatraca + ").");
 
             ICatraca catraca;
-            if (cfg.modoCatraca == "simulada") catraca = new CatracaSimulada();
+            if (cfg.modoCatraca == "simulada") catraca = new CatracaSimulada(cfg);
             else catraca = new CatracaEasyInner(cfg);
 
             var api = semInternet ? null : new ApiWorker(cfg);

@@ -4,7 +4,7 @@
   "intervaloSyncSegundos": 60,
 
   "modoCatraca": "easyinner",
-  "numeroInner": 1,
+  "inners": [1, 2],
   "ipCatraca": "192.168.0.100",
   "portaCatraca": 3570,
   "tempoLiberacaoSegundos": 5,

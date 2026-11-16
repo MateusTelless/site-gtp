@@ -14,8 +14,10 @@ namespace PonteCatraca
 
         // Catraca
         public string modoCatraca = "easyinner";   // "easyinner" ou "simulada"
-        public int numeroInner = 1;
-        public string ipCatraca = "192.168.0.100";
+        // Número de cada catraca (Inner nº, o mesmo da tela de equipamentos do Secullum). O GTP tem duas: [1, 2].
+        public List<int> inners = new List<int>();
+        public int numeroInner = 1;                 // usado só se "inners" estiver vazio (configuração antiga)
+        public string ipCatraca = "192.168.0.100";  // só para referência no log; a DLL acha cada Inner pelo número
         public int portaCatraca = 3570;
         public int tempoLiberacaoSegundos = 5;
         // false: o dedo libera só a entrada (a saída do GTP já é livre na catraca).
@@ -35,6 +37,9 @@ namespace PonteCatraca
             var json = File.ReadAllText(caminho);
             var cfg = new JavaScriptSerializer().Deserialize<Config>(json);
             if (cfg.codigosSempreLiberados == null) cfg.codigosSempreLiberados = new List<string>();
+            if (cfg.inners == null || cfg.inners.Count == 0) cfg.inners = new List<int> { cfg.numeroInner };
+            foreach (var n in cfg.inners)
+                if (n < 1 || n > 99) throw new Exception("Número de catraca inválido em \"inners\": " + n);
             if (!Path.IsPathRooted(cfg.pastaDados))
                 cfg.pastaDados = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(caminho)), cfg.pastaDados);
             Directory.CreateDirectory(cfg.pastaDados);

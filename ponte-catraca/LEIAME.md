@@ -31,12 +31,14 @@ Em `bin\config.json`, ponha `"modoCatraca": "simulada"` e rode:
 bin\PonteCatraca.exe --console
 ```
 
-Digite um número + Enter (= dedo), `g` (= girou), `d` (= desistiu).
+Digite um número + Enter (= dedo na catraca 1), `2:número` (= dedo na catraca 2), `g` / `2:g` (= girou),
+`d` / `2:d` (= desistiu).
 
 ## Instalar como serviço (no PC da catraca, PowerShell como administrador)
 
 1. Feche o Secullum e desative o serviço dele (os dois não podem falar com a catraca ao mesmo tempo).
-2. Copie a pasta `bin` para `C:\PonteCatraca` e ajuste `config.json` (URL, token, número da Inner).
+2. Copie a pasta `bin` para `C:\PonteCatraca` e ajuste `config.json` (URL, token e, em `inners`, o número de cada
+   catraca, como aparece na tela de equipamentos do Secullum; o GTP tem duas: `[1, 2]`). Uma ponte só atende as duas.
 3. Primeiro rode `C:\PonteCatraca\PonteCatraca.exe --console` e teste com o dedo de alguém.
 4. Depois instale:
 

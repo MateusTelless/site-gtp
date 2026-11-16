@@ -1,15 +1,18 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading;
 
 namespace PonteCatraca
 {
-    /// Catraca Topdata Inner com leitor de digital, em modo online, via EasyInner.dll.
+    /// Catracas Topdata Inner com leitor de digital, em modo online, via EasyInner.dll.
+    /// Uma porta TCP para todas as catracas; cada uma é chamada pelo seu número (Inner nº).
     ///
     /// Fluxo: a catraca identifica a digital sozinha (1:N, banco da própria catraca) e manda
     /// o número do usuário. A ponte decide; se liberar, espera Origem 6 (girou) ou
-    /// Origem 5 (acabou o tempo = desistência) e só então rearma a leitura.
+    /// Origem 5 (acabou o tempo = desistência) e só então rearma a leitura daquela catraca.
     ///
     /// PONTOS A CONFIRMAR NO EQUIPAMENTO (marcados com "CONFIRMAR"):
     ///   - qual Origem chega para digital (manual diz 12; exemplos oficiais só documentam 1 a 10)
@@ -23,20 +26,27 @@ namespace PonteCatraca
 
         const byte TCP_PORTA_FIXA = 2;
         const byte FORMA_LEITOR1_IDENTIFICACAO_BIO = 100;
-        const string MSG_PADRAO = "GTP  COLOQUE O  DEDO NO LEITOR";
+
+        class Estado
+        {
+            public int numero;
+            public bool conectada;
+            public bool aguardandoGiro;
+            public int pingsFalhos;
+            public readonly Stopwatch desdeLiberacao = new Stopwatch();
+            public readonly Stopwatch desdePing = new Stopwatch();
+            public readonly Stopwatch desdeTentativa = new Stopwatch();
+        }
 
         readonly Config cfg;
-        readonly int inner;
+        readonly List<Estado> catracas;
         bool portaAberta;
-        bool aguardandoGiro;
-        readonly Stopwatch desdeUltimoPing = new Stopwatch();
-        readonly Stopwatch desdeLiberacao = new Stopwatch();
-        int pingsFalhos;
+        int proxima;   // revezamento entre as catracas
 
         public CatracaEasyInner(Config cfg)
         {
             this.cfg = cfg;
-            inner = cfg.numeroInner;
+            catracas = cfg.inners.Select(n => new Estado { numero = n }).ToList();
         }
 
         static void Ok(byte ret, string comando)
@@ -48,6 +58,19 @@ namespace PonteCatraca
             }
         }
 
+        Estado De(int equipamento)
+        {
+            var e = catracas.FirstOrDefault(x => x.numero == equipamento);
+            if (e == null) throw new Exception("Catraca " + equipamento + " não está em \"inners\".");
+            return e;
+        }
+
+        public bool Conectada(int equipamento)
+        {
+            var e = catracas.FirstOrDefault(x => x.numero == equipamento);
+            return e != null && e.conectada;
+        }
+
         public void Conectar()
         {
             if (!portaAberta)
@@ -56,36 +79,55 @@ namespace PonteCatraca
                 Ok(EasyInner.AbrirPortaComunicacao(cfg.portaCatraca), "AbrirPortaComunicacao");
                 portaAberta = true;
             }
+            foreach (var e in catracas) TentarConectar(e, 30);
+            if (!catracas.Any(e => e.conectada))
+                throw new Exception("Nenhuma catraca respondeu (" + string.Join(", ", cfg.inners) + ").");
+        }
 
-            // A Inner pode demorar a responder depois de ligada: insiste por até 30 s.
-            var t = Stopwatch.StartNew();
-            byte r;
-            while ((r = EasyInner.Ping(inner)) != EasyInner.RET_COMANDO_OK)
+        /// Liga e configura uma catraca. Se não responder, fica marcada como desconectada e é tentada de novo depois.
+        void TentarConectar(Estado e, int segundos)
+        {
+            e.desdeTentativa.Restart();
+            try
             {
-                if (t.Elapsed.TotalSeconds > 30) throw new Exception("Inner " + inner + " não respondeu ao Ping (retorno " + r + ")");
-                Thread.Sleep(500);
+                var t = Stopwatch.StartNew();
+                byte r;
+                while ((r = EasyInner.Ping(e.numero)) != EasyInner.RET_COMANDO_OK)
+                {
+                    if (t.Elapsed.TotalSeconds > segundos) throw new Exception("não respondeu ao Ping (retorno " + r + ")");
+                    Thread.Sleep(500);
+                }
+
+                // A configuração fica num buffer da DLL até EnviarConfiguracoes, por isso vai uma catraca de cada vez.
+                // DefinirPadraoCartao precisa vir antes da quantidade de dígitos (ele reseta para 14).
+                Ok(EasyInner.ConfigurarInnerOnLine(), "ConfigurarInnerOnLine");
+                Ok(EasyInner.DefinirPadraoCartao(1), "DefinirPadraoCartao");               // formato livre
+                Ok(EasyInner.DefinirQuantidadeDigitosCartao((byte)cfg.qtdDigitosCodigo), "DefinirQuantidadeDigitosCartao");
+                Ok(EasyInner.HabilitarTeclado(0, 0), "HabilitarTeclado");
+                Ok(EasyInner.ConfigurarLeitor1(3), "ConfigurarLeitor1");                   // entrada e saída
+                Ok(EasyInner.ConfigurarLeitor2(0), "ConfigurarLeitor2");                   // desativado
+                // CONFIRMAR: função 8 = catraca liberada nos dois sentidos; tempo de liberação em segundos.
+                Ok(EasyInner.ConfigurarAcionamento1(8, (byte)cfg.tempoLiberacaoSegundos), "ConfigurarAcionamento1");
+                Ok(EasyInner.ConfigurarAcionamento2(0, 0), "ConfigurarAcionamento2");
+                Ok(EasyInner.ReceberDataHoraDadosOnLine(1), "ReceberDataHoraDadosOnLine");
+                Ok(EasyInner.EnviarConfiguracoes(e.numero), "EnviarConfiguracoes");
+
+                Rearmar(e);
+                e.conectada = true;
+                e.pingsFalhos = 0;
+                e.desdePing.Restart();
+                Log.Info("Catraca " + e.numero + " conectada, em modo online.");
             }
-
-            // Configuração. DefinirPadraoCartao precisa vir antes da quantidade de dígitos (ele reseta para 14).
-            Ok(EasyInner.ConfigurarInnerOnLine(), "ConfigurarInnerOnLine");
-            Ok(EasyInner.DefinirPadraoCartao(1), "DefinirPadraoCartao");               // formato livre
-            Ok(EasyInner.DefinirQuantidadeDigitosCartao((byte)cfg.qtdDigitosCodigo), "DefinirQuantidadeDigitosCartao");
-            Ok(EasyInner.HabilitarTeclado(0, 0), "HabilitarTeclado");
-            Ok(EasyInner.ConfigurarLeitor1(3), "ConfigurarLeitor1");                   // entrada e saída
-            Ok(EasyInner.ConfigurarLeitor2(0), "ConfigurarLeitor2");                   // desativado
-            // CONFIRMAR: função 8 = catraca liberada nos dois sentidos; tempo de liberação em segundos.
-            Ok(EasyInner.ConfigurarAcionamento1(8, (byte)cfg.tempoLiberacaoSegundos), "ConfigurarAcionamento1");
-            Ok(EasyInner.ConfigurarAcionamento2(0, 0), "ConfigurarAcionamento2");
-            Ok(EasyInner.ReceberDataHoraDadosOnLine(1), "ReceberDataHoraDadosOnLine");
-            Ok(EasyInner.EnviarConfiguracoes(inner), "EnviarConfiguracoes");
-
-            Rearmar();
-            desdeUltimoPing.Restart();
-            pingsFalhos = 0;
+            catch (Exception ex)
+            {
+                e.conectada = false;
+                Log.Erro("Catraca " + e.numero + ": " + ex.Message);
+            }
         }
 
         public void Desconectar()
         {
+            foreach (var e in catracas) e.conectada = false;
             if (portaAberta)
             {
                 try { EasyInner.FecharPortaComunicacao(); } catch { }
@@ -94,11 +136,11 @@ namespace PonteCatraca
         }
 
         /// Volta a catraca ao estado "esperando dedo".
-        void Rearmar()
+        void Rearmar(Estado e)
         {
-            aguardandoGiro = false;
-            EasyInner.EnviarMensagemPadraoOnLine(inner, 0, MSG_PADRAO);
-            Ok(EasyInner.EnviarFormasEntradasOnLine(inner, 0, 0, FORMA_LEITOR1_IDENTIFICACAO_BIO, 10, 17),
+            e.aguardandoGiro = false;
+            EasyInner.EnviarMensagemPadraoOnLine(e.numero, 0, Linhas("COLOQUE O", "DEDO"));
+            Ok(EasyInner.EnviarFormasEntradasOnLine(e.numero, 0, 0, FORMA_LEITOR1_IDENTIFICACAO_BIO, 10, 17),
                 "EnviarFormasEntradasOnLine");
         }
 
@@ -108,42 +150,64 @@ namespace PonteCatraca
             var cartao = new StringBuilder(32);
             while (t.ElapsedMilliseconds < timeoutMs)
             {
-                byte origem = 0, compl = 0, dia = 0, mes = 0, ano = 0, hora = 0, min = 0, seg = 0;
-                cartao.Length = 0;
-                var ret = EasyInner.ReceberDadosOnLine(inner, ref origem, ref compl, cartao,
-                    ref dia, ref mes, ref ano, ref hora, ref min, ref seg);
-
-                if (ret == EasyInner.RET_COMANDO_OK)
+                for (int i = 0; i < catracas.Count; i++)
                 {
-                    var l = Interpretar(origem, compl, cartao.ToString().Trim());
-                    if (l != null) return l;
-                    continue;
-                }
-
-                // Sem evento (CONFIRMAR o código exato): mantém a conexão viva.
-                if (desdeUltimoPing.ElapsedMilliseconds > 5000)
-                {
-                    desdeUltimoPing.Restart();
-                    if (EasyInner.PingOnLine(inner) != EasyInner.RET_COMANDO_OK)
+                    var e = catracas[(proxima + i) % catracas.Count];
+                    var l = Consultar(e, cartao);
+                    if (l != null)
                     {
-                        if (++pingsFalhos >= 3) throw new Exception("Inner " + inner + " parou de responder.");
+                        proxima = (catracas.IndexOf(e) + 1) % catracas.Count;   // a próxima busca começa pela outra catraca
+                        return l;
                     }
-                    else pingsFalhos = 0;
                 }
-
-                // Se a confirmação de giro nunca chegar, não deixa a catraca travada sem ler.
-                if (aguardandoGiro && desdeLiberacao.Elapsed.TotalSeconds > cfg.tempoLiberacaoSegundos + 10)
-                {
-                    Log.Aviso("Sem confirmação de giro; rearmando a leitura.");
-                    Rearmar();
-                }
-
+                if (!catracas.Any(c => c.conectada) && catracas.All(c => c.desdeTentativa.Elapsed.TotalSeconds < 30))
+                    throw new Exception("Todas as catracas pararam de responder.");
                 Thread.Sleep(75);
             }
             return null;
         }
 
-        Leitura Interpretar(byte origem, byte compl, string cartao)
+        Leitura Consultar(Estado e, StringBuilder cartao)
+        {
+            if (!e.conectada)
+            {
+                if (e.desdeTentativa.Elapsed.TotalSeconds >= 30) TentarConectar(e, 3);
+                return null;
+            }
+
+            byte origem = 0, compl = 0, dia = 0, mes = 0, ano = 0, hora = 0, min = 0, seg = 0;
+            cartao.Length = 0;
+            var ret = EasyInner.ReceberDadosOnLine(e.numero, ref origem, ref compl, cartao,
+                ref dia, ref mes, ref ano, ref hora, ref min, ref seg);
+            if (ret == EasyInner.RET_COMANDO_OK)
+                return Interpretar(e, origem, compl, cartao.ToString().Trim());
+
+            // Sem evento (CONFIRMAR o código exato): mantém a conexão viva.
+            if (e.desdePing.ElapsedMilliseconds > 5000)
+            {
+                e.desdePing.Restart();
+                if (EasyInner.PingOnLine(e.numero) != EasyInner.RET_COMANDO_OK)
+                {
+                    if (++e.pingsFalhos >= 3)
+                    {
+                        e.conectada = false;
+                        e.desdeTentativa.Restart();
+                        Log.Erro("Catraca " + e.numero + " parou de responder; tentando de novo a cada 30 s.");
+                    }
+                }
+                else e.pingsFalhos = 0;
+            }
+
+            // Se a confirmação de giro nunca chegar, não deixa a catraca travada sem ler.
+            if (e.aguardandoGiro && e.desdeLiberacao.Elapsed.TotalSeconds > cfg.tempoLiberacaoSegundos + 10)
+            {
+                Log.Aviso("Catraca " + e.numero + ": sem confirmação de giro; rearmando a leitura.");
+                Rearmar(e);
+            }
+            return null;
+        }
+
+        Leitura Interpretar(Estado e, byte origem, byte compl, string cartao)
         {
             switch (origem)
             {
@@ -151,48 +215,49 @@ namespace PonteCatraca
                 case ORIGEM_LEITOR1:
                 case ORIGEM_LEITOR2:
                 case ORIGEM_TECLADO:
-                    if (cartao.Length == 0) { Rearmar(); return null; }
+                    if (cartao.Length == 0) { Rearmar(e); return null; }
                     return new Leitura
                     {
                         tipo = TipoLeitura.Identificacao,
+                        equipamento = e.numero,
                         codigo = cartao,
                         origem = origem == ORIGEM_BIOMETRIA ? "digital" : "origem " + origem
                     };
 
                 case ORIGEM_GIRO:
-                    Rearmar();
-                    return new Leitura { tipo = TipoLeitura.Giro, origem = compl == 1 ? "entrada" : "saida" };
+                    Rearmar(e);
+                    return new Leitura { tipo = TipoLeitura.Giro, equipamento = e.numero, origem = compl == 1 ? "entrada" : "saida" };
 
                 case ORIGEM_FIM_TEMPO:
-                    var estava = aguardandoGiro;
-                    Rearmar();
-                    return estava ? new Leitura { tipo = TipoLeitura.Desistencia, origem = "fim do tempo" } : null;
+                    var estava = e.aguardandoGiro;
+                    Rearmar(e);
+                    return estava ? new Leitura { tipo = TipoLeitura.Desistencia, equipamento = e.numero, origem = "fim do tempo" } : null;
 
                 default:
                     // Registrar tudo que não conhecemos ajuda a acertar os códigos no primeiro teste.
-                    Log.Aviso("Evento não tratado: origem=" + origem + " complemento=" + compl + " cartao='" + cartao + "'");
-                    Rearmar();
+                    Log.Aviso("Catraca " + e.numero + ": evento não tratado: origem=" + origem + " complemento=" + compl + " cartao='" + cartao + "'");
+                    Rearmar(e);
                     return null;
             }
         }
 
-        public void Liberar(string linha1, string linha2, bool apenasEntrada)
+        public void Liberar(int equipamento, string linha1, string linha2, bool apenasEntrada)
         {
-            EasyInner.EnviarMensagemTemporariaOnLine(inner, 0, Linhas(linha1, linha2), (byte)cfg.tempoLiberacaoSegundos);
-            Ok(apenasEntrada ? EasyInner.LiberarCatracaEntrada(inner) : EasyInner.LiberarCatracaDoisSentidos(inner),
+            var e = De(equipamento);
+            EasyInner.EnviarMensagemTemporariaOnLine(e.numero, 0, Linhas(linha1, linha2), (byte)cfg.tempoLiberacaoSegundos);
+            Ok(apenasEntrada ? EasyInner.LiberarCatracaEntrada(e.numero) : EasyInner.LiberarCatracaDoisSentidos(e.numero),
                 "LiberarCatraca");
-            aguardandoGiro = true;
-            desdeLiberacao.Restart();
+            e.aguardandoGiro = true;
+            e.desdeLiberacao.Restart();
         }
 
-        public void Negar(string linha1, string linha2)
+        public void Negar(int equipamento, string linha1, string linha2)
         {
-            EasyInner.LigarLedVermelho(inner);
-            EasyInner.AcionarBipLongo(inner);
-            EasyInner.EnviarMensagemTemporariaOnLine(inner, 0, Linhas(linha1, linha2), 3);
-            Thread.Sleep(1500);
-            EasyInner.DesligarLedVermelho(inner);
-            Rearmar();
+            var e = De(equipamento);
+            // Sem pausa aqui: enquanto uma catraca mostra a mensagem, a outra continua sendo atendida.
+            Rearmar(e);
+            EasyInner.AcionarBipLongo(e.numero);
+            EasyInner.EnviarMensagemTemporariaOnLine(e.numero, 0, Linhas(linha1, linha2), 3);
         }
 
         /// O visor tem 2 linhas de 16 caracteres; a mensagem é uma string só de até 32. Cada linha vai centralizada.

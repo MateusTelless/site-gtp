@@ -26,8 +26,13 @@ ficha do aluno → **Definir número da catraca** → digite **o mesmo número**
 
 Tudo isso aparece no Secullum ou na própria catraca. Prints servem.
 
-- [ ] Foto da **etiqueta** da catraca (modelo e número de série).
-- [ ] Tela de **equipamentos** do Secullum: IP da catraca, porta, **número do equipamento** (Inner nº) e tipo de conexão.
+São **duas catracas**: as informações abaixo valem para cada uma.
+
+- [ ] Foto da **etiqueta** de cada catraca (modelo e número de série).
+- [ ] Tela de **equipamentos** do Secullum: IP de cada catraca, porta, **número do equipamento** (Inner nº) e tipo de conexão.
+- [ ] Hoje, quando um aluno cadastra a digital no menu de **uma** catraca, ele já passa na **outra**?
+  Ou a recepção cadastra o dedo nas duas? (Cada catraca guarda as próprias digitais; preciso saber se o
+  Secullum copia de uma para a outra.)
 - [ ] Se o Secullum mostra a **versão do firmware** e o **modelo do leitor biométrico**, um print disso também.
 - [ ] Em **qual PC** o Secullum roda, qual Windows, e se é **este mesmo computador** onde conversamos.
 - [ ] Mais ou menos **quantas pessoas** têm digital cadastrada hoje.
@@ -66,7 +71,7 @@ precisa recadastrar o dedo.
 
 1. Fechar o Secullum e parar o serviço dele. A catraca fica sem controle durante o teste.
 2. Rodar a ponte na janela: `PonteCatraca.exe --console`.
-3. Testar com 3 pessoas: uma em dia (deve aparecer "LIBERADO / nome"), uma bloqueada ("VER NA RECEPCAO") e uma sem cadastro.
+3. Conferir que as **duas catracas** aparecem conectadas no log. Testar com 3 pessoas, nas duas catracas: uma em dia (deve aparecer "LIBERADO / nome"), uma bloqueada ("VER NA RECEPCAO") e uma sem cadastro.
 4. Testar o **cadastro pelo menu da catraca** com a ponte ligada: abrir o menu, digitar um número novo, pôr o dedo 3 vezes,
    e conferir se depois esse dedo aparece com o número certo. Se o menu não abrir com a ponte ligada, eu habilito
    pela configuração (`PermitirCadastroInnerBioVerid`) ou faço o cadastro pelo painel.
@@ -80,6 +85,8 @@ O log confirma os códigos que a documentação deixou em aberto (digital, giro 
 - **[eu]** Ajustes que o log do teste mostrar.
 - **Cadastro de digital continua igual ao de hoje**: no menu da catraca, digitar o número do aluno e ele põe o dedo 3 vezes.
   A diferença é que o número vem da ficha do aluno no painel ("Definir número da catraca").
+  - **[eu]** **Cópia da digital entre as duas catracas**: quando a digital é cadastrada no menu de uma catraca, a ponte
+    copia para a outra, para o aluno passar em qualquer uma. (Se hoje o Secullum já faz isso, essa parte é obrigatória.)
   - **[eu]** (opcional) a ponte confere na catraca quem já tem digital e marca "biometria cadastrada" no painel sozinha.
   - **[eu]** (só se o menu não funcionar com a ponte ligada) cadastro de digital iniciado pelo painel.
 - **[eu]** **Importação do Secullum**: liga cada pessoa do Secullum ao aluno do painel (pelo CPF ou pelo nome) e preenche o número antigo, para quem já tem digital continuar passando.
