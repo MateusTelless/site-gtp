@@ -46,13 +46,13 @@ async function run(){
 
  const lista=await ok(await call('catraca/liberados'));
  const por=Object.fromEntries(lista.pessoas.map(p=>[p.codigo,p]));
- assert.deepEqual(por['1042'],{codigo:'1042',nome:'MARIA SOUZA',liberado:true,mensagem:''});
- assert.equal(por['1043'].mensagem,'PROCURE A SECRETARIA','6 dias de atraso > 5 de tolerância');
+ assert.deepEqual(por['1042'],{codigo:'1042',nome:'MARIA SOUZA',liberado:true,mensagem:'',motivo:''});
+ assert.deepEqual([por['1043'].liberado,por['1043'].mensagem,por['1043'].motivo],[false,'VER NA RECEPCAO','pagamento_atrasado'],'6 dias de atraso > 5 de tolerância');
  assert.equal(por['1044'].liberado,true,'3 dias de atraso dentro da tolerância');
- assert.equal(por['1045'].mensagem,'MATRICULA INATIVA');
- assert.equal(por['1046'].mensagem,'MATRICULA INATIVA');
+ assert.equal(por['1045'].motivo,'matricula_inativa');assert.equal(por['1045'].mensagem,'VER NA RECEPCAO');
+ assert.equal(por['1046'].motivo,'matricula_inativa');
  assert.equal(por['777'].liberado,true,'usa o código legado do Secullum, sem zeros');
- assert.equal(por['2000'].mensagem,'CODIGO DUPLICADO');
+ assert.equal(por['2000'].motivo,'codigo_duplicado');assert.equal(por['2000'].mensagem,'VER NA RECEPCAO');
  assert.equal(lista.pessoas.filter(p=>p.codigo==='2000').length,2);
  assert.equal(lista.pessoas.length,8,'aluno sem código fica de fora');
  assert.equal(por['1043'].nome,'JOAO LIMA','sem acento');

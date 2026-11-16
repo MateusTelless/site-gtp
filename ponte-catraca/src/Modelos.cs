@@ -8,7 +8,8 @@ namespace PonteCatraca
         public string codigo;
         public string nome;
         public bool liberado;
-        public string mensagem;
+        public string mensagem;   // frase do visor quando bloqueado (hoje sempre "VER NA RECEPCAO")
+        public string motivo;     // só para o registro: pagamento_atrasado, matricula_inativa, codigo_duplicado
     }
 
     public class ListaLiberados
@@ -44,6 +45,8 @@ namespace PonteCatraca
     {
         public bool liberar;
         public string resultado;   // liberado | negado | nao_cadastrado
-        public string mensagem;    // texto do visor (até 16 caracteres por linha)
+        public string nome;        // 2ª linha do visor quando liberado
+        public string mensagem;    // 1ª linha do visor quando bloqueado
+        public string motivo;      // vai para o registro, não aparece no visor
     }
 }

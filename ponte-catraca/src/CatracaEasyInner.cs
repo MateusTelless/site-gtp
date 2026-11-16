@@ -195,10 +195,17 @@ namespace PonteCatraca
             Rearmar();
         }
 
-        /// O visor tem 2 linhas de 16 caracteres; a mensagem é uma string só de até 32.
+        /// O visor tem 2 linhas de 16 caracteres; a mensagem é uma string só de até 32. Cada linha vai centralizada.
         static string Linhas(string l1, string l2)
         {
-            return (l1 ?? "").PadRight(16).Substring(0, 16) + (l2 ?? "").PadRight(16).Substring(0, 16);
+            return Centro(l1) + Centro(l2);
+        }
+
+        static string Centro(string s)
+        {
+            s = (s ?? "").Trim();
+            if (s.Length > 16) s = s.Substring(0, 16);
+            return s.PadLeft((16 + s.Length) / 2).PadRight(16);
         }
     }
 }

@@ -8,6 +8,7 @@ const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cac
 function fail(message:string,status=400):never{throw Object.assign(new Error(message),{status})}
 const RESULTADOS=['liberado','negado','nao_cadastrado','giro','desistencia'];
 const MAX_EVENTOS=500;
+const MENSAGEM_BLOQUEIO='VER NA RECEPCAO';
 
 const sha=async(s:string)=>new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)));
 async function autorizado(req:Request,token:string|undefined){
@@ -39,11 +40,13 @@ export async function listaLiberados(DB:D1Database,toleranciaDias:number){
  const pessoas=[];
  for(const r of rows){
   const codigo=normalizarCodigo(r.codigo);if(!codigo)continue;
-  let mensagem='';
-  if((porCodigo.get(codigo)||0)>1)mensagem='CODIGO DUPLICADO';
-  else if(r.status!=='ativo'||!r.ativa)mensagem='MATRICULA INATIVA';
-  else if(r.vencidas>0)mensagem='PROCURE A SECRETARIA';
-  pessoas.push({codigo,nome:nomeVisor(r.full_name),liberado:!mensagem,mensagem});
+  // O visor mostra a mesma frase para qualquer bloqueio (não expõe atraso de pagamento na frente dos outros);
+  // o motivo vai só para o registro e o painel.
+  let motivo='';
+  if((porCodigo.get(codigo)||0)>1)motivo='codigo_duplicado';
+  else if(r.status!=='ativo'||!r.ativa)motivo='matricula_inativa';
+  else if(r.vencidas>0)motivo='pagamento_atrasado';
+  pessoas.push({codigo,nome:nomeVisor(r.full_name),liberado:!motivo,mensagem:motivo?MENSAGEM_BLOQUEIO:'',motivo});
  }
  return pessoas;
 }

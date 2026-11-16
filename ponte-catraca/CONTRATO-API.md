@@ -19,8 +19,10 @@ configurado no Worker, `503`.
 **Regra de liberação (real):** `students.status = 'ativo'`, pelo menos uma matrícula `ativa` e nenhuma
 parcela `aberta` com vencimento há mais de `CATRACA_TOLERANCIA_DIAS` dias (padrão 5).
 Código da catraca = `students.access_code` ou, se vazio, `students.legacy_code` (número do Secullum).
-Mensagens: `MATRICULA INATIVA`, `PROCURE A SECRETARIA`, `CODIGO DUPLICADO` (dois alunos com o mesmo número:
-os dois ficam bloqueados até a secretaria corrigir). As seções abaixo com SQL "sugerido" foram
+Visor: liberado = `LIBERADO` / nome; bloqueado = `VER NA RECEPCAO` em qualquer caso (o motivo não aparece
+para quem está na fila). O campo `motivo` (`pagamento_atrasado`, `matricula_inativa`, `codigo_duplicado`) vai
+só para o registro e para a área Catraca do painel. Dois alunos com o mesmo número ficam os dois bloqueados
+até a secretaria corrigir. As seções abaixo com SQL "sugerido" foram
 substituídas por essa implementação.
 
 ---
@@ -36,8 +38,8 @@ Resposta `200`:
 {
   "geradoEm": "2026-11-16T14:03:00-03:00",
   "pessoas": [
-    { "codigo": "1042", "nome": "MARIA SOUZA", "liberado": true,  "mensagem": "" },
-    { "codigo": "1043", "nome": "JOAO LIMA",   "liberado": false, "mensagem": "PROCURE A SECRETARIA" }
+    { "codigo": "1042", "nome": "MARIA SOUZA", "liberado": true,  "mensagem": "", "motivo": "" },
+    { "codigo": "1043", "nome": "JOAO LIMA",   "liberado": false, "mensagem": "VER NA RECEPCAO", "motivo": "pagamento_atrasado" }
   ]
 }
 ```

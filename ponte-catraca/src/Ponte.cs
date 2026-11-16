@@ -50,23 +50,27 @@ namespace PonteCatraca
 
         // ---------------- regra de acesso ----------------
 
+        /// Visor igual ao do Secullum: "LIBERADO" + nome; bloqueio com uma frase só, sem expor o motivo.
+        public const string MensagemBloqueio = "VER NA RECEPCAO";
+
         public Decisao Decidir(string codigo)
         {
             var norm = CacheLiberados.Normalizar(codigo);
             if (cfg.codigosSempreLiberados.Any(c => CacheLiberados.Normalizar(c) == norm))
-                return new Decisao { liberar = true, resultado = "liberado", mensagem = "BEM-VINDO" };
+                return new Decisao { liberar = true, resultado = "liberado", nome = "BEM-VINDO", motivo = "" };
 
             var p = cache.Buscar(codigo);
             if (p == null)
-                return new Decisao { liberar = false, resultado = "nao_cadastrado", mensagem = "NAO CADASTRADO" };
+                return new Decisao { liberar = false, resultado = "nao_cadastrado", mensagem = MensagemBloqueio, motivo = "nao_cadastrado" };
             if (!p.liberado)
                 return new Decisao
                 {
                     liberar = false,
                     resultado = "negado",
-                    mensagem = string.IsNullOrWhiteSpace(p.mensagem) ? "ACESSO NEGADO" : p.mensagem
+                    mensagem = string.IsNullOrWhiteSpace(p.mensagem) ? MensagemBloqueio : p.mensagem,
+                    motivo = p.motivo ?? ""
                 };
-            return new Decisao { liberar = true, resultado = "liberado", mensagem = p.nome ?? "" };
+            return new Decisao { liberar = true, resultado = "liberado", nome = p.nome ?? "", motivo = "" };
         }
 
         // ---------------- thread da catraca ----------------
@@ -105,16 +109,17 @@ namespace PonteCatraca
                 var d = Decidir(l.codigo);
                 if (d.liberar)
                 {
-                    catraca.Liberar(Visor(d.mensagem), "PODE PASSAR", !cfg.liberarSaidaSempre);
+                    catraca.Liberar("LIBERADO", Visor(d.nome), !cfg.liberarSaidaSempre);
                     ultimoCodigoLiberado = l.codigo;
                 }
                 else
                 {
                     catraca.Negar(Visor(d.mensagem), "");
                 }
-                Log.Info(l.origem + " " + l.codigo + " -> " + d.resultado + " (" + d.mensagem + ")");
+                Log.Info(l.origem + " " + l.codigo + " -> " + d.resultado
+                    + (d.liberar ? " (" + d.nome + ")" : " (" + d.motivo + ")"));
                 fila.Adicionar(Evento.Novo(CacheLiberados.Normalizar(l.codigo), d.resultado,
-                    d.liberar ? "" : d.mensagem, cfg.numeroInner));
+                    d.motivo, cfg.numeroInner));
                 return;
             }
 

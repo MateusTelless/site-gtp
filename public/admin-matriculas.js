@@ -202,6 +202,8 @@ function ensureSummary(){if(tab||siteTab!=='overview'||!can('admin','secretaria'
 async function drawSummaryTab(){panel.innerHTML=heading('Visão geral','O que aconteceu no dia, com as matrículas em destaque.')+'<section class="m-summary" data-mat-summary><p>Carregando…</p></section>';await renderSummary()}
 
 // Catraca: situação da ponte no PC do curso e últimas passagens, pelo nome do aluno.
+// O visor mostra só "VER NA RECEPCAO"; o motivo aparece aqui, para a recepção saber o que resolver.
+const MOTIVO={pagamento_atrasado:'Pagamento em atraso',matricula_inativa:'Sem matrícula ativa',codigo_duplicado:'Número repetido em dois alunos',nao_cadastrado:'Número sem aluno no painel'};
 const PASSAGEM={liberado:['Liberado',''],giro:['Passou',''],negado:['Bloqueado','muted'],nao_cadastrado:['Não cadastrado','muted'],desistencia:['Liberado, não passou','muted']};
 async function drawCatraca(){
  const d=await api('admin/catraca'),agora=Date.parse(d.agora);
@@ -209,7 +211,7 @@ async function drawCatraca(){
  panel.innerHTML=heading('Catraca','Quem passou, quem foi bloqueado e se a catraca está conectada. A liberação segue a matrícula e o financeiro: quem fica em dia volta a passar em até 1 minuto.')+`
   <div class="cards">${d.pontes.map(ponte).join('')||'<div class="card s-late"><span>Catraca</span><strong>Ainda não conectada</strong><span>A ponte no PC do curso ainda não deu sinal.</span></div>'}</div>
   <div class="toolbar"><button data-m="catraca">Atualizar</button></div>
-  <div class="table-wrap"><table><thead><tr><th>Quando</th><th>Aluno</th><th>Resultado</th></tr></thead><tbody>${d.acessos.map(r=>{const [t,cls]=PASSAGEM[r.resultado]||[r.resultado,'muted'];return `<tr><td>${when(r.data_hora)}</td><td>${r.full_name?esc(r.full_name):r.codigo?'Sem aluno com este número':'—'}${r.codigo?`<small>Nº ${esc(r.codigo)}</small>`:''}</td><td><span class="badge ${cls}">${t}</span>${r.motivo&&r.resultado==='negado'?`<small>${esc(r.motivo)}</small>`:''}</td></tr>`}).join('')||'<tr><td colspan="3">Nenhuma passagem registrada ainda.</td></tr>'}</tbody></table></div>`;
+  <div class="table-wrap"><table><thead><tr><th>Quando</th><th>Aluno</th><th>Resultado</th></tr></thead><tbody>${d.acessos.map(r=>{const [t,cls]=PASSAGEM[r.resultado]||[r.resultado,'muted'];return `<tr><td>${when(r.data_hora)}</td><td>${r.full_name?esc(r.full_name):r.codigo?'Sem aluno com este número':'—'}${r.codigo?`<small>Nº ${esc(r.codigo)}</small>`:''}</td><td><span class="badge ${cls}">${t}</span>${r.motivo&&['negado','nao_cadastrado'].includes(r.resultado)?`<small>${esc(MOTIVO[r.motivo]||r.motivo)}</small>`:''}</td></tr>`}).join('')||'<tr><td colspan="3">Nenhuma passagem registrada ainda.</td></tr>'}</tbody></table></div>`;
 }
 
 const draws={'mat-resumo':drawSummaryTab,'mat-catraca':drawCatraca,'mat-matriculas':drawEnrollments,'mat-alunos':drawStudents,'mat-turmas':drawClasses,'mat-financeiro':drawFinance,'mat-equipe':drawTeam};
