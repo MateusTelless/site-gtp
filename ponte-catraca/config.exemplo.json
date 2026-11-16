@@ -8,7 +8,7 @@
   "ipCatraca": "192.168.0.100",
   "portaCatraca": 3570,
   "tempoLiberacaoSegundos": 5,
-  "liberarSaidaSempre": true,
+  "liberarSaidaSempre": false,
   "qtdDigitosCodigo": 14,
 
   "codigosSempreLiberados": [],

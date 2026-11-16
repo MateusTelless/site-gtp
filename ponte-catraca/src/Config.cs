@@ -18,7 +18,9 @@ namespace PonteCatraca
         public string ipCatraca = "192.168.0.100";
         public int portaCatraca = 3570;
         public int tempoLiberacaoSegundos = 5;
-        public bool liberarSaidaSempre = true;     // nunca prende ninguém do lado de dentro
+        // false: o dedo libera só a entrada (a saída do GTP já é livre na catraca).
+        // true: o dedo libera os dois sentidos (para catracas que pedem o dedo também na saída).
+        public bool liberarSaidaSempre = false;
         public int qtdDigitosCodigo = 14;
 
         // Códigos que sempre passam (professores, equipe), mesmo sem internet
