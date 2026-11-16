@@ -1,0 +1,42 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Web.Script.Serialization;
+
+namespace PonteCatraca
+{
+    public class Config
+    {
+        // Worker
+        public string urlApi = "https://SEU-DOMINIO/api/catraca";
+        public string token = "";
+        public int intervaloSyncSegundos = 60;
+
+        // Catraca
+        public string modoCatraca = "easyinner";   // "easyinner" ou "simulada"
+        public int numeroInner = 1;
+        public string ipCatraca = "192.168.0.100";
+        public int portaCatraca = 3570;
+        public int tempoLiberacaoSegundos = 5;
+        public bool liberarSaidaSempre = true;     // nunca prende ninguém do lado de dentro
+        public int qtdDigitosCodigo = 14;
+
+        // Códigos que sempre passam (professores, equipe), mesmo sem internet
+        public List<string> codigosSempreLiberados = new List<string>();
+
+        public string pastaDados = "dados";
+
+        public static Config Carregar(string caminho)
+        {
+            if (!File.Exists(caminho))
+                throw new FileNotFoundException("Arquivo de configuração não encontrado: " + caminho);
+            var json = File.ReadAllText(caminho);
+            var cfg = new JavaScriptSerializer().Deserialize<Config>(json);
+            if (cfg.codigosSempreLiberados == null) cfg.codigosSempreLiberados = new List<string>();
+            if (!Path.IsPathRooted(cfg.pastaDados))
+                cfg.pastaDados = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(caminho)), cfg.pastaDados);
+            Directory.CreateDirectory(cfg.pastaDados);
+            return cfg;
+        }
+    }
+}

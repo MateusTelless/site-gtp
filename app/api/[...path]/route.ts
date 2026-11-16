@@ -4,10 +4,12 @@ import { env } from 'cloudflare:workers';
 import { getAdminIdentity } from '../../admin-identity';
 import { passwordAction } from '../../password-auth';
 import { validateVisual } from '../../visual-validation';
-import { enrollmentPublic, enrollmentAdmin, staffRole } from '../../enrollment';import seed from '../../../seed.json';
+import { enrollmentPublic, enrollmentAdmin, staffRole } from '../../enrollment';
+import { catracaApi, catracaPainel } from '../../catraca';
+import seed from '../../../seed.json';
 import pageDefaults from '../../../page-defaults.json';
 
-const bindings=()=>env as unknown as {DB:D1Database;BUCKET:R2Bucket;ADMIN_EMAILS?:string;AUTH_PROVIDER?:string;SHEETS_WEBHOOK_URL?:string;SHEETS_WEBHOOK_SECRET?:string;MATRICULAS_SHEET_URL?:string;MATRICULAS_SHEET_SECRET?:string};
+const bindings=()=>env as unknown as {DB:D1Database;BUCKET:R2Bucket;ADMIN_EMAILS?:string;AUTH_PROVIDER?:string;SHEETS_WEBHOOK_URL?:string;SHEETS_WEBHOOK_SECRET?:string;MATRICULAS_SHEET_URL?:string;MATRICULAS_SHEET_SECRET?:string;CATRACA_TOKEN?:string;CATRACA_TOLERANCIA_DIAS?:string};
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 function fail(message:string,status=400):never{throw Object.assign(new Error(message),{status})}
 const now=()=>new Date().toISOString();
@@ -35,6 +37,8 @@ async function rateLimit(DB:D1Database,req:Request,scope:string,max:number){cons
 function validate(data:any){if(!data||typeof data!=='object'||Array.isArray(data))fail('Conteúdo inválido.');data.provas??=[];data.paginas??=structuredClone(pageDefaults);for(const tab of tabs){if(!Array.isArray(data[tab])||data[tab].length>150)fail('Lista inválida: '+tab);const ids=new Set();for(const r of data[tab]){if(!r||typeof r.id!=='string'||!/^[\w-]{1,100}$/.test(r.id)||ids.has(r.id)||typeof r.title!=='string'||!r.title.trim()||r.title.length>300||typeof r.visible!=='boolean'||!r.fields||typeof r.fields!=='object'||Array.isArray(r.fields))fail('Registro inválido: '+tab);ids.add(r.id);for(const [k,v] of Object.entries(r.fields)){if(typeof v!=='string'||v.length>10000||k.length>100)fail('Campo inválido.');if(/Link|Destino|Imagem|WhatsApp/.test(k)&&/[<>"'\\\r\n]/.test(v))fail('O endereço contém caracteres inválidos.');if(/Link|Destino|Imagem|WhatsApp/.test(k)&&v&&!/^(https:\/\/|\/(?!\/)|#|\+?[\d ()-]+$)/i.test(v))fail('Use um link HTTPS, caminho do site ou telefone.');}}}for(const r of data.provas){if(!['apmbb','epcar','cn','espcex','soldado'].includes(r.fields['Instituição'])||!/^\d{4}$/.test(r.fields['Ano']))fail('Informe instituição e ano da prova.');if(r.visible&&!['Link da prova','Link do gabarito','Link da resolução','Link do vídeo','Resolução comentada'].some(k=>r.fields[k]?.trim()))fail('Adicione um material ou resolução antes de mostrar a prova.');}for(const r of data.paginas){const def=pageDefaults.find(p=>p.id===r.id);if(!def||Object.keys(r.fields).some(k=>!(k in def.fields)))fail('Página ou campo não reconhecido.');}if(!data.carrossel.some((r:any)=>r.visible))fail('Mantenha ao menos um destaque visível.');validateCampaigns(data.carrossel);data.visual=validateVisual(data.visual);return {...data,__siteEditorVersion:2,__storeCatalogV1:true};}
 async function handle(req:Request){
  const {DB,BUCKET}=bindings(),url=new URL(req.url),path=url.pathname.replace(/^\/api\//,'');
+ // Ponte da catraca: programa no PC do curso, autenticado por token (não manda Origin). Fica antes da checagem de origem.
+ if(path.startsWith('catraca/')){const r=await catracaApi(req,path,bindings());if(r)return r}
  if(req.method!=='GET'&&req.headers.get('origin')!==url.origin)fail('Origem não autorizada.',403);
  if(path.startsWith('auth/'))return passwordAction(req,path);
  if(path==='content'&&req.method==='GET'){const row=await DB.prepare('SELECT body,revision FROM content WHERE id=?').bind('published').first<any>();return json({data:normalized(row?JSON.parse(row.body):seed),revision:row?.revision||0,serverNow:Date.now()});}
@@ -71,7 +75,9 @@ async function handle(req:Request){
  const role=await staffRole(DB,user.email);
  if(/^admin\/(matriculas|alunos|pessoas|turmas|planos|financeiro|equipe|registro)(\/|$)/.test(path)){const team=(bindings().ADMIN_EMAILS||'').toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);const r=await enrollmentAdmin(req,path,DB,{email:user.email.toLowerCase(),role},team,sendEnrollmentToSheet);if(r)return r;fail('Caminho não encontrado.',404)}
  // Conteúdo do site, contatos e aula teste: só administrador e secretaria.
- if(!['admin','secretaria'].includes(role))fail('Seu perfil não permite esta área.',403); if(path==='admin/backups'&&req.method==='GET')return json({backups:await listBackups(bindings())});
+ if(!['admin','secretaria'].includes(role))fail('Seu perfil não permite esta área.',403);
+ if(path==='admin/catraca'&&req.method==='GET')return json(await catracaPainel(DB));
+ if(path==='admin/backups'&&req.method==='GET')return json({backups:await listBackups(bindings())});
  if(path==='admin/backups'&&req.method==='POST')return json(await makeBackup(bindings(),'Cópia manual'));
  if(path==='admin/backups/export'&&req.method==='GET')return exportBackup(bindings(),url.searchParams.get('id')||'');
  if(path==='admin/backups/verify'&&req.method==='POST'){const b=await body(req,2000);return json(await verifyBackup(bindings(),b.id))}

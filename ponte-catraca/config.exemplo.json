@@ -1,0 +1,16 @@
+{
+  "urlApi": "https://SEU-DOMINIO/api/catraca",
+  "token": "COLE-AQUI-O-TOKEN_PONTE",
+  "intervaloSyncSegundos": 60,
+
+  "modoCatraca": "easyinner",
+  "numeroInner": 1,
+  "ipCatraca": "192.168.0.100",
+  "portaCatraca": 3570,
+  "tempoLiberacaoSegundos": 5,
+  "liberarSaidaSempre": true,
+  "qtdDigitosCodigo": 14,
+
+  "codigosSempreLiberados": [],
+  "pastaDados": "dados"
+}
