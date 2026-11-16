@@ -1,0 +1,55 @@
+/* Página de matrícula: segue o visual das páginas de guia. */
+.enroll{max-width:860px}
+.enroll-steps{display:flex;gap:8px;list-style:none;padding:0;margin:0 0 24px;flex-wrap:wrap;counter-reset:step}
+.enroll-steps li{flex:1 1 120px;padding:10px 12px;border-top:4px solid var(--line);color:var(--muted);font-weight:700;font-size:.9rem;counter-increment:step}
+.enroll-steps li::before{content:counter(step) ". "}
+.enroll-steps li.current{border-color:var(--navy);color:var(--ink)}
+.enroll-steps li.done{border-color:#7a96b4;color:var(--ink)}
+#enroll section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:16px}
+#enroll h2{margin-top:0}
+#enroll h3{margin:24px 0 8px}
+.enroll-options{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.enroll-option{display:grid;gap:4px;padding:16px;border:1px solid var(--line);border-radius:12px;cursor:pointer;position:relative}
+.enroll-option input{position:absolute;top:16px;right:16px;width:18px;height:18px}
+.enroll-option b{padding-right:28px;color:var(--ink)}
+.enroll-option span{color:var(--muted);font-size:.92rem}
+.enroll-option:has(input:checked){border-color:var(--navy);box-shadow:0 0 0 2px var(--navy) inset}
+.enroll-option:has(input:focus-visible){outline:3px solid #7a96b4;outline-offset:2px}
+.enroll-option.full{opacity:.55;cursor:not-allowed}
+.enroll-option em{color:#9b2c2c;font-style:normal;font-weight:700}
+.enroll-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+#enroll label{display:grid;gap:6px;font-weight:600;color:var(--ink)}
+#enroll input:not([type=radio]):not([type=checkbox]),#enroll select{width:100%;padding:11px 12px;border:1px solid #b9c6d4;border-radius:8px;font:inherit;background:#fff}
+#enroll input:focus,#enroll select:focus{outline:3px solid #7a96b4;outline-offset:1px}
+#enroll fieldset{border:0;padding:0;margin:0}
+#enroll legend{font-weight:600;margin-bottom:6px}
+#enroll .enroll-check{display:flex;align-items:flex-start;gap:10px;font-weight:500;margin:10px 0}
+.enroll-check input{width:18px;height:18px;margin-top:3px;flex:none}
+.enroll-note{color:var(--muted);font-size:.92rem}
+.enroll-error{background:#fdecec;border:1px solid #e5b4b4;color:#7c1d1d;border-radius:10px;padding:12px 14px;font-weight:600}
+.enroll-actions{display:flex;justify-content:space-between;gap:12px;margin:8px 0 40px}
+.enroll-actions .button{border:0;cursor:pointer;font:inherit}
+.enroll-actions [hidden],.enroll-steps [hidden]{display:none}
+.enroll-actions #next{margin-left:auto}
+.enroll-actions button:disabled{opacity:.6;cursor:wait}
+.enroll-trap{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
+/* Turma vinda do botão do curso, e a confirmação final. */
+#plans h3{grid-column:1/-1;margin-bottom:0}
+.enroll-chosen-label{grid-column:1/-1;margin:0;color:var(--muted);font-weight:600}
+.enroll-option.enroll-chosen{grid-column:1/-1;border-color:var(--navy);box-shadow:0 0 0 2px var(--navy) inset;cursor:default}
+.enroll-turma-check{border:2px solid var(--navy);border-radius:12px;padding:16px 18px;background:#f3f6fa;margin-bottom:16px}
+.enroll-turma-check h3{margin:4px 0 6px!important;font-size:1.3rem}
+.enroll-turma-check p{margin:0 0 6px}
+.enroll-turma-ask{font-weight:600}
+.enroll-review-block{border-top:1px solid var(--line);padding-top:4px}
+.enroll-review-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.enroll-review-head h3{margin:14px 0 6px!important}
+.enroll-fix{background:none;border:0;padding:6px 2px;color:var(--navy);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;min-height:44px}
+.enroll-turma-ask .enroll-fix{min-height:0;padding:0}
+#enroll .enroll-check-strong{font-weight:700;background:#f3f6fa;border-radius:10px;padding:12px}
+#done{border:1px solid var(--line);border-radius:14px;background:#fff;padding:24px}
+@media(max-width:720px){.enroll-grid{grid-template-columns:1fr}#enroll section{padding:18px}
+ /* No celular a barra mostra só os números, e o nome da etapa atual. */
+ .enroll-steps{flex-wrap:nowrap;gap:6px}.enroll-steps li{flex:1 1 0;min-width:0;padding:8px 4px;text-align:center;white-space:nowrap}
+ .enroll-steps li:not(.current){font-size:0}.enroll-steps li:not(.current)::before{font-size:.9rem;content:counter(step)}
+ .enroll-steps li.current{flex:3 1 0}}

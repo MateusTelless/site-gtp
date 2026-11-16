@@ -4,10 +4,10 @@ import { env } from 'cloudflare:workers';
 import { getAdminIdentity } from '../../admin-identity';
 import { passwordAction } from '../../password-auth';
 import { validateVisual } from '../../visual-validation';
-import seed from '../../../seed.json';
+import { enrollmentPublic, enrollmentAdmin, staffRole } from '../../enrollment';import seed from '../../../seed.json';
 import pageDefaults from '../../../page-defaults.json';
 
-const bindings=()=>env as unknown as {DB:D1Database;BUCKET:R2Bucket;ADMIN_EMAILS?:string;AUTH_PROVIDER?:string;SHEETS_WEBHOOK_URL?:string;SHEETS_WEBHOOK_SECRET?:string};
+const bindings=()=>env as unknown as {DB:D1Database;BUCKET:R2Bucket;ADMIN_EMAILS?:string;AUTH_PROVIDER?:string;SHEETS_WEBHOOK_URL?:string;SHEETS_WEBHOOK_SECRET?:string;MATRICULAS_SHEET_URL?:string;MATRICULAS_SHEET_SECRET?:string};
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 function fail(message:string,status=400):never{throw Object.assign(new Error(message),{status})}
 const now=()=>new Date().toISOString();
@@ -27,6 +27,9 @@ function upgradeTrialAndDates<T extends {cursos?:Row[];paginas?:Row[];carrossel?
 // Desligada sem os dois segredos. Falhas não afetam o visitante: o pedido já está no D1.
 const formatPhone=(t:string)=>t.replace(/^(\d{2})(\d{4,5})(\d{4})$/,'($1) $2-$3');
 async function sendToSheet(row:Record<string,string>):Promise<'enviado'|'erro'|'desligada'>{const {SHEETS_WEBHOOK_URL:url,SHEETS_WEBHOOK_SECRET:secret}=bindings();if(!url||!secret)return 'desligada';if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url)){console.error('SHEETS_WEBHOOK_URL inválida');return 'erro'}try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...row,secret}),redirect:'follow',signal:AbortSignal.timeout(8000)});const b=await r.json().catch(()=>null) as {ok?:boolean}|null;if(r.ok&&b?.ok)return 'enviado';console.error('Planilha recusou o pedido',r.status);return 'erro'}catch(e){console.error('Falha ao enviar à planilha',(e as Error)?.name);return 'erro'}}
+// Envia o estado de uma matrícula para a planilha do painel (Apps Script em integracoes/planilha-matriculas).
+// Desligado sem os dois segredos. Falhas não afetam quem se matricula nem a equipe: a matrícula já está no D1.
+async function sendEnrollmentToSheet(row:Record<string,unknown>){const {MATRICULAS_SHEET_URL:url,MATRICULAS_SHEET_SECRET:secret}=bindings();if(!url||!secret)return;if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url)){console.error('MATRICULAS_SHEET_URL inválida');return}try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...row,secret}),redirect:'follow',signal:AbortSignal.timeout(8000)});const b=await r.json().catch(()=>null) as {ok?:boolean}|null;if(!r.ok||!b?.ok)console.error('Planilha de matrículas recusou o envio',r.status)}catch(e){console.error('Falha ao enviar à planilha de matrículas',(e as Error)?.name)}}
 // Limite de envios por IP numa janela de 1 hora, separado por formulário.
 async function rateLimit(DB:D1Database,req:Request,scope:string,max:number){const hour=Math.floor(Date.now()/3600000),ip=req.headers.get('cf-connecting-ip')||'local';const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(scope+':'+ip+':'+hour)))).map(x=>x.toString(16).padStart(2,'0')).join('');const count=await DB.prepare('INSERT INTO limits(id,count,expires) VALUES(?,1,?) ON CONFLICT(id) DO UPDATE SET count=count+1 RETURNING count').bind(hash,Date.now()+7200000).first<{count:number}>();if((count?.count||0)>max)fail('Muitas tentativas. Tente novamente mais tarde.',429);await DB.prepare('DELETE FROM limits WHERE expires < ?').bind(Date.now()).run();}
 function validate(data:any){if(!data||typeof data!=='object'||Array.isArray(data))fail('Conteúdo inválido.');data.provas??=[];data.paginas??=structuredClone(pageDefaults);for(const tab of tabs){if(!Array.isArray(data[tab])||data[tab].length>150)fail('Lista inválida: '+tab);const ids=new Set();for(const r of data[tab]){if(!r||typeof r.id!=='string'||!/^[\w-]{1,100}$/.test(r.id)||ids.has(r.id)||typeof r.title!=='string'||!r.title.trim()||r.title.length>300||typeof r.visible!=='boolean'||!r.fields||typeof r.fields!=='object'||Array.isArray(r.fields))fail('Registro inválido: '+tab);ids.add(r.id);for(const [k,v] of Object.entries(r.fields)){if(typeof v!=='string'||v.length>10000||k.length>100)fail('Campo inválido.');if(/Link|Destino|Imagem|WhatsApp/.test(k)&&/[<>"'\\\r\n]/.test(v))fail('O endereço contém caracteres inválidos.');if(/Link|Destino|Imagem|WhatsApp/.test(k)&&v&&!/^(https:\/\/|\/(?!\/)|#|\+?[\d ()-]+$)/i.test(v))fail('Use um link HTTPS, caminho do site ou telefone.');}}}for(const r of data.provas){if(!['apmbb','epcar','cn','espcex','soldado'].includes(r.fields['Instituição'])||!/^\d{4}$/.test(r.fields['Ano']))fail('Informe instituição e ano da prova.');if(r.visible&&!['Link da prova','Link do gabarito','Link da resolução','Link do vídeo','Resolução comentada'].some(k=>r.fields[k]?.trim()))fail('Adicione um material ou resolução antes de mostrar a prova.');}for(const r of data.paginas){const def=pageDefaults.find(p=>p.id===r.id);if(!def||Object.keys(r.fields).some(k=>!(k in def.fields)))fail('Página ou campo não reconhecido.');}if(!data.carrossel.some((r:any)=>r.visible))fail('Mantenha ao menos um destaque visível.');validateCampaigns(data.carrossel);data.visual=validateVisual(data.visual);return {...data,__siteEditorVersion:2,__storeCatalogV1:true};}
@@ -61,9 +64,14 @@ async function handle(req:Request){
   await DB.prepare('UPDATE trial_requests SET sheet_status=? WHERE id=?').bind(sheet,id).run();
   return json({ok:true});
  }
+ if(path==='matricula'||path.startsWith('matricula/')){const r=await enrollmentPublic(req,path,DB,sendEnrollmentToSheet);if(r)return r;fail('Caminho não encontrado.',404)}
  if(path==='health'&&req.method==='GET'){try{await DB.prepare('SELECT 1 AS ok').first();return json({ok:true})}catch{return json({ok:false},503)}}
  const user=await admin(req);
- if(path==='admin/backups'&&req.method==='GET')return json({backups:await listBackups(bindings())});
+ // Perfis da equipe: matrícula, financeiro e registro conferem o perfil em cada rota (app/enrollment.ts).
+ const role=await staffRole(DB,user.email);
+ if(/^admin\/(matriculas|alunos|pessoas|turmas|planos|financeiro|equipe|registro)(\/|$)/.test(path)){const team=(bindings().ADMIN_EMAILS||'').toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);const r=await enrollmentAdmin(req,path,DB,{email:user.email.toLowerCase(),role},team,sendEnrollmentToSheet);if(r)return r;fail('Caminho não encontrado.',404)}
+ // Conteúdo do site, contatos e aula teste: só administrador e secretaria.
+ if(!['admin','secretaria'].includes(role))fail('Seu perfil não permite esta área.',403); if(path==='admin/backups'&&req.method==='GET')return json({backups:await listBackups(bindings())});
  if(path==='admin/backups'&&req.method==='POST')return json(await makeBackup(bindings(),'Cópia manual'));
  if(path==='admin/backups/export'&&req.method==='GET')return exportBackup(bindings(),url.searchParams.get('id')||'');
  if(path==='admin/backups/verify'&&req.method==='POST'){const b=await body(req,2000);return json(await verifyBackup(bindings(),b.id))}

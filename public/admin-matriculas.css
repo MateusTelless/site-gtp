@@ -1,0 +1,81 @@
+/* Matrículas, agenda e resumo do dia. Cores do painel: azul-marinho #082649, texto #102c4d, apoio #5c6d82, linhas #dde3ea. */
+.m-summary{margin:8px 0 28px}
+.m-summary-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.m-summary-top h2{margin:0}
+.m-daynav{display:flex;align-items:center;gap:6px}
+.m-daynav strong{min-width:190px;text-align:center;display:inline-block}
+.m-group{margin:26px 0 10px;padding-top:14px;border-top:1px solid #dde3ea;font-size:1rem;color:#102c4d;font-weight:700}
+/* Boletim do dia: a faixa azul-marinho com os números de matrículas. O fio dourado vem do selo do GETEPE. */
+.m-bulletin{display:grid;grid-template-columns:1fr 1fr;background:#082649;color:#fff;border-radius:14px;padding:26px 0;margin-bottom:14px}
+.m-bulletin>div{display:grid;gap:6px;align-content:start;padding:0 28px}
+.m-bulletin>div+div{border-left:2px solid #d3b476}
+.m-big{font-size:3.6rem;line-height:1;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.m-what{font-size:1rem;color:#dfe7ef;max-width:28ch}
+.m-bulletin .m-delta{font-size:.85rem;color:#c7d3df}
+.m-bulletin .m-delta.up{color:#9be3b8}
+.m-bulletin .m-delta.down{color:#ffb4ab}
+.m-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:12px}
+.m-summary .table-wrap{margin-bottom:8px}
+.m-tile{background:#fff;border:1px solid #dde3ea;border-radius:12px;padding:16px 18px;display:grid;gap:6px;align-content:start;min-height:112px}
+.m-tile .m-label{font-size:.86rem;color:#5c6d82;font-weight:600}
+.m-tile .m-value{font-size:2rem;font-weight:700;color:#102c4d;line-height:1.05;font-variant-numeric:tabular-nums}
+.m-tile .m-delta{font-size:.82rem;color:#5c6d82}
+.m-tile .m-delta.up{color:#1a7f4b}
+.m-tile .m-delta.down{color:#b42318}
+/* Matrículas em evidência: retângulos maiores, em azul-marinho. */
+.m-tiles.hero{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.m-tile.hero{background:#082649;border-color:#082649;min-height:140px}
+.m-tile.hero .m-label,.m-tile.hero .m-delta{color:#c7d3df}
+.m-tile.hero .m-value{color:#fff;font-size:2.8rem}
+.m-tile.hero .m-delta.up{color:#9be3b8}
+.m-tile.hero .m-delta.down{color:#ffb4ab}
+.m-tile.warn{border-left:4px solid #b54708}
+.m-tile button{justify-self:start;margin-top:4px}
+.m-alerts{border-left:3px solid #b54708;background:#fff;padding:12px 18px;margin:0 0 6px;border-radius:0 10px 10px 0}
+.m-alerts h3{margin:0 0 6px;font-size:.95rem;color:#7a2e0b}
+.m-alerts ul{margin:0;padding-left:18px;display:grid;gap:4px;color:#102c4d}
+.m-flag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:700;margin-right:6px}
+.m-flag.signed{background:#e5f4e4;color:#14532d}
+.m-flag.new{background:#e7f1fb;color:#123c69}
+/* Contagem por turma */
+.m-class .m-label{color:#102c4d;font-size:.95rem}
+.m-class.closed{opacity:.7}
+.m-meter{width:100%;height:8px;display:block;margin-top:6px}
+.m-breakdown{display:grid;gap:2px;margin:6px 0 2px;font-size:.82rem}
+.m-breakdown div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed #e3e9f0;padding:2px 0}
+.m-breakdown dt{color:#5c6d82}.m-breakdown dd{margin:0;font-weight:700;color:#102c4d;font-variant-numeric:tabular-nums}
+.m-key{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin:0 4px 0 10px}
+.m-key.dark{background:#082649;margin-left:0}.m-key.light{background:#a9bccf}
+/* Calendário da agenda */
+.m-agenda-bar .actions{align-items:center}
+.m-agenda-bar strong{min-width:150px;text-align:center;display:inline-block}
+.m-agenda-bar strong::first-letter,.m-daynav strong::first-letter{text-transform:uppercase}
+.m-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:12px 0 24px}
+.m-cal-head{font-size:.78rem;font-weight:700;color:#5c6d82;text-align:center;padding:4px 0}
+.m-cal-day{min-height:76px;border:1px solid #dde3ea;border-radius:10px;background:#fff;text-align:left;padding:8px;display:flex;flex-direction:column;gap:4px;color:#102c4d;cursor:pointer}
+.m-cal-day:hover{border-color:#082649;background:#f3f7fb}
+.m-cal-day span{font-weight:700;align-self:flex-start}
+.m-cal-day small{font-size:.72rem;color:#5c6d82;line-height:1.3}
+.m-cal-day.has{background:#f3f7fb;border-color:#a9bccf}
+.m-cal-day.today span{background:#082649;color:#fff;border-radius:999px;padding:0 8px}
+.m-cal-day.selected{box-shadow:0 0 0 2px #082649 inset}
+.m-day-title{margin:22px 0 8px;font-size:1rem}
+.m-day-title::first-letter{text-transform:uppercase}
+@media(max-width:600px){.m-bulletin{grid-template-columns:1fr;gap:18px;padding:22px 0}.m-bulletin>div+div{border-left:0;border-top:2px solid #d3b476;padding-top:18px}.m-big{font-size:3rem}}
+@media(max-width:850px){.m-cal-day{min-height:56px;padding:6px}.m-cal-day small{display:none}.m-cal-day.has span{text-decoration:underline}.m-tile.hero .m-value{font-size:2.2rem}}
+
+/* Alunos: busca e ficha (equivalente à Central do Aluno do Lexus). */
+.s-q{flex:1 1 320px}
+.s-q input{width:100%}
+tr.s-current td{background:#eef3f8}
+.s-card{margin-top:24px;padding:20px;border:1px solid #dde3ea;border-radius:14px;background:#fff}
+.s-card h2{margin:0 0 12px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.s-card h2 small{font-size:.9rem;color:#5c6d82;font-weight:600}
+.s-tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid #dde3ea;margin-bottom:16px}
+.s-tabs button{border:1px solid transparent;border-bottom:0;border-radius:8px 8px 0 0;background:none;padding:10px 14px;min-height:44px;font:inherit;color:#5c6d82;cursor:pointer}
+.s-tabs button[aria-selected="true"]{border-color:#dde3ea;background:#fff;color:#102c4d;font-weight:700;margin-bottom:-1px}
+.s-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px 16px;margin-bottom:14px}
+.s-field{display:grid;gap:2px;padding:8px 10px;border:1px solid #dde3ea;border-radius:8px}
+.s-field span{font-size:.82rem;color:#5c6d82}
+.s-field b{color:#102c4d;font-weight:600;overflow-wrap:anywhere}
+.card.s-late{border-color:#e5b4b4;background:#fdf3f3}
