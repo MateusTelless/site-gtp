@@ -77,6 +77,22 @@ async function run(){
  assert.equal(painel.acessos[0].full_name,null);assert.equal(painel.acessos.find(a=>a.codigo==='1042').full_name,'Maria da Silva Souza');
 
  assert.equal((await call('catraca/nada')).status,404);
+
+ // Painel: número da catraca na ficha do aluno (app/enrollment.ts).
+ const enr=new Function(stripTypeScriptTypes(fs.readFileSync('app/enrollment.ts','utf8').replace(/export /g,''))+';return {enrollmentAdmin}')();
+ const adm=async(path,data,role='secretaria')=>{const req=new Request('https://getepe.test/api/'+path,{method:data?'POST':'GET',headers:{'Content-Type':'application/json','cf-connecting-ip':'203.0.113.9'},body:data?JSON.stringify(data):undefined});
+  try{return await enr.enrollmentAdmin(req,path.split('?')[0],DB,{email:role+'@x.test',role},[])}catch(err){return Response.json({error:err.message},{status:err.status||500})}};
+ const g1=await ok(await adm('admin/alunos/catraca',{id:'s6'}));
+ assert.equal(g1.numero,'2001','próximo depois do maior número já usado (02000)');
+ assert.equal((await ok(await adm('admin/alunos/ficha?id=s6'))).aluno.catraca_numero,'2001');
+ const fichaLegado=(await ok(await adm('admin/alunos/ficha?id=s7'))).aluno;
+ assert.equal(fichaLegado.catraca_numero,'777');assert.equal(fichaLegado.catraca_legado,true);
+ const dup=await adm('admin/alunos/catraca',{id:'s6',numero:'0001042'});assert.equal(dup.status,409);assert.match((await dup.json()).error,/Maria da Silva Souza/);
+ assert.equal((await adm('admin/alunos/catraca',{id:'s6',numero:'12a'})).status,400);
+ assert.equal((await adm('admin/alunos/catraca',{id:'s6',numero:'5555'},'financeiro')).status,403);
+ assert.equal((await ok(await adm('admin/alunos/catraca',{id:'s6',numero:'05555'}))).numero,'5555');
+ assert.equal(db.prepare("SELECT COUNT(*) AS n FROM audit_log WHERE action='numero_catraca'").get().n,2);
+ assert.ok((await ok(await call('catraca/liberados'))).pessoas.some(p=>p.codigo==='5555'),'número novo entra na lista da catraca');
  console.log('Catraca: ok');
 }
 run().catch(e=>{console.error(e);process.exit(1)});

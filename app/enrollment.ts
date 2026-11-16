@@ -308,12 +308,30 @@ export async function enrollmentAdmin(req:Request,path:string,DB:D1Database,staf
   const ids=[s.id,person!.id,...enrollments.map(e=>e.id),...parcels.map(p=>p.id)];
   const history=staff.role==='admin'?(await DB.prepare(`SELECT at,actor,role,action,entity,detail FROM audit_log WHERE entity_id IN (${ids.map(()=>'?').join(',')}) ORDER BY at DESC LIMIT 100`).bind(...ids).all<Row>()).results.map(r=>({...r,detail:JSON.parse(r.detail)})):null;
   await audit(DB,req,staff,'ver_dados','student',s.id,{}).run();
-  return json({aluno:{...person,codigo:enrollmentCode(s.id),status:s.status,biometrics_registered:s.biometrics_registered,biometrics_at:s.biometrics_at,cadastrado_em:s.created_at},responsaveis:guardians,
+  const catraca=String(s.access_code||s.legacy_code||'').replace(/^0+(?=\d)/,'');
+  return json({aluno:{...person,codigo:enrollmentCode(s.id),status:s.status,biometrics_registered:s.biometrics_registered,biometrics_at:s.biometrics_at,cadastrado_em:s.created_at,catraca_numero:catraca||null,catraca_legado:!s.access_code&&!!s.legacy_code},responsaveis:guardians,
    matriculas:enrollments.map(e=>({...e,codigo:enrollmentCode(e.id),...(money?{}:{total_cents:undefined})})),
    // Secretaria vê só se está em dia; valores e parcelas ficam com administrador e financeiro, como na ficha da matrícula.
    financeiro:money?{resumo:{contratado_cents:sum(live),pago_cents:sum(live,'paid_cents'),aberto_cents:sum(live.filter(p=>p.status==='aberta')),vencido_cents:sum(overdue),vencidas:overdue.length,proxima:next?{due_on:next.due_on,amount_cents:next.amount_cents}:null},parcelas:parcels}
     :{resumo:{vencidas:overdue.length}},
    historico:history});
+ }
+ // Número do aluno na catraca (o mesmo gravado com a digital). Sem "numero", gera o próximo livre.
+ // O número antigo do Secullum (legacy_code) continua valendo até alguém definir um novo.
+ if(path==='admin/alunos/catraca'&&POST){
+  can('admin','secretaria');const b=await readBody(req,1000);
+  const s=await DB.prepare('SELECT id,access_code,legacy_code FROM students WHERE id=?').bind(String(b.id)).first<Row>();if(!s)fail('Aluno não encontrado.',404);
+  const CODE="ltrim(COALESCE(NULLIF(access_code,''),legacy_code),'0')";
+  let numero=b.numero===undefined||b.numero===null||b.numero===''?'':String(b.numero).trim();
+  if(numero){if(!/^\d{1,10}$/.test(numero)||/^0+$/.test(numero))fail('Use só números, de 1 a 10 dígitos.');numero=numero.replace(/^0+/,'')}
+  else{
+   const max=await DB.prepare(`SELECT MAX(n) AS n FROM (SELECT CAST(ltrim(access_code,'0') AS INTEGER) AS n FROM students WHERE access_code GLOB '[0-9]*' UNION ALL SELECT CAST(ltrim(legacy_code,'0') AS INTEGER) FROM students WHERE legacy_code GLOB '[0-9]*')`).first<{n:number|null}>();
+   numero=String(Math.max(1000,max?.n||0)+1);
+  }
+  const dono=await DB.prepare(`SELECT p.full_name FROM students s JOIN people p ON p.id=s.person_id WHERE s.id<>? AND ${CODE.replace(/access_code|legacy_code/g,m=>'s.'+m)}=?`).bind(s.id,numero).first<{full_name:string}>();
+  if(dono)fail('O número '+numero+' já é de '+dono.full_name+'.',409);
+  await DB.batch([DB.prepare('UPDATE students SET access_code=? WHERE id=?').bind(numero,s.id),audit(DB,req,staff,'numero_catraca','student',s.id,{antes:s.access_code||s.legacy_code||null,depois:numero})]);
+  return json({ok:true,numero});
  }
  if(path==='admin/pessoas/editar'&&POST){
   can('admin','secretaria');const b=await readBody(req,4000);

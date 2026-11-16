@@ -152,8 +152,8 @@ function drawStudentCard(){
  if(v==='dados')body=`<div class="s-grid">${field('Nome',a.full_name)}${field('Código do aluno',a.codigo)}${field('Data de cadastro',day(a.cadastrado_em))}${field('Situação',a.status==='ativo'?'Ativo':'Inativo')}
    ${field('Celular',fmtPhone(a.phone))}${field('E-mail',a.email)}${field('Nascimento',day(a.birth_date))}${field('Idade',a.birth_date?ageOf(a.birth_date)+' anos':'')}
    ${field('CPF',fmtCpf(a.cpf))}${field('CEP',fmtCep(a.cep))}${field('Endereço',a.street)}${field('Número',a.number)}${field('Complemento',a.complement)}${field('Bairro',a.district)}${field('Cidade',a.city)}${field('Estado',a.state)}
-   ${field('Dia de vencimento das parcelas',d.matriculas.find(m=>m.status!=='cancelada')?.due_day?'Dia '+d.matriculas.find(m=>m.status!=='cancelada').due_day:'')}${field('Biometria',a.biometrics_registered?'Cadastrada em '+day(a.biometrics_at):'Pendente')}</div>
-   ${can('admin','secretaria')?`<div class="actions"><button data-s-edit="${esc(a.id)}">Editar dados</button></div><div id="s-edit"></div>`:''}
+   ${field('Dia de vencimento das parcelas',d.matriculas.find(m=>m.status!=='cancelada')?.due_day?'Dia '+d.matriculas.find(m=>m.status!=='cancelada').due_day:'')}${field('Biometria',a.biometrics_registered?'Cadastrada em '+day(a.biometrics_at):'Pendente')}${field('Número na catraca',a.catraca_numero?a.catraca_numero+(a.catraca_legado?' (do Secullum)':''):'Não definido: o aluno ainda não passa na catraca')}</div>
+   ${can('admin','secretaria')?`<div class="actions"><button data-s-edit="${esc(a.id)}">Editar dados</button>${a.catraca_numero?`<button data-s-catraca="${esc(a.id)}" data-atual="${esc(a.catraca_numero)}">Alterar número da catraca</button>`:`<button class="primary" data-s-catraca="${esc(a.id)}">Gerar número da catraca</button>`}</div><div id="s-edit"></div>`:''}
    ${d.responsaveis.map(g=>personBlock('Responsável',g,` · ${esc(g.relationship)}`)).join('')}`;
  if(v==='matriculas')body=`<div class="table-wrap"><table><thead><tr><th>Turma</th><th>Plano</th><th>Situação</th><th>Contrato</th><th>Recebida em</th><th></th></tr></thead><tbody>${d.matriculas.map(m=>`<tr><td>${esc(m.class_name)}<small>${esc(m.shift)} · ${day(m.starts_on)} a ${day(m.ends_on)}</small></td><td>${esc(m.plan_name)}${showMoney&&m.total_cents?`<small>${money(m.total_cents)} · dia ${m.due_day} · ${esc(METHOD[m.payment_method]||m.payment_method)}</small>`:''}</td><td><span class="badge${m.status==='ativa'?'':' muted'}">${esc(STATUS[m.status]||m.status)}</span>${m.status_reason?`<small>${esc(m.status_reason)}</small>`:''}</td><td>${m.contract_signed_at?'Assinado em '+day(spDay(m.contract_signed_at)):'Pendente'}</td><td>${when(m.created_at)}<small>Código ${esc(m.codigo)}</small></td><td><button data-s-enroll="${esc(m.id)}">Abrir matrícula</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhuma matrícula.</td></tr>'}</tbody></table></div><div id="m-detail"></div>`;
  if(v==='financeiro')body=showMoney?`<div class="cards"><div class="card"><span>Contratado</span><strong>${money(f.contratado_cents)}</strong></div><div class="card"><span>Pago</span><strong>${money(f.pago_cents)}</strong></div><div class="card"><span>A receber</span><strong>${money(f.aberto_cents)}</strong>${f.proxima?`<span>Próxima: ${day(f.proxima.due_on)}, ${money(f.proxima.amount_cents)}</span>`:''}</div><div class="card${late?' s-late':''}"><span>Vencido</span><strong>${money(f.vencido_cents)}</strong><span>${pl(f.vencidas,'parcela','parcelas')}</span></div></div>${parcelTable(d.financeiro.parcelas,false)}`
@@ -201,7 +201,18 @@ async function renderSummary(){const box=panel.querySelector('[data-mat-summary]
 function ensureSummary(){if(tab||siteTab!=='overview'||!can('admin','secretaria')||panel.querySelector('[data-mat-summary]'))return;const cards=panel.querySelector('.cards');if(!cards)return;const box=document.createElement('section');box.className='m-summary';box.dataset.matSummary='';box.innerHTML='<p>Carregando o resumo do dia…</p>';cards.before(box);renderSummary()}
 async function drawSummaryTab(){panel.innerHTML=heading('Visão geral','O que aconteceu no dia, com as matrículas em destaque.')+'<section class="m-summary" data-mat-summary><p>Carregando…</p></section>';await renderSummary()}
 
-const draws={'mat-resumo':drawSummaryTab,'mat-matriculas':drawEnrollments,'mat-alunos':drawStudents,'mat-turmas':drawClasses,'mat-financeiro':drawFinance,'mat-equipe':drawTeam};
+// Catraca: situação da ponte no PC do curso e últimas passagens, pelo nome do aluno.
+const PASSAGEM={liberado:['Liberado',''],giro:['Passou',''],negado:['Bloqueado','muted'],nao_cadastrado:['Não cadastrado','muted'],desistencia:['Liberado, não passou','muted']};
+async function drawCatraca(){
+ const d=await api('admin/catraca'),agora=Date.parse(d.agora);
+ const ponte=p=>{const visto=Date.parse(p.visto_em),online=agora-visto<3*60000&&p.conectada;return `<div class="card${online?'':' s-late'}"><span>Catraca ${p.equipamento}</span><strong>${online?'Funcionando':agora-visto>=3*60000?'Sem sinal':'Ponte sem catraca'}</strong><span>Último sinal: ${when(p.visto_em)}</span>${p.pendentes?`<span>${pl(p.pendentes,'passagem','passagens')} esperando envio</span>`:''}</div>`};
+ panel.innerHTML=heading('Catraca','Quem passou, quem foi bloqueado e se a catraca está conectada. A liberação segue a matrícula e o financeiro: quem fica em dia volta a passar em até 1 minuto.')+`
+  <div class="cards">${d.pontes.map(ponte).join('')||'<div class="card s-late"><span>Catraca</span><strong>Ainda não conectada</strong><span>A ponte no PC do curso ainda não deu sinal.</span></div>'}</div>
+  <div class="toolbar"><button data-m="catraca">Atualizar</button></div>
+  <div class="table-wrap"><table><thead><tr><th>Quando</th><th>Aluno</th><th>Resultado</th></tr></thead><tbody>${d.acessos.map(r=>{const [t,cls]=PASSAGEM[r.resultado]||[r.resultado,'muted'];return `<tr><td>${when(r.data_hora)}</td><td>${r.full_name?esc(r.full_name):r.codigo?'Sem aluno com este número':'—'}${r.codigo?`<small>Nº ${esc(r.codigo)}</small>`:''}</td><td><span class="badge ${cls}">${t}</span>${r.motivo&&r.resultado==='negado'?`<small>${esc(r.motivo)}</small>`:''}</td></tr>`}).join('')||'<tr><td colspan="3">Nenhuma passagem registrada ainda.</td></tr>'}</tbody></table></div>`;
+}
+
+const draws={'mat-resumo':drawSummaryTab,'mat-catraca':drawCatraca,'mat-matriculas':drawEnrollments,'mat-alunos':drawStudents,'mat-turmas':drawClasses,'mat-financeiro':drawFinance,'mat-equipe':drawTeam};
 async function open(name){tab=name;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));try{await draws[name]()}catch(e){panel.innerHTML=heading('Não foi possível abrir',esc(e.message))}}
 async function refresh(){if(tab==='mat-financeiro'){await drawFinance();return}
  if(tab==='mat-alunos'&&student.id){const open=$('#m-detail')?.dataset.id;await openStudent(student.id);if(open&&student.view==='matriculas')await openEnrollment(open);return}const id=$('#m-detail')?.dataset.id;if(tab==='mat-matriculas'){await loadAgenda();if(id)await openEnrollment(id)}}
@@ -223,6 +234,9 @@ document.addEventListener('click',async e=>{const b=e.target.closest('button');i
   if(b.dataset.sView){student.view=b.dataset.sView;drawStudentCard()}
   if(b.dataset.sEnroll)await openEnrollment(b.dataset.sEnroll);
   if(b.dataset.sEdit)studentEditForm();
+  if(b.dataset.sCatraca){let numero='';if(b.dataset.atual){numero=prompt('Novo número na catraca (só números). Deixe em branco para gerar o próximo livre.\nAtenção: a digital já gravada na catraca continua com o número antigo.',b.dataset.atual);if(numero===null)return}
+   const r=await api('admin/alunos/catraca',{id:b.dataset.sCatraca,numero:numero.trim()});message('Número na catraca: '+r.numero+'. Use este número ao cadastrar a digital.');await openStudent(student.id)}
+  if(b.dataset.m==='catraca')await drawCatraca();
   if('sEditClose' in b.dataset)$('#s-edit').innerHTML='';
   if(b.dataset.mMonth!==undefined){const n=Number(b.dataset.mMonth);agenda.month=n?shiftMonth(agenda.month,n):todaySP().slice(0,7);agenda.day='';await loadAgenda()}
   if(b.dataset.mDay!==undefined){agenda.day=b.dataset.mDay===agenda.day?'':b.dataset.mDay;await loadAgenda();$('#m-agenda').scrollIntoView({behavior:'smooth'})}
@@ -244,7 +258,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('button');i
 });
 // Mostra só as áreas do perfil. Financeiro e consulta não editam o site, então abrem direto nas áreas novas.
 api('admin/equipe/eu').then(r=>{me=r;const site=can('admin','secretaria');
- document.querySelectorAll('#nav [data-tab]').forEach(b=>{const t=b.dataset.tab;b.hidden=t==='mat-resumo'?site:t==='mat-financeiro'?!can('admin','financeiro'):t==='mat-equipe'?!can('admin'):t==='mat-turmas'?can('financeiro'):t.startsWith('mat-')?false:!site});
+ document.querySelectorAll('#nav [data-tab]').forEach(b=>{const t=b.dataset.tab;b.hidden=t==='mat-resumo'?site:t==='mat-financeiro'?!can('admin','financeiro'):t==='mat-equipe'?!can('admin'):t==='mat-catraca'?!site:t==='mat-turmas'?can('financeiro'):t.startsWith('mat-')?false:!site});
  if(!site)open('mat-resumo');else ensureSummary();
 }).catch(()=>{});
 })();
