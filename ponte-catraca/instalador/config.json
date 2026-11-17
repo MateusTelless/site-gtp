@@ -1,0 +1,16 @@
+{
+  "urlApi": "https://getepe.com.br/api/catraca",
+  "token": "PREENCHER-COM-A-CHAVE-CATRACA_TOKEN",
+  "intervaloSyncSegundos": 60,
+
+  "modoCatraca": "easyinner",
+  "inners": [1, 2],
+  "ipsCatracas": ["PREENCHER-IP-CATRACA-1", "PREENCHER-IP-CATRACA-2"],
+  "portaCatraca": 3570,
+  "tempoLiberacaoSegundos": 5,
+  "liberarSaidaSempre": false,
+  "qtdDigitosCodigo": 14,
+
+  "codigosSempreLiberados": [],
+  "pastaDados": "dados"
+}

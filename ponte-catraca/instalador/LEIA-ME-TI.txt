@@ -1,0 +1,118 @@
+PONTE DA CATRACA - GUIA DE INSTALACAO PARA O TI
+===============================================
+
+O que e: um programa pequeno que fica no PC do Secullum e passa a controlar as
+duas catracas Topdata no lugar dele. Ele baixa do site (getepe.com.br), a cada
+1 minuto, a lista de quem pode entrar (matricula ativa e pagamento em dia) e
+libera ou bloqueia cada dedo na hora. Sem internet, continua funcionando com a
+ultima lista.
+
+Visor da catraca:  liberado  -> "LIBERADO" + nome do aluno
+                   bloqueado -> "VER NA RECEPCAO" (o motivo aparece so no painel do site)
+
+O cadastro de digital continua igual: menu da catraca, numero do aluno, dedo 3 vezes.
+O numero do aluno agora vem da ficha dele no painel do site.
+
+ARQUIVOS DESTA PASTA
+--------------------
+  PonteCatraca.exe        o programa
+  config.json             configuracao (voce preenche, etapa 2)
+  1-VERIFICAR.bat         confere se o PC esta pronto (nao altera nada)
+  2-TESTAR.bat            roda a ponte numa janela, para o teste
+  3-INSTALAR-SERVICO.bat  instala de vez como servico do Windows
+  4-REMOVER-SERVICO.bat   plano B: remove o servico (depois e so abrir o Secullum)
+  VER-LOG-DE-HOJE.bat     abre o registro do dia
+  scripts\                scripts usados pelos .bat
+  EasyInner.dll           NAO VEM NO PACOTE: voce copia do SDK da Topdata (etapa 1)
+
+
+ETAPA 1 - PREPARAR O PC (pode fazer hoje; nao mexe no Secullum)
+---------------------------------------------------------------
+1. Copie esta pasta inteira para  C:\PonteCatraca
+   (precisa ser esse caminho; nao deixe em Downloads nem na Area de Trabalho).
+
+2. Baixe o SDK EasyInner no portal de integradores da Topdata
+   (integrador.topdata.com.br, cadastro gratuito). Copie a EasyInner.dll E as outras
+   DLLs que vierem junto para  C:\PonteCatraca  (ao lado do PonteCatraca.exe).
+   Mande tambem uma copia do SDK (manual em PDF e exemplo em C#) para o responsavel
+   pelo site.
+
+3. Em Configuracoes > Sistema > Energia, deixe "Suspender" como NUNCA (na tomada).
+   O PC precisa ficar ligado o tempo todo.
+
+4. Anote, na tela de equipamentos do Secullum, para CADA catraca:
+   - numero do equipamento (Inner no)
+   - IP
+   - porta (normalmente 3570)
+   e mande para o responsavel pelo site, junto com uma foto da etiqueta de cada catraca.
+
+
+ETAPA 2 - PREENCHER O config.json
+---------------------------------
+Abra  C:\PonteCatraca\config.json  no Bloco de Notas e troque:
+
+  "token"        -> a chave de acesso que o responsavel pelo site vai te passar
+                    PESSOALMENTE (nao por mensagem). Fica entre aspas.
+  "inners"       -> o numero de cada catraca, como aparece no Secullum. Ex.: [1, 2]
+  "ipsCatracas"  -> o IP de cada catraca, entre aspas. Ex.: ["192.168.0.50", "192.168.0.51"]
+  "portaCatraca" -> so mude se no Secullum for diferente de 3570
+
+Nao mexa no resto. Cuidado com virgulas e aspas: o 1-VERIFICAR.bat avisa se
+o arquivo ficar com erro.
+
+Depois, de dois cliques em  1-VERIFICAR.bat. Tudo precisa ficar [OK], com duas excecoes:
+  - "Site sem resposta / 404": normal enquanto o site novo nao estiver no ar no
+    getepe.com.br. Avise o responsavel pelo site.
+  - "Porta 3570 em uso por Secullum": normal enquanto o Secullum estiver aberto.
+
+
+ETAPA 3 - TESTE (cerca de 1 hora, num horario SEM AULA)
+-------------------------------------------------------
+Combine o horario com o responsavel pelo site. Se der, instale o Claude neste PC
+para ele acompanhar.
+
+1. Feche o Secullum e pare o servico dele (services.msc > servico do Secullum > Parar).
+   A partir daqui as catracas ficam sem controle ate a etapa 5 ou o fim do teste.
+2. De dois cliques em  1-VERIFICAR.bat  (a porta 3570 agora precisa estar livre).
+3. De dois cliques em  2-TESTAR.bat. A janela deve mostrar as duas catracas
+   "conectada, em modo online" e o visor delas deve mostrar "COLOQUE O DEDO".
+4. Teste NAS DUAS catracas com 3 pessoas:
+   - uma em dia               -> visor "LIBERADO" + nome, catraca gira
+   - uma bloqueada no painel  -> visor "VER NA RECEPCAO"
+   - alguem sem cadastro      -> visor "VER NA RECEPCAO"
+   - alguem saindo (saida livre) -> deve girar normal
+5. Teste o cadastro de digital pelo menu da catraca com a ponte ligada:
+   numero novo, dedo 3 vezes, depois passe esse dedo.
+6. Feche a janela do teste. De dois cliques em  VER-LOG-DE-HOJE.bat, salve o arquivo
+   e mande para o responsavel pelo site.
+7. VOLTA AO NORMAL: inicie o servico do Secullum e abra o Secullum de novo.
+
+
+ETAPA 4 - AJUSTES
+-----------------
+O responsavel pelo site corrige o que o teste mostrar e te manda um PonteCatraca.exe
+novo, se precisar. E so substituir o arquivo em C:\PonteCatraca.
+
+
+ETAPA 5 - TROCA DEFINITIVA (depois do teste aprovado)
+-----------------------------------------------------
+1. Pare o servico do Secullum e mude o tipo de inicializacao para "Desativado"
+   (services.msc). NAO desinstale o Secullum: ele fica 30 dias como plano B.
+2. Clique com o botao direito em  3-INSTALAR-SERVICO.bat > Executar como administrador.
+   Deve aparecer "Servico instalado e rodando".
+3. Confira no painel do site, area "Catraca": as duas catracas como "Funcionando".
+4. Reinicie o PC uma vez e confira de novo (o servico liga sozinho).
+
+
+PLANO B (se algo der errado depois da troca)
+-------------------------------------------
+1. Botao direito em  4-REMOVER-SERVICO.bat > Executar como administrador.
+2. Volte o servico do Secullum para "Automatico", inicie e abra o Secullum.
+As catracas voltam a funcionar como antes.
+
+
+SEGURANCA
+---------
+- A chave (token) nao vai por mensagem e nao sai deste PC.
+- As digitais ficam so nas catracas. Nada do banco do Secullum precisa sair daqui.
+- O config.json tem a chave: nao compartilhe o arquivo depois de preenchido.
