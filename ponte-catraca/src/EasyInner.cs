@@ -32,6 +32,14 @@ namespace PonteCatraca
         [DllImport(Dll, CallingConvention = Cc)] public static extern byte HabilitarTeclado(byte habilita, byte ecoar);
         [DllImport(Dll, CallingConvention = Cc)] public static extern byte ReceberDataHoraDadosOnLine(byte recebe);
         [DllImport(Dll, CallingConvention = Cc)] public static extern byte EnviarConfiguracoes(int inner);
+        [DllImport(Dll, CallingConvention = Cc)] public static extern byte DefinirFuncaoDefaultSensorBiometria(byte funcao);
+        [DllImport(Dll, CallingConvention = Cc)] public static extern byte DefinirFuncaoDefaultLeitoresProximidade(byte funcao);
+        [DllImport(Dll, CallingConvention = Cc)] public static extern byte RegistrarAcessoNegado(byte tipoRegistro);
+        [DllImport(Dll, CallingConvention = Cc)] public static extern void SetarBioVariavel(int maior);
+        [DllImport(Dll, CallingConvention = Cc)] public static extern void ConfigurarBioVariavel(int maior);
+        [DllImport(Dll, CallingConvention = Cc)]
+        public static extern byte ReceberVersaoFirmware(int inner, ref byte linha, ref short variacao, ref byte versaoAlta,
+            ref byte versaoBaixa, ref byte versaoSufixo, ref byte innerAcessoBio);
 
         // ---- modo online ----
         [DllImport(Dll, CallingConvention = Cc)]

@@ -14,15 +14,16 @@ namespace PonteCatraca
     /// o número do usuário. A ponte decide; se liberar, espera Origem 6 (girou) ou
     /// Origem 5 (acabou o tempo = desistência) e só então rearma a leitura daquela catraca.
     ///
-    /// PONTOS A CONFIRMAR NO EQUIPAMENTO (marcados com "CONFIRMAR"):
-    ///   - qual Origem chega para digital (manual diz 12; exemplos oficiais só documentam 1 a 10)
-    ///   - valor de retorno de ReceberDadosOnLine quando não há evento
-    ///   - qual ConfigurarAcionamento controla o tempo de liberação da catraca
+    /// Conferido com o SDK EasyInner 6.0.2 (exemplo C# oficial, FrmOnlineController e Enumeradores):
+    ///   - Origem 12 = SENSOR_BIOMETRICO, 5 = fim do tempo (não girou), 6 = giro
+    ///   - ReceberDadosOnLine: 0 = chegou evento; qualquer outro valor = nada novo
+    ///   - FormaEntrada 100 = leitor 1 + identificação biométrica (o exemplo monta o mesmo valor por bits)
+    ///   - Acionamento 6 = saída livre e entrada controlada (caso do GETEPE)
     public class CatracaEasyInner : ICatraca
     {
         // Origens (EasyInnerInterop.cs da Topdata, exceto 12 que vem do manual)
         const byte ORIGEM_TECLADO = 1, ORIGEM_LEITOR1 = 2, ORIGEM_LEITOR2 = 3;
-        const byte ORIGEM_FIM_TEMPO = 5, ORIGEM_GIRO = 6, ORIGEM_BIOMETRIA = 12;   // CONFIRMAR 12
+        const byte ORIGEM_FIM_TEMPO = 5, ORIGEM_GIRO = 6, ORIGEM_BIOMETRIA = 12;
 
         const byte TCP_PORTA_FIXA = 2;
         const byte FORMA_LEITOR1_IDENTIFICACAO_BIO = 100;
@@ -98,17 +99,39 @@ namespace PonteCatraca
                     Thread.Sleep(500);
                 }
 
-                // A configuração fica num buffer da DLL até EnviarConfiguracoes, por isso vai uma catraca de cada vez.
+                // Firmware 5 ou mais novo: usuários biométricos com até 16 dígitos (como no exemplo oficial).
+                byte linha = 0, vAlta = 0, vBaixa = 0, vSufixo = 0, acessoBio = 0; short variacao = 0;
+                if (EasyInner.ReceberVersaoFirmware(e.numero, ref linha, ref variacao, ref vAlta, ref vBaixa, ref vSufixo, ref acessoBio) == EasyInner.RET_COMANDO_OK)
+                    Log.Info("Catraca " + e.numero + ": firmware " + vAlta + "." + vBaixa + " (linha " + linha + ", variação " + variacao + ", bio " + acessoBio + ")");
+
+                // Configuração igual à do exemplo oficial da Topdata (FrmOnlineController.MontaConfiguracaoInner).
+                // Fica num buffer da DLL até EnviarConfiguracoes, por isso vai uma catraca de cada vez.
                 // DefinirPadraoCartao precisa vir antes da quantidade de dígitos (ele reseta para 14).
-                Ok(EasyInner.ConfigurarInnerOnLine(), "ConfigurarInnerOnLine");
                 Ok(EasyInner.DefinirPadraoCartao(1), "DefinirPadraoCartao");               // formato livre
+                Ok(EasyInner.ConfigurarInnerOnLine(), "ConfigurarInnerOnLine");
+                if (cfg.liberarSaidaSempre)
+                {
+                    // Dedo também na saída: o acionamento registra entrada ou saída conforme o giro.
+                    Ok(EasyInner.ConfigurarAcionamento1(1, (byte)cfg.tempoLiberacaoSegundos), "ConfigurarAcionamento1");
+                    Ok(EasyInner.ConfigurarAcionamento2(0, 0), "ConfigurarAcionamento2");
+                    Ok(EasyInner.ConfigurarLeitor1(3), "ConfigurarLeitor1");               // entrada e saída
+                }
+                else
+                {
+                    // GETEPE: saída livre (6 = CATRACA_SAIDA_LIBERADA), dedo só na entrada.
+                    // ATENÇÃO: 8 = catraca livre nos DOIS sentidos (qualquer um passa). Não usar.
+                    Ok(EasyInner.ConfigurarAcionamento1(6, (byte)cfg.tempoLiberacaoSegundos), "ConfigurarAcionamento1");
+                    Ok(EasyInner.ConfigurarLeitor1(1), "ConfigurarLeitor1");               // só entrada
+                }
+                Ok(EasyInner.ConfigurarLeitor2(0), "ConfigurarLeitor2");                   // desativado
                 Ok(EasyInner.DefinirQuantidadeDigitosCartao((byte)cfg.qtdDigitosCodigo), "DefinirQuantidadeDigitosCartao");
                 Ok(EasyInner.HabilitarTeclado(0, 0), "HabilitarTeclado");
-                Ok(EasyInner.ConfigurarLeitor1(3), "ConfigurarLeitor1");                   // entrada e saída
-                Ok(EasyInner.ConfigurarLeitor2(0), "ConfigurarLeitor2");                   // desativado
-                // CONFIRMAR: função 8 = catraca liberada nos dois sentidos; tempo de liberação em segundos.
-                Ok(EasyInner.ConfigurarAcionamento1(8, (byte)cfg.tempoLiberacaoSegundos), "ConfigurarAcionamento1");
-                Ok(EasyInner.ConfigurarAcionamento2(0, 0), "ConfigurarAcionamento2");
+                Ok(EasyInner.RegistrarAcessoNegado(0), "RegistrarAcessoNegado");
+                // Registro padrão do leitor/digital: 10 = sempre entrada; 12 = conforme o giro.
+                var funcaoPadrao = (byte)(cfg.liberarSaidaSempre ? 12 : 10);
+                Ok(EasyInner.DefinirFuncaoDefaultLeitoresProximidade(funcaoPadrao), "DefinirFuncaoDefaultLeitoresProximidade");
+                Ok(EasyInner.DefinirFuncaoDefaultSensorBiometria(funcaoPadrao), "DefinirFuncaoDefaultSensorBiometria");
+                if (vAlta >= 5) { EasyInner.SetarBioVariavel(1); EasyInner.ConfigurarBioVariavel(1); }
                 Ok(EasyInner.ReceberDataHoraDadosOnLine(1), "ReceberDataHoraDadosOnLine");
                 Ok(EasyInner.EnviarConfiguracoes(e.numero), "EnviarConfiguracoes");
 
@@ -182,8 +205,8 @@ namespace PonteCatraca
             if (ret == EasyInner.RET_COMANDO_OK)
                 return Interpretar(e, origem, compl, cartao.ToString().Trim());
 
-            // Sem evento (CONFIRMAR o código exato): mantém a conexão viva.
-            if (e.desdePing.ElapsedMilliseconds > 5000)
+            // Sem evento (qualquer retorno diferente de 0): a cada 3 s manda PingOnLine, como o exemplo oficial.
+            if (e.desdePing.ElapsedMilliseconds > 3000)
             {
                 e.desdePing.Restart();
                 if (EasyInner.PingOnLine(e.numero) != EasyInner.RET_COMANDO_OK)
@@ -215,6 +238,8 @@ namespace PonteCatraca
                 case ORIGEM_LEITOR1:
                 case ORIGEM_LEITOR2:
                 case ORIGEM_TECLADO:
+                    // Digital: o exemplo oficial fica só com os dígitos e tira os zeros à esquerda.
+                    if (origem == ORIGEM_BIOMETRIA) cartao = new string(cartao.Where(char.IsDigit).ToArray());
                     if (cartao.Length == 0) { Rearmar(e); return null; }
                     return new Leitura
                     {

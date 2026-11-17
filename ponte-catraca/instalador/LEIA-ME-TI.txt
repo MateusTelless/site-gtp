@@ -23,7 +23,8 @@ ARQUIVOS DESTA PASTA
   4-REMOVER-SERVICO.bat   plano B: remove o servico (depois e so abrir o Secullum)
   VER-LOG-DE-HOJE.bat     abre o registro do dia
   scripts\                scripts usados pelos .bat
-  EasyInner.dll           NAO VEM NO PACOTE: voce copia do SDK da Topdata (etapa 1)
+  EasyInner.dll e outras  DLLs da Topdata (SDK EasyInner 6.0.2), ja incluidas
+  TOPDATA-REGISTRAR-DLLS.bat  so se o teste mostrar erro 4, 5, 6 ou 8 (DLL / GPF)
 
 
 ETAPA 1 - PREPARAR O PC (pode fazer hoje; nao mexe no Secullum)
@@ -31,11 +32,8 @@ ETAPA 1 - PREPARAR O PC (pode fazer hoje; nao mexe no Secullum)
 1. Copie esta pasta inteira para  C:\PonteCatraca
    (precisa ser esse caminho; nao deixe em Downloads nem na Area de Trabalho).
 
-2. Baixe o SDK EasyInner no portal de integradores da Topdata
-   (integrador.topdata.com.br, cadastro gratuito). Copie a EasyInner.dll E as outras
-   DLLs que vierem junto para  C:\PonteCatraca  (ao lado do PonteCatraca.exe).
-   Mande tambem uma copia do SDK (manual em PDF e exemplo em C#) para o responsavel
-   pelo site.
+2. As DLLs da Topdata (EasyInner.dll e companhia) JA VEM no pacote. Nao copie nada
+   para C:\Windows: elas funcionam na propria pasta e assim nao mexem no Secullum.
 
 3. Em Configuracoes > Sistema > Energia, deixe "Suspender" como NUNCA (na tomada).
    O PC precisa ficar ligado o tempo todo.
@@ -56,6 +54,9 @@ Abra  C:\PonteCatraca\config.json  no Bloco de Notas e troque:
   "inners"       -> o numero de cada catraca, como aparece no Secullum. Ex.: [1, 2]
   "ipsCatracas"  -> o IP de cada catraca, entre aspas. Ex.: ["192.168.0.50", "192.168.0.51"]
   "portaCatraca" -> so mude se no Secullum for diferente de 3570
+  "codigosSempreLiberados" -> SO PARA O TESTE antes do site estar no ar: o numero de
+                    1 ou 2 pessoas que ja tem digital na catraca. Ex.: ["1042"]
+                    Esvazie depois (deixe [] ) para valer a regra do site.
 
 Nao mexa no resto. Cuidado com virgulas e aspas: o 1-VERIFICAR.bat avisa se
 o arquivo ficar com erro.
@@ -76,11 +77,14 @@ para ele acompanhar.
 2. De dois cliques em  1-VERIFICAR.bat  (a porta 3570 agora precisa estar livre).
 3. De dois cliques em  2-TESTAR.bat. A janela deve mostrar as duas catracas
    "conectada, em modo online" e o visor delas deve mostrar "COLOQUE O DEDO".
-4. Teste NAS DUAS catracas com 3 pessoas:
-   - uma em dia               -> visor "LIBERADO" + nome, catraca gira
-   - uma bloqueada no painel  -> visor "VER NA RECEPCAO"
-   - alguem sem cadastro      -> visor "VER NA RECEPCAO"
-   - alguem saindo (saida livre) -> deve girar normal
+4. Teste NAS DUAS catracas:
+   - pessoa de "codigosSempreLiberados" -> visor "LIBERADO", catraca gira so para ENTRAR
+   - outra pessoa com digital           -> visor "VER NA RECEPCAO" (enquanto o site nao
+                                           estiver no ar, so os numeros do teste passam)
+   - alguem saindo (saida livre)        -> deve girar normal, sem dedo
+   - ninguem consegue ENTRAR sem dedo   -> confira empurrando a catraca no sentido de entrada
+   Se a janela mostrar erro 4, 5, 6 ou 8: botao direito em TOPDATA-REGISTRAR-DLLS.bat >
+   Executar como administrador, e rode o 2-TESTAR.bat de novo.
 5. Teste o cadastro de digital pelo menu da catraca com a ponte ligada:
    numero novo, dedo 3 vezes, depois passe esse dedo.
 6. Feche a janela do teste. De dois cliques em  VER-LOG-DE-HOJE.bat, salve o arquivo
