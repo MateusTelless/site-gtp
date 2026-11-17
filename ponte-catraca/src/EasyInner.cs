@@ -19,6 +19,10 @@ namespace PonteCatraca
         [DllImport(Dll, CallingConvention = Cc)] public static extern void FecharPortaComunicacao();
         [DllImport(Dll, CallingConvention = Cc)] public static extern byte Ping(int inner);
         [DllImport(Dll, CallingConvention = Cc)] public static extern byte PingOnLine(int inner);
+        // O exemplo oficial testa a conexão lendo o relógio (o Ping pode responder OK sem a catraca conectada).
+        [DllImport(Dll, CallingConvention = Cc)]
+        public static extern byte ReceberRelogio(int inner, ref byte dia, ref byte mes, ref byte ano,
+            ref byte hora, ref byte minuto, ref byte segundo);
 
         // ---- configuração (fica num buffer da DLL até EnviarConfiguracoes) ----
         [DllImport(Dll, CallingConvention = Cc)] public static extern byte ConfigurarInnerOnLine();

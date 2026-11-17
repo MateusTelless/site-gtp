@@ -80,9 +80,13 @@ namespace PonteCatraca
                 Ok(EasyInner.AbrirPortaComunicacao(cfg.portaCatraca), "AbrirPortaComunicacao");
                 portaAberta = true;
             }
-            foreach (var e in catracas) TentarConectar(e, 30);
+            // A porta fica aberta o tempo todo: no modo TCP de porta fixa são as catracas que se conectam ao PC,
+            // e elas levam alguns segundos para isso. Fechar e reabrir a porta impede a conexão.
+            Log.Info("Porta " + cfg.portaCatraca + " aberta; esperando as catracas se conectarem ao PC...");
+            foreach (var e in catracas) TentarConectar(e, 20);
             if (!catracas.Any(e => e.conectada))
-                throw new Exception("Nenhuma catraca respondeu (" + string.Join(", ", cfg.inners) + ").");
+                Log.Aviso("Nenhuma catraca conectou ainda. Continuo tentando a cada 15 s. Se não conectar: confira se o Secullum "
+                    + "está parado (Ligar Online > Parar), se o firewall permitiu o PonteCatraca e, no Secullum, o tipo de conexão de cada catraca.");
         }
 
         /// Liga e configura uma catraca. Se não responder, fica marcada como desconectada e é tentada de novo depois.
@@ -91,19 +95,48 @@ namespace PonteCatraca
             e.desdeTentativa.Restart();
             try
             {
+                // Mesmo teste do exemplo oficial: ler o relógio só funciona com a catraca conectada de verdade.
                 var t = Stopwatch.StartNew();
-                byte r;
-                while ((r = EasyInner.Ping(e.numero)) != EasyInner.RET_COMANDO_OK)
+                byte r, d = 0, mo = 0, a = 0, h = 0, mi = 0, s = 0;
+                while ((r = EasyInner.ReceberRelogio(e.numero, ref d, ref mo, ref a, ref h, ref mi, ref s)) != EasyInner.RET_COMANDO_OK)
                 {
-                    if (t.Elapsed.TotalSeconds > segundos) throw new Exception("não respondeu ao Ping (retorno " + r + ")");
+                    if (t.Elapsed.TotalSeconds > segundos) throw new Exception("ainda não conectou ao PC (retorno " + r + ")");
                     Thread.Sleep(500);
                 }
+                Log.Info("Catraca " + e.numero + " respondeu (relógio " + d.ToString("00") + "/" + mo.ToString("00") + " " + h.ToString("00") + ":" + mi.ToString("00") + ").");
 
                 // Firmware 5 ou mais novo: usuários biométricos com até 16 dígitos (como no exemplo oficial).
                 byte linha = 0, vAlta = 0, vBaixa = 0, vSufixo = 0, acessoBio = 0; short variacao = 0;
-                if (EasyInner.ReceberVersaoFirmware(e.numero, ref linha, ref variacao, ref vAlta, ref vBaixa, ref vSufixo, ref acessoBio) == EasyInner.RET_COMANDO_OK)
+                var rf = EasyInner.ReceberVersaoFirmware(e.numero, ref linha, ref variacao, ref vAlta, ref vBaixa, ref vSufixo, ref acessoBio);
+                if (rf == EasyInner.RET_COMANDO_OK)
                     Log.Info("Catraca " + e.numero + ": firmware " + vAlta + "." + vBaixa + " (linha " + linha + ", variação " + variacao + ", bio " + acessoBio + ")");
+                else Log.Aviso("Catraca " + e.numero + ": não consegui ler o firmware (retorno " + rf + ").");
 
+                // O exemplo oficial tenta enviar a configuração até 3 vezes; o buffer da DLL se esvazia a cada envio.
+                byte ret = 1;
+                for (int tentativa = 1; tentativa <= 3 && ret != EasyInner.RET_COMANDO_OK; tentativa++)
+                {
+                    MontarConfiguracao(vAlta);
+                    ret = EasyInner.EnviarConfiguracoes(e.numero);
+                    if (ret != EasyInner.RET_COMANDO_OK) { Log.Aviso("Catraca " + e.numero + ": EnviarConfiguracoes retornou " + ret + " (tentativa " + tentativa + ")"); Thread.Sleep(1000); }
+                }
+                Ok(ret, "EnviarConfiguracoes");
+
+                Rearmar(e);
+                e.conectada = true;
+                e.pingsFalhos = 0;
+                e.desdePing.Restart();
+                Log.Info("Catraca " + e.numero + " conectada, em modo online.");
+            }
+            catch (Exception ex)
+            {
+                e.conectada = false;
+                Log.Erro("Catraca " + e.numero + ": " + ex.Message);
+            }
+        }
+
+        void MontarConfiguracao(byte vAlta)
+        {
                 // Configuração igual à do exemplo oficial da Topdata (FrmOnlineController.MontaConfiguracaoInner).
                 // Fica num buffer da DLL até EnviarConfiguracoes, por isso vai uma catraca de cada vez.
                 // DefinirPadraoCartao precisa vir antes da quantidade de dígitos (ele reseta para 14).
@@ -133,19 +166,6 @@ namespace PonteCatraca
                 Ok(EasyInner.DefinirFuncaoDefaultSensorBiometria(funcaoPadrao), "DefinirFuncaoDefaultSensorBiometria");
                 if (vAlta >= 5) { EasyInner.SetarBioVariavel(1); EasyInner.ConfigurarBioVariavel(1); }
                 Ok(EasyInner.ReceberDataHoraDadosOnLine(1), "ReceberDataHoraDadosOnLine");
-                Ok(EasyInner.EnviarConfiguracoes(e.numero), "EnviarConfiguracoes");
-
-                Rearmar(e);
-                e.conectada = true;
-                e.pingsFalhos = 0;
-                e.desdePing.Restart();
-                Log.Info("Catraca " + e.numero + " conectada, em modo online.");
-            }
-            catch (Exception ex)
-            {
-                e.conectada = false;
-                Log.Erro("Catraca " + e.numero + ": " + ex.Message);
-            }
         }
 
         public void Desconectar()
@@ -183,8 +203,6 @@ namespace PonteCatraca
                         return l;
                     }
                 }
-                if (!catracas.Any(c => c.conectada) && catracas.All(c => c.desdeTentativa.Elapsed.TotalSeconds < 30))
-                    throw new Exception("Todas as catracas pararam de responder.");
                 Thread.Sleep(75);
             }
             return null;
@@ -194,7 +212,7 @@ namespace PonteCatraca
         {
             if (!e.conectada)
             {
-                if (e.desdeTentativa.Elapsed.TotalSeconds >= 30) TentarConectar(e, 3);
+                if (e.desdeTentativa.Elapsed.TotalSeconds >= 15) TentarConectar(e, 3);
                 return null;
             }
 
@@ -215,7 +233,7 @@ namespace PonteCatraca
                     {
                         e.conectada = false;
                         e.desdeTentativa.Restart();
-                        Log.Erro("Catraca " + e.numero + " parou de responder; tentando de novo a cada 30 s.");
+                        Log.Erro("Catraca " + e.numero + " parou de responder; tentando de novo a cada 15 s.");
                     }
                 }
                 else e.pingsFalhos = 0;
