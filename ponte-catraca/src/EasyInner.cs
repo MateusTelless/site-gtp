@@ -89,5 +89,31 @@ namespace PonteCatraca
         public static extern byte SolicitarExclusaoUsuario(int inner, string usuario);
         [DllImport(Dll, CallingConvention = Cc)]
         public static extern byte UsuarioFoiExcluido(int inner, byte onLine);
+
+        // ---- biometria firmware 6xx (cópia de digitais entre catracas) ----
+        // Assinaturas e uso copiados do exemplo oficial (EasyInner.cs e FrmBioController6xx.cs do SDK 6.0.2).
+        // TipoModBio: 0 = LN (Nitgen), 1 = LC, 2 = LM; vem de ReceberVersaoFirmware6xx.
+        [DllImport(Dll, CallingConvention = Cc)]
+        public static extern byte ReceberVersaoFirmware6xx(int inner, ref byte linha, ref short variacao, ref byte versaoAlta,
+            ref byte versaoBaixa, ref byte versaoSufixo, ref byte innerAcessoBio, ref byte tipoModBio);
+        [DllImport(Dll, CallingConvention = Cc)]
+        public static extern byte RequisitarListarUsuariosBio(int inner, int tipoComBio, int numPacote);
+        [DllImport(Dll, CallingConvention = Cc)]
+        public static extern byte RespostaListarUsuariosBio(int inner, ref int qtdPacotes, ref int tamanho);
+        [DllImport(Dll, CallingConvention = Cc)]
+        public static extern byte ReceberListaPacUsuariosBio(int inner, byte[] listaUsuarios, int tamanhoBuffer);
+        [DllImport(Dll, CallingConvention = Cc, CharSet = CharSet.Ansi)]
+        public static extern byte RequisitarUsuarioCadastradoBio(int inner, int tipoModBio, string usuario);
+        [DllImport(Dll, CallingConvention = Cc)]
+        public static extern byte RespostaUsuarioCadastradoBio(int inner, ref int tamanhoReceber);
+        [DllImport(Dll, CallingConvention = Cc)]
+        public static extern byte ReceberDigitalUsuarioBio(int inner, byte[] bufferTemplate, int tamanhoReceber);
+        [DllImport(Dll, CallingConvention = Cc, CharSet = CharSet.Ansi)]
+        public static extern byte EnviarDigitalUsuarioBio(int inner, int tipoModBio, string usuario, byte[] digital1, byte[] digital2);
+        [DllImport(Dll, CallingConvention = Cc)]
+        public static extern byte RespostaEnviarDigitalUsuarioBio(int inner);
+
+        public const byte RET_BIO_USR_JA_CADASTRADO = 131, RET_BIO_USR_NAO_CADASTRADO = 132, RET_BIO_BASE_CHEIA = 133;
+        public const byte RET_BIO_MODULO_INCORRETO = 250;
     }
 }

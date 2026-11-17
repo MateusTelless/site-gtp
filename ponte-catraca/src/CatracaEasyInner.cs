@@ -19,7 +19,7 @@ namespace PonteCatraca
     ///   - ReceberDadosOnLine: 0 = chegou evento; qualquer outro valor = nada novo
     ///   - FormaEntrada 100 = leitor 1 + identificação biométrica (o exemplo monta o mesmo valor por bits)
     ///   - Acionamento 6 = saída livre e entrada controlada (caso do GETEPE)
-    public class CatracaEasyInner : ICatraca
+    public partial class CatracaEasyInner : ICatraca
     {
         // Origens (EasyInnerInterop.cs da Topdata, exceto 12 que vem do manual)
         const byte ORIGEM_TECLADO = 1, ORIGEM_LEITOR1 = 2, ORIGEM_LEITOR2 = 3;
@@ -34,6 +34,7 @@ namespace PonteCatraca
             public bool conectada;
             public bool aguardandoGiro;
             public int pingsFalhos;
+            public int tipoBio = -1;   // módulo biométrico (0 = LN, 1 = LC, 2 = LM); -1 = desconhecido, não copia digitais
             public readonly Stopwatch desdeLiberacao = new Stopwatch();
             public readonly Stopwatch desdePing = new Stopwatch();
             public readonly Stopwatch desdeTentativa = new Stopwatch();
@@ -111,6 +112,15 @@ namespace PonteCatraca
                 if (rf == EasyInner.RET_COMANDO_OK)
                     Log.Info("Catraca " + e.numero + ": firmware " + vAlta + "." + vBaixa + " (linha " + linha + ", variação " + variacao + ", bio " + acessoBio + ")");
                 else Log.Aviso("Catraca " + e.numero + ": não consegui ler o firmware (retorno " + rf + ").");
+
+                // Tipo do módulo biométrico, necessário para copiar digitais entre as catracas (firmware 6 ou mais novo).
+                if (rf == EasyInner.RET_COMANDO_OK && vAlta >= 6 && acessoBio == 1)
+                {
+                    byte l6 = 0, a6 = 0, b6 = 0, s6 = 0, bio6 = 0, tipo = 0; short v6 = 0;
+                    var r6 = EasyInner.ReceberVersaoFirmware6xx(e.numero, ref l6, ref v6, ref a6, ref b6, ref s6, ref bio6, ref tipo);
+                    if (r6 == EasyInner.RET_COMANDO_OK) { e.tipoBio = tipo; Log.Info("Catraca " + e.numero + ": módulo biométrico tipo " + tipo + "."); }
+                    else Log.Aviso("Catraca " + e.numero + ": não consegui ler o tipo do módulo biométrico (retorno " + r6 + "); não vou copiar digitais.");
+                }
 
                 // O exemplo oficial tenta enviar a configuração até 3 vezes; o buffer da DLL se esvazia a cada envio.
                 byte ret = 1;
@@ -203,6 +213,7 @@ namespace PonteCatraca
                         return l;
                     }
                 }
+                TalvezSincronizarDigitais();
                 Thread.Sleep(75);
             }
             return null;

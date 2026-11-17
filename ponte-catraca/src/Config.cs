@@ -28,6 +28,12 @@ namespace PonteCatraca
         // Códigos que sempre passam (professores, equipe), mesmo sem internet
         public List<string> codigosSempreLiberados = new List<string>();
 
+        // Digitais: a ponte copia de uma catraca para a outra o que estiver faltando (cadastro feito numa só).
+        // As digitais nunca saem da rede da escola: vão de catraca para catraca, com cópia de segurança em dados\digitais.
+        public bool sincronizarDigitais = true;
+        public int intervaloSyncDigitaisMinutos = 5;
+        public bool backupDigitais = true;
+
         public string pastaDados = "dados";
 
         public static Config Carregar(string caminho)

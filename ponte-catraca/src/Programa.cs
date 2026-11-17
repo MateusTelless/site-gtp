@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.ServiceProcess;
 
@@ -6,12 +6,12 @@ namespace PonteCatraca
 {
     public static class Programa
     {
-        public const string Versao = "0.1.2";
+        public const string Versao = "0.1.3";
 
         /// Uso:
-        ///   PonteCatraca.exe              -> roda como serviço do Windows (instalado com instalar-servico.ps1)
+        ///   PonteCatraca.exe              -> roda como serviÃ§o do Windows (instalado com instalar-servico.ps1)
         ///   PonteCatraca.exe --console    -> roda na janela, para testar
-        ///   PonteCatraca.exe --console --sem-internet -> não fala com o Worker (só a lista local)
+        ///   PonteCatraca.exe --console --sem-internet -> nÃ£o fala com o Worker (sÃ³ a lista local)
         public static int Main(string[] args)
         {
             try { Console.OutputEncoding = System.Text.Encoding.UTF8; } catch { }
