@@ -381,6 +381,7 @@ body>.preview:not(.is-draft){display:none}
 .trial-form h2{margin:0 0 6px}
 .trial-form label{display:block;margin-top:14px;font-weight:700;font-size:14px;color:var(--navy)}
 .trial-form input{display:block;width:100%;height:auto;min-height:46px;padding:11px 12px;margin:6px 0 0;border:1px solid var(--line);border-radius:6px;font:inherit;font-weight:400;color:var(--ink);background:#fff}
+.trial-form input[hidden]{display:none}
 .trial-form .button{width:100%;margin-top:18px;justify-content:center;cursor:pointer}
 .trial-form .button[disabled]{opacity:.7;cursor:progress}
 .trial-error{color:#a32d2d;font-size:14px;font-weight:700;margin:12px 0 0}
@@ -424,3 +425,14 @@ section.newsletter-section .newsletter-form{box-shadow:none;border:1px solid #db
 section.newsletter-section .newsletter-form input:focus-visible{outline-color:#082649}
 .store-home .store-booklet .store-booklet-body a.button{align-self:stretch;width:100%;max-width:none;justify-content:center}
 .store-booklet>.store-booklet-body{align-self:stretch;width:100%;box-sizing:border-box}
+
+/* Sem barra de rolagem lateral: a faixa do topo usa 100vw, que inclui a largura da barra de rolagem do navegador. */
+html,body{overflow-x:clip}
+/* Telas grandes (a partir de 1500 px): conteúdo até 1440 px e quatro cursos por fileira. Tablet e celular não mudam. */
+@media(min-width:1500px){
+.wrap,.hero-copy,.campaign-caption{max-width:1504px}
+.hero-art{right:max(24px,calc((100vw - 1440px)/2))}
+.hero-bottom{left:max(32px,calc((100vw - 1440px)/2));right:max(32px,calc((100vw - 1440px)/2))}
+.site-footer{padding-left:max(32px,calc((100% - 1440px)/2));padding-right:max(32px,calc((100% - 1440px)/2))}
+.course-grid{grid-template-columns:repeat(4,1fr)}
+}
