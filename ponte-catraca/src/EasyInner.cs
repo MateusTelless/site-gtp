@@ -58,6 +58,9 @@ namespace PonteCatraca
         [DllImport(Dll, CallingConvention = Cc)] public static extern byte LiberarCatracaEntrada(int inner);
         [DllImport(Dll, CallingConvention = Cc)] public static extern byte LiberarCatracaSaida(int inner);
         [DllImport(Dll, CallingConvention = Cc)] public static extern byte LiberarCatracaDoisSentidos(int inner);
+        // Catraca montada invertida (exemplo oficial: CatInvertida / LiberaEntradaInvertida).
+        [DllImport(Dll, CallingConvention = Cc)] public static extern byte LiberarCatracaEntradaInvertida(int inner);
+        [DllImport(Dll, CallingConvention = Cc)] public static extern byte LiberarCatracaSaidaInvertida(int inner);
 
         [DllImport(Dll, CallingConvention = Cc, CharSet = CharSet.Ansi)]
         public static extern byte EnviarMensagemPadraoOnLine(int inner, byte exibirData, string mensagem);

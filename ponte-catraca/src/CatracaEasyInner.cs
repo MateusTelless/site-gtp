@@ -163,8 +163,18 @@ namespace PonteCatraca
                 {
                     // GETEPE: saída livre (6 = CATRACA_SAIDA_LIBERADA), dedo só na entrada.
                     // ATENÇÃO: 8 = catraca livre nos DOIS sentidos (qualquer um passa). Não usar.
-                    Ok(EasyInner.ConfigurarAcionamento1(6, (byte)cfg.tempoLiberacaoSegundos), "ConfigurarAcionamento1");
-                    Ok(EasyInner.ConfigurarLeitor1(1), "ConfigurarLeitor1");               // só entrada
+                    // Catraca invertida (como no exemplo oficial, Acionamento_Catraca_Saida_Liberada + CatInvertida):
+                    // 7 = CATRACA_ENTRADA_LIBERADA e leitor "somente saída", que na prática é a entrada do prédio.
+                    if (cfg.catracaInvertida)
+                    {
+                        Ok(EasyInner.ConfigurarAcionamento1(7, (byte)cfg.tempoLiberacaoSegundos), "ConfigurarAcionamento1");
+                        Ok(EasyInner.ConfigurarLeitor1(2), "ConfigurarLeitor1");
+                    }
+                    else
+                    {
+                        Ok(EasyInner.ConfigurarAcionamento1(6, (byte)cfg.tempoLiberacaoSegundos), "ConfigurarAcionamento1");
+                        Ok(EasyInner.ConfigurarLeitor1(1), "ConfigurarLeitor1");           // só entrada
+                    }
                 }
                 Ok(EasyInner.ConfigurarLeitor2(0), "ConfigurarLeitor2");                   // desativado
                 Ok(EasyInner.DefinirQuantidadeDigitosCartao((byte)cfg.qtdDigitosCodigo), "DefinirQuantidadeDigitosCartao");
@@ -280,7 +290,7 @@ namespace PonteCatraca
 
                 case ORIGEM_GIRO:
                     Rearmar(e);
-                    return new Leitura { tipo = TipoLeitura.Giro, equipamento = e.numero, origem = compl == 1 ? "entrada" : "saida" };
+                    return new Leitura { tipo = TipoLeitura.Giro, equipamento = e.numero, origem = (compl == 1) != cfg.catracaInvertida ? "entrada" : "saida" };
 
                 case ORIGEM_FIM_TEMPO:
                     var estava = e.aguardandoGiro;
@@ -304,8 +314,11 @@ namespace PonteCatraca
         {
             var e = De(equipamento);
             EasyInner.EnviarMensagemTemporariaOnLine(e.numero, 0, Linhas(linha1, linha2), (byte)cfg.tempoLiberacaoSegundos);
-            Ok(apenasEntrada ? EasyInner.LiberarCatracaEntrada(e.numero) : EasyInner.LiberarCatracaDoisSentidos(e.numero),
-                "LiberarCatraca");
+            byte r;
+            if (!apenasEntrada) r = EasyInner.LiberarCatracaDoisSentidos(e.numero);
+            else if (cfg.catracaInvertida) r = EasyInner.LiberarCatracaEntradaInvertida(e.numero);
+            else r = EasyInner.LiberarCatracaEntrada(e.numero);
+            Ok(r, "LiberarCatraca");
             e.aguardandoGiro = true;
             e.desdeLiberacao.Restart();
         }

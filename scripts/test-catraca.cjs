@@ -93,6 +93,9 @@ async function run(){
  assert.equal((await ok(await adm('admin/alunos/catraca',{id:'s6',numero:'05555'}))).numero,'5555');
  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM audit_log WHERE action='numero_catraca'").get().n,2);
  assert.ok((await ok(await call('catraca/liberados'))).pessoas.some(p=>p.codigo==='5555'),'número novo entra na lista da catraca');
+ // Números do Secullum com o ano no fim (4257 + "26") não puxam a sequência: o próximo segue os de até 5 dígitos.
+ db.prepare("UPDATE students SET legacy_code='425726' WHERE id='s7'").run();
+ assert.equal((await ok(await adm('admin/alunos/catraca',{id:'s6'}))).numero,'5556');
  console.log('Catraca: ok');
 }
 run().catch(e=>{console.error(e);process.exit(1)});

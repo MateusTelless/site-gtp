@@ -23,6 +23,9 @@ namespace PonteCatraca
         // false: o dedo libera só a entrada (a saída do GTP já é livre na catraca).
         // true: o dedo libera os dois sentidos (para catracas que pedem o dedo também na saída).
         public bool liberarSaidaSempre = false;
+        // Catraca montada "invertida" (lado esquerdo, no SDK da Topdata): o que a placa chama de saída é a entrada do prédio.
+        // No GTP as duas são assim (teste de 17/11/2026: sem isso a entrada ficou livre e a saída travada).
+        public bool catracaInvertida = true;
         public int qtdDigitosCodigo = 14;
 
         // Códigos que sempre passam (professores, equipe), mesmo sem internet
