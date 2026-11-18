@@ -325,8 +325,12 @@ export async function enrollmentAdmin(req:Request,path:string,DB:D1Database,staf
   let numero=b.numero===undefined||b.numero===null||b.numero===''?'':String(b.numero).trim();
   if(numero){if(!/^\d{1,10}$/.test(numero)||/^0+$/.test(numero))fail('Use só números, de 1 a 10 dígitos.');numero=numero.replace(/^0+/,'')}
   else{
-   const max=await DB.prepare(`SELECT MAX(n) AS n FROM (SELECT CAST(ltrim(access_code,'0') AS INTEGER) AS n FROM students WHERE access_code GLOB '[0-9]*' UNION ALL SELECT CAST(ltrim(legacy_code,'0') AS INTEGER) FROM students WHERE legacy_code GLOB '[0-9]*')`).first<{n:number|null}>();
-   numero=String(Math.max(1000,max?.n||0)+1);
+   // Segue a sequência das matrículas (hoje na casa dos 4 dígitos). Números de 6 ou mais dígitos ficam de fora:
+   // no Secullum alguns alunos ganharam o ano no fim (ex.: 4257 + "26" = 425726) e puxariam a sequência lá para cima.
+   const usados=new Set(((await DB.prepare(`SELECT ltrim(access_code,'0') AS c FROM students WHERE access_code GLOB '[0-9]*' UNION SELECT ltrim(legacy_code,'0') FROM students WHERE legacy_code GLOB '[0-9]*'`).all<{c:string}>()).results||[]).map(r=>String(r.c)));
+   let n=1000;for(const c of usados)if(c.length<=5)n=Math.max(n,Number(c));
+   do n++;while(usados.has(String(n)));
+   numero=String(n);
   }
   const dono=await DB.prepare(`SELECT p.full_name FROM students s JOIN people p ON p.id=s.person_id WHERE s.id<>? AND ${CODE.replace(/access_code|legacy_code/g,m=>'s.'+m)}=?`).bind(s.id,numero).first<{full_name:string}>();
   if(dono)fail('O número '+numero+' já é de '+dono.full_name+'.',409);
