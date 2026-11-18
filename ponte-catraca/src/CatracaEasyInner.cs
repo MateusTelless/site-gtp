@@ -292,6 +292,14 @@ namespace PonteCatraca
                 case ORIGEM_TECLADO:
                     // Digital: o exemplo oficial fica só com os dígitos e tira os zeros à esquerda.
                     if (origem == ORIGEM_BIOMETRIA) cartao = new string(cartao.Where(char.IsDigit).ToArray());
+                    // Com o Leitor 1 em "entrada e saída invertidas" (catraca 2 do GTP) a catraca acrescenta um dígito
+                    // de sentido no fim (teste de 17/11/2026: 000000001111113 em vez de 00000000111111). Usa só os
+                    // primeiros qtdDigitosCodigo dígitos.
+                    if (cartao.Length > cfg.qtdDigitosCodigo && cfg.qtdDigitosCodigo > 0)
+                    {
+                        Log.Info("Catraca " + e.numero + ": número lido " + cartao + ", usando os " + cfg.qtdDigitosCodigo + " primeiros dígitos.");
+                        cartao = cartao.Substring(0, cfg.qtdDigitosCodigo);
+                    }
                     if (cartao.Length == 0) { Rearmar(e); return null; }
                     return new Leitura
                     {
