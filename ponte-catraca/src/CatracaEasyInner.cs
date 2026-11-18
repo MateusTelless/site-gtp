@@ -179,22 +179,16 @@ namespace PonteCatraca
                 {
                     // GETEPE: saída livre (6 = CATRACA_SAIDA_LIBERADA), dedo só na entrada.
                     // ATENÇÃO: 8 = catraca livre nos DOIS sentidos (qualquer um passa). Não usar.
-                    // Catraca invertida (como no exemplo oficial, Acionamento_Catraca_Saida_Liberada + CatInvertida):
-                    // 7 = CATRACA_ENTRADA_LIBERADA e leitor "somente saída", que na prática é a entrada do prédio.
-                    if (invertida)
-                    {
-                        Ok(EasyInner.ConfigurarAcionamento1(7, (byte)cfg.tempoLiberacaoSegundos), "ConfigurarAcionamento1");
-                        Ok(EasyInner.ConfigurarLeitor1(2), "ConfigurarLeitor1");
-                    }
-                    else
-                    {
-                        Ok(EasyInner.ConfigurarAcionamento1(6, (byte)cfg.tempoLiberacaoSegundos), "ConfigurarAcionamento1");
-                        Ok(EasyInner.ConfigurarLeitor1(1), "ConfigurarLeitor1");           // só entrada
-                    }
+                    // Igual ao Secullum do GTP (prints de 17/11/2026): relé 1 "Catraca com saída liberada" (6) nas duas;
+                    // Leitor 1 "Somente para entrada" (1) na catraca normal e "Entrada e saída invertidas" (4) na invertida.
+                    Ok(EasyInner.ConfigurarAcionamento1(6, (byte)cfg.tempoLiberacaoSegundos), "ConfigurarAcionamento1");
+                    Ok(EasyInner.ConfigurarLeitor1((byte)(invertida ? 4 : 1)), "ConfigurarLeitor1");
                 }
                 Ok(EasyInner.ConfigurarLeitor2(0), "ConfigurarLeitor2");                   // desativado
                 Ok(EasyInner.DefinirQuantidadeDigitosCartao((byte)cfg.qtdDigitosCodigo), "DefinirQuantidadeDigitosCartao");
-                Ok(EasyInner.HabilitarTeclado(0, 0), "HabilitarTeclado");
+                // O Secullum deixa o teclado habilitado (necessário para o menu de cadastro na catraca).
+                // A leitura online continua só por digital (FORMA_LEITOR1_IDENTIFICACAO_BIO).
+                Ok(EasyInner.HabilitarTeclado(1, 0), "HabilitarTeclado");
                 Ok(EasyInner.RegistrarAcessoNegado(0), "RegistrarAcessoNegado");
                 // Registro padrão do leitor/digital: 10 = sempre entrada; 12 = conforme o giro.
                 var funcaoPadrao = (byte)(cfg.liberarSaidaSempre ? 12 : 10);
