@@ -5,7 +5,7 @@
 
   "modoCatraca": "easyinner",
   "inners": [1, 2],
-  "ipsCatracas": ["PREENCHER-IP-CATRACA-1", "PREENCHER-IP-CATRACA-2"],
+  "ipsCatracas": ["192.168.15.117", "192.168.15.118"],
   "portaCatraca": 3570,
   "tempoLiberacaoSegundos": 5,
   "liberarSaidaSempre": false,
