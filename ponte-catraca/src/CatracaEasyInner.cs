@@ -123,6 +123,21 @@ namespace PonteCatraca
                     else Log.Aviso("Catraca " + e.numero + ": não consegui ler o tipo do módulo biométrico (retorno " + r6 + "); não vou copiar digitais.");
                 }
 
+                // Diagnóstico do sentido de giro: registra a configuração que está na catraca ANTES de mandar a nossa
+                // (logo depois de parar o Secullum, é a que ele deixou). Comparar catraca 1 e 2 mostra o que difere.
+                if (rf == EasyInner.RET_COMANDO_OK && vAlta >= 6)
+                {
+                    try
+                    {
+                        var conf = new byte[50];
+                        var rc = EasyInner.ReceberConfiguracoesInner(e.numero, conf);
+                        if (rc == EasyInner.RET_COMANDO_OK)
+                            Log.Info("Catraca " + e.numero + ": configuração encontrada nela: " + BitConverter.ToString(conf));
+                        else Log.Aviso("Catraca " + e.numero + ": não consegui ler a configuração dela (retorno " + rc + ").");
+                    }
+                    catch (Exception ex) { Log.Aviso("Catraca " + e.numero + ": leitura da configuração: " + ex.Message); }
+                }
+
                 // O exemplo oficial tenta enviar a configuração até 3 vezes; o buffer da DLL se esvazia a cada envio.
                 byte ret = 1;
                 for (int tentativa = 1; tentativa <= 3 && ret != EasyInner.RET_COMANDO_OK; tentativa++)

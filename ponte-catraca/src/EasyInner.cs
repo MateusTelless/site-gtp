@@ -100,6 +100,9 @@ namespace PonteCatraca
         [DllImport(Dll, CallingConvention = Cc)]
         public static extern byte ReceberVersaoFirmware6xx(int inner, ref byte linha, ref short variacao, ref byte versaoAlta,
             ref byte versaoBaixa, ref byte versaoSufixo, ref byte innerAcessoBio, ref byte tipoModBio);
+        // Lê a configuração gravada na catraca (6xx, 50 bytes; exemplo oficial FrmBioController6xx.ReceberConfiguracoesInner).
+        [DllImport(Dll, CallingConvention = Cc)]
+        public static extern byte ReceberConfiguracoesInner(int inner, byte[] configuracoesInner);
         [DllImport(Dll, CallingConvention = Cc)]
         public static extern byte RequisitarListarUsuariosBio(int inner, int tipoComBio, int numPacote);
         [DllImport(Dll, CallingConvention = Cc)]
