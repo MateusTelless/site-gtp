@@ -1,6 +1,7 @@
 import vinext from "vinext";
 import { defineConfig } from "vite";
 import hostingConfig from "./.openai/hosting.json";
+import deployConfig from "./cloudflare.json";
 import { readExecutionProfile } from "./scripts/execution-profile.mjs";
 import { sites } from "./build/sites-vite-plugin";
 import { connectorPreview } from "./build/connector-preview-plugin.mjs";
@@ -36,6 +37,22 @@ const localBindingConfig = {
     : [],
 };
 
+// Build para a conta Cloudflare do GETEPE (cloudflare.json): nome do Worker, banco D1 e bucket R2 reais,
+// logs e rastreamento ligados. A prévia local (npm run dev) continua com os nomes de exemplo acima.
+function deployBindingConfig() {
+  if (!deployConfig.d1.database_id) {
+    throw new Error("Falta o database_id do D1 em cloudflare.json (crie o banco e cole o número; veja PUBLICAR-CLOUDFLARE.md).");
+  }
+  return {
+    ...localBindingConfig,
+    name: deployConfig.name,
+    compatibility_date: deployConfig.compatibility_date,
+    d1_databases: d1 ? [{ binding: d1, database_name: deployConfig.d1.database_name, database_id: deployConfig.d1.database_id, migrations_dir: "../../drizzle" }] : [],
+    r2_buckets: r2 ? [{ binding: r2, bucket_name: deployConfig.r2.bucket_name }] : [],
+    observability: { enabled: true, traces: { enabled: true } },
+  };
+}
+
 export default defineConfig(async ({ command }) => {
   // Use Miniflare's local Request.cf placeholder unless fetching is requested.
   process.env.CLOUDFLARE_CF_FETCH_ENABLED ??= "false";
@@ -68,7 +85,7 @@ export default defineConfig(async ({ command }) => {
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         inspectorPort: false,
         config: {
-          ...localBindingConfig,
+          ...(command === "build" && process.env.CLOUDFLARE_DEPLOY === "1" ? deployBindingConfig() : localBindingConfig),
           ...(command === "serve"
             ? {
                 services: [

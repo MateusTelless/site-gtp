@@ -1,0 +1,7 @@
+{
+  "$comentario": "Publicação na conta Cloudflare do GETEPE. Só nomes e o número do banco (não são segredos). Os segredos vão em 'wrangler secret put'. Veja PUBLICAR-CLOUDFLARE.md.",
+  "name": "site-gtp",
+  "compatibility_date": "2026-11-18",
+  "d1": { "database_name": "getepe-db", "database_id": "4a6aa5db-df1d-45a3-b60c-13c6d9a57272" },
+  "r2": { "bucket_name": "getepe-arquivos" }
+}
