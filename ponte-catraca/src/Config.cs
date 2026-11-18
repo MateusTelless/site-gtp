@@ -24,7 +24,8 @@ namespace PonteCatraca
         // true: o dedo libera os dois sentidos (para catracas que pedem o dedo também na saída).
         public bool liberarSaidaSempre = false;
         // Números das catracas montadas "invertidas" (CatInvertida no SDK da Topdata): o que a placa chama de saída
-        // é a entrada do prédio. No GTP fica vazio: a 0.1.6 sem inversão deixou as duas certas (17/11/2026).
+        // é a entrada do prédio. No GTP é a catraca 1: no vídeo de 17/11/2026 ela girava livre de fora para dentro
+        // com a mesma configuração que deixava a catraca 2 certa.
         // O visor mostra "CATRACA n" para identificar cada uma.
         public List<int> catracasInvertidas = new List<int>();
         // Como liberar a entrada numa catraca invertida: "saida" (LiberarCatracaSaida: a "saída" da placa é a entrada
