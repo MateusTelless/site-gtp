@@ -35,6 +35,39 @@
 .enroll-trap{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 /* Turma vinda do botão do curso, e a confirmação final. */
 #plans h3{grid-column:1/-1;margin-bottom:0}
+/* Pagamento: Pix ou cartão primeiro; depois dia, data da primeira parcela, parcelas do cartão e visita. */
+.enroll-block{margin:0 0 20px}
+#enroll fieldset.enroll-block legend{font-size:1.05rem;font-weight:700;margin-bottom:10px}
+.enroll-chips{display:flex;flex-wrap:wrap;gap:8px}
+.enroll-chip{position:relative;display:inline-flex}
+.enroll-chip input{position:absolute;opacity:0;width:1px;height:1px}
+.enroll-chip span{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid #b9c6d4;border-radius:999px;background:#fff;font-weight:600;cursor:pointer}
+.enroll-chip input:checked+span{background:var(--navy);border-color:var(--navy);color:#fff}
+.enroll-chip input:focus-visible+span{outline:3px solid #7a96b4;outline-offset:2px}
+#enroll .enroll-other{max-width:260px;margin-top:12px}
+#enroll .enroll-other[hidden]{display:none}
+/* Desconto de 5%: ex-aluno (verde) ou militar/dependente com documento. */
+.enroll-disc{border:1px solid #b9c6d4;border-radius:12px;padding:14px 16px;margin:0 0 20px;background:#f7f9fc}
+#enroll fieldset.enroll-disc{border:1px solid #b9c6d4;padding:14px 16px}
+#enroll .enroll-disc legend{font-weight:700;padding:0 4px}
+.enroll-disc.ok{display:grid;gap:2px;background:#e0f0e7;border-color:#22744a;color:#14532d}
+.enroll-disc.ok b{font-size:1.1rem}
+#enroll .enroll-file{margin-top:12px;font-weight:600}
+.enroll-ok{color:#14532d;font-weight:700;margin:8px 0 0}
+.enroll-off{display:block;font-weight:600;color:#22744a;font-size:.8rem}
+/* Coluna de 1x a 12x ao lado da opção Cartão. */
+#methods.with-ncol{grid-template-columns:repeat(3,minmax(0,1fr));align-items:start}
+.enroll-ncol{border:2px solid var(--navy);border-radius:12px;padding:10px;background:#fff}
+.enroll-ncol p{margin:0 0 6px;font-weight:700;color:var(--ink)}
+#enroll .enroll-nrow{display:grid;grid-template-columns:22px 40px 1fr;align-items:center;gap:4px 8px;padding:8px;border-radius:8px;cursor:pointer;font-weight:500;min-height:40px}
+.enroll-nrow input{width:18px;height:18px;margin:0}
+.enroll-nrow b{color:var(--ink)}
+.enroll-nrow span{font-variant-numeric:tabular-nums}
+.enroll-nrow small{grid-column:3;color:var(--muted);margin-top:-6px}
+.enroll-nrow:hover{background:#f3f6fa}
+.enroll-nrow:has(input:checked){background:var(--navy);color:#fff}.enroll-nrow:has(input:checked) b,.enroll-nrow:has(input:checked) span,.enroll-nrow:has(input:checked) small{color:#fff}
+@media(max-width:720px){#methods.with-ncol{grid-template-columns:1fr}}
+#enroll label.enroll-block{max-width:320px}
 .enroll-chosen-label{grid-column:1/-1;margin:0;color:var(--muted);font-weight:600}
 .enroll-option.enroll-chosen{grid-column:1/-1;border-color:var(--navy);box-shadow:0 0 0 2px var(--navy) inset;cursor:default}
 .enroll-turma-check{border:2px solid var(--navy);border-radius:12px;padding:16px 18px;background:#f3f6fa;margin-bottom:16px}
@@ -53,3 +86,6 @@
  .enroll-steps{flex-wrap:nowrap;gap:6px}.enroll-steps li{flex:1 1 0;min-width:0;padding:8px 4px;text-align:center;white-space:nowrap}
  .enroll-steps li:not(.current){font-size:0}.enroll-steps li:not(.current)::before{font-size:.9rem;content:counter(step)}
  .enroll-steps li.current{flex:3 1 0}}
+/* Arquivos do desconto de militar: frente, verso e vínculo. */
+.enroll-filerow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+#enroll .enroll-filerow .enroll-file{margin-top:0}

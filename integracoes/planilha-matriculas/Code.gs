@@ -63,7 +63,7 @@ function doPost(e) {
 
 /*
  * Planilha "Alunos 202X" da equipe: uma linha por aluno, no padrão que ela já usa.
- *   A quantidade (já numerada) · B Lexus (fica em branco) · C NOMES · D DT MATRICULA · E ESCOLA (código da turma, ex.: BSET27)
+ *   A quantidade (já numerada) · B Lexus (RA do aluno, que o site manda) · C NOMES · D DT MATRICULA · E ESCOLA (código da turma, ex.: BSET27)
  *   F TURMA (M, T, N ou ONLINE) · G OCORRENCIAS · H ATIVO · I TOTAL
  *   depois, um bloco por mês com o título "JULHO/26" na linha 1: DATA, VALOR, PAGO, FORMA.
  * O site só manda o bloco "alunos" depois do contrato assinado. A linha é achada pelo texto "Site CÓDIGO" na coluna G:
@@ -72,7 +72,7 @@ function doPost(e) {
  * Desligado enquanto ALUNOS_PLANILHA_ID não estiver nas propriedades do script.
  */
 var ALUNOS_PRIMEIRA_LINHA = 3; // linha 1: meses; linha 2: cabeçalho
-var COL = { quantidade: 1, nome: 3, matricula: 4, escola: 5, turma: 6, ocorrencias: 7, situacao: 8, total: 9 };
+var COL = { quantidade: 1, ra: 2, nome: 3, matricula: 4, escola: 5, turma: 6, ocorrencias: 7, situacao: 8, total: 9 };
 var MESES = { JANEIRO: 1, FEVEREIRO: 2, 'MARÇO': 3, MARCO: 3, ABRIL: 4, MAIO: 5, JUNHO: 6, JULHO: 7, AGOSTO: 8, SETEMBRO: 9, OUTUBRO: 10, NOVEMBRO: 11, DEZEMBRO: 12 };
 
 function gravarAluno(codigo, a) {
@@ -102,6 +102,7 @@ function gravarAluno(codigo, a) {
       numero(a.total_cents) / 100
     ]]);
     aba.getRange(linha, COL.matricula).setNumberFormat('dd/mm/yyyy');
+    if (/^\d{1,10}$/.test(String(a.ra || ''))) aba.getRange(linha, COL.ra).setValue(Number(a.ra));
     Object.keys(meses).forEach(function (m) {
       if (!blocos[m]) return;
       var p = meses[m];

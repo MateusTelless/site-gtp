@@ -36,6 +36,13 @@
       "when": 1794843786556,
       "tag": "0004_catraca",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1794958176172,
+      "tag": "0005_ex_alunos_rg_ra",
+      "breakpoints": true
     }
   ]
 }

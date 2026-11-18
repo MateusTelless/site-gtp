@@ -55,7 +55,18 @@ CREATE TABLE `enrollments` (
 	`status_reason` text,
 	`contract_signed_at` text,
 	`created_at` text NOT NULL,
-	`updated_at` text NOT NULL
+	`updated_at` text NOT NULL,
+	`first_due_on` text,
+	`card_installments` integer,
+	`card_visit_on` text,
+	`contract_ref` text,
+	`contract_sent_at` text,
+	`discount_pct` integer DEFAULT 0 NOT NULL,
+	`discount_reason` text,
+	`discount_status` text,
+	`discount_info` text,
+	`discount_check` text,
+	`discount_checked_at` text
 );
 --> statement-breakpoint
 CREATE INDEX `enrollments_student` ON `enrollments` (`student_id`);--> statement-breakpoint
@@ -117,16 +128,14 @@ CREATE TABLE `plans` (
 	`id` text PRIMARY KEY NOT NULL,
 	`class_id` text NOT NULL,
 	`name` text NOT NULL,
-	`enrollment_fee_cents` integer DEFAULT 0 NOT NULL,
-	`enrollment_fee_due_days` integer DEFAULT 3 NOT NULL,
-	`installment_count` integer NOT NULL,
-	`installment_cents` integer NOT NULL,
-	`first_due_month` text NOT NULL,
 	`due_days` text NOT NULL,
 	`methods` text NOT NULL,
 	`active` integer DEFAULT 1 NOT NULL,
 	`created_at` text NOT NULL,
-	`updated_at` text NOT NULL
+	`updated_at` text NOT NULL,
+	`cash_cents` integer DEFAULT 0 NOT NULL,
+	`card_max` integer DEFAULT 12 NOT NULL,
+	`card_rate_bp` integer DEFAULT 0 NOT NULL
 );
 --> statement-breakpoint
 CREATE INDEX `plans_class` ON `plans` (`class_id`);--> statement-breakpoint
@@ -160,3 +169,17 @@ CREATE TABLE `students` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `students_person_id_unique` ON `students` (`person_id`);
+--> statement-breakpoint
+CREATE TABLE `enrollment_documents` (
+	`id` text PRIMARY KEY NOT NULL,
+	`enrollment_id` text,
+	`kind` text NOT NULL,
+	`r2_key` text NOT NULL,
+	`content_type` text NOT NULL,
+	`size` integer NOT NULL,
+	`uploaded_at` text NOT NULL,
+	`ip_hash` text,
+	`part` text DEFAULT 'frente' NOT NULL
+);
+--> statement-breakpoint
+CREATE INDEX `enrollment_documents_enrollment_idx` ON `enrollment_documents` (`enrollment_id`);

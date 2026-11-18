@@ -1,20 +1,32 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Matrícula | GETEPE</title><meta name="description" content="Faça sua matrícula no GETEPE: escolha a turma e o plano, preencha os dados e receba o contrato e a primeira cobrança por e-mail."><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/logo-marinho-teste.png"><link rel="stylesheet" href="/style.css?v=69"><link rel="stylesheet" href="/guides.css?v=1"><link rel="stylesheet" href="/matricula.css?v=4"></head><body>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Matrícula | GETEPE</title><meta name="description" content="Faça sua matrícula no GETEPE: escolha a turma, preencha os dados, escolha Pix ou cartão e receba o contrato por e-mail."><meta name="robots" content="noindex,nofollow"><link rel="icon" href="/logo-marinho-teste.png"><link rel="stylesheet" href="/style.css?v=71"><link rel="stylesheet" href="/guides.css?v=1"><link rel="stylesheet" href="/matricula.css?v=9"></head><body>
 <div class="preview">GETEPE · CURSO GENERAL TELLES PIRES</div>
 <header class="guide-header"><a class="brand" href="/"><img src="/logo-marinho-teste.png" alt="" width="44" height="44"> GETEPE</a><nav aria-label="Menu principal"><a href="/#cursos">Nossos cursos</a><a href="/calendario-de-turmas/">Turmas e horários</a><a href="/unidade-sao-paulo/">Unidade</a></nav></header>
 <main class="guide-wrap enroll">
- <div class="guide-intro"><p class="eyebrow">MATRÍCULA</p><h1>Faça sua matrícula</h1><p>Leva cerca de 5 minutos. No fim, a equipe envia o contrato para assinar e a primeira cobrança para o e-mail informado.</p></div>
+ <div class="guide-intro"><p class="eyebrow">MATRÍCULA</p><h1>Faça sua matrícula</h1><p>Leva cerca de 5 minutos. No fim, você recebe o contrato por e-mail para assinar.</p></div>
  <ol class="enroll-steps" aria-label="Etapas da matrícula"><li data-step-label="1" class="current">Turma</li><li data-step-label="2">Aluno</li><li data-step-label="3">Responsável</li><li data-step-label="4">Pagamento</li><li data-step-label="5">Confirmação</li></ol>
  <form id="enroll" novalidate>
   <input type="text" name="website" class="enroll-trap" tabindex="-1" autocomplete="off" aria-hidden="true">
-  <section data-step="1"><h2>Escolha a turma e o plano</h2><div id="classes" class="enroll-options" role="radiogroup" aria-label="Turmas"><p>Carregando turmas…</p></div><div id="plans" class="enroll-options" role="radiogroup" aria-label="Planos"></div></section>
+  <section data-step="1"><h2>Escolha a turma</h2><div id="classes" class="enroll-options" role="radiogroup" aria-label="Turmas"><p>Carregando turmas…</p></div></section>
   <section data-step="2" hidden><h2>Dados do aluno</h2><div class="enroll-grid" data-person="aluno"></div></section>
   <section data-step="3" hidden><h2>Responsável financeiro</h2><p id="guardian-why"></p><div id="guardian-fields"><div class="enroll-grid" data-person="responsavel"></div><label>Parentesco com o aluno<input name="responsavel.parentesco" maxlength="40" autocomplete="off"></label></div></section>
-  <section data-step="4" hidden><h2>Pagamento</h2><div class="enroll-grid"><label>Dia de vencimento das mensalidades<select name="vencimento" id="due-day"></select></label><fieldset><legend>Forma de pagamento</legend><div id="methods"></div></fieldset></div><p class="enroll-note">O pagamento é feito na página do serviço de cobrança. Nenhum dado de cartão é digitado aqui.</p><div class="guide-table-wrap"><table><caption>Parcelas previstas</caption><thead><tr><th>Parcela</th><th>Vencimento</th><th>Valor</th></tr></thead><tbody id="schedule"><tr><td colspan="3">Escolha o dia de vencimento.</td></tr></tbody></table></div></section>
+  <section data-step="4" hidden><h2>Pagamento</h2>
+   <div id="discount"></div>
+   <fieldset class="enroll-block"><legend>Como você quer pagar?</legend><div id="methods" class="enroll-options" role="radiogroup" aria-label="Forma de pagamento"></div></fieldset>
+   <div id="pay-pix" hidden>
+    <fieldset class="enroll-block" id="pix-days-box"><legend>Dia de vencimento das parcelas</legend><div id="pix-days" class="enroll-chips"></div><label id="pix-other-wrap" class="enroll-other" hidden>Qual dia do mês? (1 a 28)<input name="vencimento_outro" type="number" min="1" max="28" inputmode="numeric"></label></fieldset>
+    <fieldset class="enroll-block"><legend>Data da primeira parcela (em até 3 dias)</legend><div id="pix-first" class="enroll-chips"></div></fieldset>
+    <div class="guide-table-wrap"><table><caption>Parcelas</caption><thead><tr><th>Parcela</th><th>Vencimento</th><th>Valor</th></tr></thead><tbody id="schedule"><tr><td colspan="3">Escolha o dia de vencimento e a data da primeira parcela.</td></tr></tbody></table></div>
+   </div>
+   <div id="pay-card" hidden>
+    <label class="enroll-block">Dia da visita para passar o cartão (dia útil)<select name="visita"></select></label>
+    <p class="enroll-note">Na unidade: Rua Vergueiro, 819 · Sobreloja 1 · Liberdade, São Paulo, de segunda a sexta. O cartão é passado na maquininha; nenhum dado de cartão é digitado no site.</p>
+   </div>
+  </section>
   <section data-step="5" hidden><h2>Confirme suas informações</h2><p>Confira tudo antes de enviar. O contrato sai com estes dados.</p><div id="review"></div><label class="enroll-check enroll-check-strong"><input type="checkbox" name="turma_ok"><span>Confirmo que quero me matricular na turma <b id="turma-ok-name"></b>.</span></label><label class="enroll-check"><input type="checkbox" name="aceite"> Li e aceito a política de privacidade e autorizo o uso destes dados para a matrícula, o contrato e a cobrança do curso.</label></section>
   <p id="enroll-error" class="enroll-error" role="alert" hidden></p>
   <div class="enroll-actions"><button type="button" class="button" id="back" hidden>Voltar</button><button type="submit" class="button dark" id="next">Continuar</button></div>
  </form>
- <section id="done" class="guide-section" hidden tabindex="-1"><h2>Matrícula recebida</h2><p id="done-message"></p><ol><li>Você recebe o contrato por e-mail para assinar.</li><li>Depois, recebe a primeira cobrança, por Pix ou cartão de crédito.</li><li>Com o pagamento confirmado, vá à unidade cadastrar a biometria: Rua Vergueiro, 819, Sobreloja 1, Liberdade, São Paulo.</li></ol><p>Dúvidas? Fale com a equipe pelo <a href="https://wa.me/5511971920102" target="_blank" rel="noopener noreferrer">WhatsApp ↗</a>.</p></section>
+ <section id="done" class="guide-section" hidden tabindex="-1"><h2>Matrícula recebida</h2><p id="done-message"></p><ol><li>Você recebe o contrato por e-mail para assinar.</li><li id="done-pay">Depois, faça o pagamento.</li><li>Com o pagamento confirmado, vá à unidade cadastrar a biometria: Rua Vergueiro, 819, Sobreloja 1, Liberdade, São Paulo.</li></ol><p>Dúvidas? Fale com a equipe pelo <a href="https://wa.me/5511971920102" target="_blank" rel="noopener noreferrer">WhatsApp ↗</a>.</p></section>
 </main>
 <footer class="guide-footer"><b>GETEPE · Curso General Telles Pires</b><p>Rua Vergueiro, 819 · Sobreloja 1 · Liberdade · São Paulo</p><a href="/">Voltar ao site</a></footer>
-<script src="/matricula.js?v=3" defer></script></body></html>
+<script src="/matricula.js?v=12" defer></script></body></html>

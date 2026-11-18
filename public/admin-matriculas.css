@@ -79,3 +79,9 @@ tr.s-current td{background:#eef3f8}
 .s-field span{font-size:.82rem;color:#5c6d82}
 .s-field b{color:#102c4d;font-weight:600;overflow-wrap:anywhere}
 .card.s-late{border-color:#e5b4b4;background:#fdf3f3}
+
+/* Tabela do cartão no plano. */
+.m-card{border:1px solid #dde3ea;border-radius:12px;padding:14px;margin:12px 0}
+.m-card legend{font-weight:700;padding:0 6px}
+.box.m-warn{border-color:#9a6a12;background:#fbf4e4}
+.m-check{border-left:4px solid #22744a;background:#e0f0e7;padding:10px 12px;border-radius:8px;margin:8px 0}.m-check.bad{border-left-color:#b0352d;background:#f8e1de}.m-check ul{margin:6px 0 0 18px}
