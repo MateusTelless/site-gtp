@@ -23,7 +23,7 @@ namespace PonteCatraca
     {
         // Origens (EasyInnerInterop.cs da Topdata, exceto 12 que vem do manual)
         const byte ORIGEM_TECLADO = 1, ORIGEM_LEITOR1 = 2, ORIGEM_LEITOR2 = 3;
-        const byte ORIGEM_FIM_TEMPO = 5, ORIGEM_GIRO = 6, ORIGEM_BIOMETRIA = 12;
+        const byte ORIGEM_FIM_TEMPO = 5, ORIGEM_GIRO = 6, ORIGEM_BIOMETRIA = 12, ORIGEM_RESPOSTA_BIO = 13;
 
         const byte TCP_PORTA_FIXA = 2;
         const byte FORMA_LEITOR1_IDENTIFICACAO_BIO = 100;
@@ -286,6 +286,11 @@ namespace PonteCatraca
                     var estava = e.aguardandoGiro;
                     Rearmar(e);
                     return estava ? new Leitura { tipo = TipoLeitura.Desistencia, equipamento = e.numero, origem = "fim do tempo" } : null;
+
+                case ORIGEM_RESPOSTA_BIO:
+                    // Visto no teste real (17/11/2026): enquanto a ponte lista e copia digitais, chegam eventos
+                    // com origem 13 (respostas do módulo biométrico). Não são passagens: ignora sem rearmar.
+                    return null;
 
                 default:
                     // Registrar tudo que não conhecemos ajuda a acertar os códigos no primeiro teste.

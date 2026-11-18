@@ -6,7 +6,7 @@ namespace PonteCatraca
 {
     public static class Programa
     {
-        public const string Versao = "0.1.3";
+        public const string Versao = "0.1.4";
 
         /// Uso:
         ///   PonteCatraca.exe              -> roda como serviÃ§o do Windows (instalado com instalar-servico.ps1)

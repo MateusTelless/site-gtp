@@ -29,6 +29,8 @@ namespace PonteCatraca
         readonly Stopwatch desdeListagemDigitais = new Stopwatch();
         readonly Stopwatch desdeRodadaDigitais = Stopwatch.StartNew();
         bool listagemDigitaisFeita;
+        // Usuários que aparecem na lista mas a catraca diz que não têm digital (retorno 132): não tenta de novo.
+        readonly HashSet<string> semDigital = new HashSet<string>(StringComparer.Ordinal);
         int copiadasNaRodada, falhasNaRodada, backupsNaRodada;
 
         string PastaBackupDigitais(int tipoBio)
@@ -95,6 +97,7 @@ namespace PonteCatraca
             var faltando = new Dictionary<int, int>();
             foreach (var u in todos)
             {
+                if (semDigital.Contains(u)) continue;
                 foreach (var destino in catracas)
                 {
                     if (porCatraca[destino.numero].Contains(u)) continue;
@@ -116,11 +119,12 @@ namespace PonteCatraca
 
         void ExecutarTarefaDigital(TarefaDigital t)
         {
+            if (semDigital.Contains(t.usuario)) return;
             var origem = De(t.origem);
             var template = LerDigital(origem, t.usuario);
             if (template == null)
             {
-                if (t.destino != 0) falhasNaRodada++;
+                if (t.destino != 0 && !semDigital.Contains(t.usuario)) falhasNaRodada++;
                 return;
             }
             if (cfg.backupDigitais) GuardarBackup(origem.tipoBio, t.usuario, template);
@@ -184,6 +188,13 @@ namespace PonteCatraca
             int tamanho = 0;
             var r = EasyInner.RequisitarUsuarioCadastradoBio(e.numero, e.tipoBio, usuario);
             if (r == EasyInner.RET_COMANDO_OK) r = EasyInner.RespostaUsuarioCadastradoBio(e.numero, ref tamanho);
+            if (r == EasyInner.RET_BIO_USR_NAO_CADASTRADO)
+            {
+                // Cadastro sem digital (ex.: usuário criado só com número). Não é erro; anota e não tenta mais.
+                semDigital.Add(usuario);
+                Log.Info("Usuário " + usuario + " está na catraca " + e.numero + " sem digital; não há o que copiar.");
+                return null;
+            }
             if (r != EasyInner.RET_COMANDO_OK || tamanho <= 0)
             {
                 Log.Aviso("Digital do usuário " + usuario + ": não consegui ler da catraca " + e.numero + " (retorno " + r + ").");
