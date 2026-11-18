@@ -320,7 +320,10 @@ namespace PonteCatraca
             EasyInner.EnviarMensagemTemporariaOnLine(e.numero, 0, Linhas(linha1, linha2), (byte)cfg.tempoLiberacaoSegundos);
             byte r;
             if (!apenasEntrada) r = EasyInner.LiberarCatracaDoisSentidos(e.numero);
-            else if (e.invertida) r = EasyInner.LiberarCatracaEntradaInvertida(e.numero);
+            else if (e.invertida)
+                r = cfg.liberarInvertidaCom == "entradaInvertida"
+                    ? EasyInner.LiberarCatracaEntradaInvertida(e.numero)
+                    : EasyInner.LiberarCatracaSaida(e.numero);
             else r = EasyInner.LiberarCatracaEntrada(e.numero);
             Ok(r, "LiberarCatraca");
             e.aguardandoGiro = true;

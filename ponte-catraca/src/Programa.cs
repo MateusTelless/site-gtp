@@ -6,7 +6,7 @@ namespace PonteCatraca
 {
     public static class Programa
     {
-        public const string Versao = "0.1.7";
+        public const string Versao = "0.1.8";
 
         /// Uso:
         ///   PonteCatraca.exe              -> roda como serviço do Windows (instalado com instalar-servico.ps1)
@@ -44,7 +44,8 @@ namespace PonteCatraca
             // Mostra qual config.json está valendo: no teste de 17/11/2026 editaram o arquivo de outra pasta.
             Log.Info("Configuração: " + Path.GetFullPath(caminhoConfig));
             Log.Info("  catracas " + string.Join(", ", cfg.inners)
-                + "; invertidas: " + (cfg.catracasInvertidas.Count == 0 ? "nenhuma" : string.Join(", ", cfg.catracasInvertidas))
+                + "; invertidas: " + (cfg.catracasInvertidas.Count == 0 ? "nenhuma" : string.Join(", ", cfg.catracasInvertidas) + " (libera com " + cfg.liberarInvertidaCom + ")")
+                + (cfg.liberarSaidaSempre ? "; ATENÇÃO: liberarSaidaSempre=true (dedo também na saída)" : "")
                 + "; sempre liberados: " + (cfg.codigosSempreLiberados.Count == 0 ? "nenhum" : string.Join(", ", cfg.codigosSempreLiberados)) + ".");
 
             ICatraca catraca;
