@@ -34,6 +34,7 @@ namespace PonteCatraca
             public bool conectada;
             public bool aguardandoGiro;
             public int pingsFalhos;
+            public bool invertida;
             public int tipoBio = -1;   // módulo biométrico (0 = LN, 1 = LC, 2 = LM); -1 = desconhecido, não copia digitais
             public readonly Stopwatch desdeLiberacao = new Stopwatch();
             public readonly Stopwatch desdePing = new Stopwatch();
@@ -48,7 +49,7 @@ namespace PonteCatraca
         public CatracaEasyInner(Config cfg)
         {
             this.cfg = cfg;
-            catracas = cfg.inners.Select(n => new Estado { numero = n }).ToList();
+            catracas = cfg.inners.Select(n => new Estado { numero = n, invertida = cfg.catracasInvertidas.Contains(n) }).ToList();
         }
 
         static void Ok(byte ret, string comando)
@@ -126,7 +127,7 @@ namespace PonteCatraca
                 byte ret = 1;
                 for (int tentativa = 1; tentativa <= 3 && ret != EasyInner.RET_COMANDO_OK; tentativa++)
                 {
-                    MontarConfiguracao(vAlta);
+                    MontarConfiguracao(vAlta, e.invertida);
                     ret = EasyInner.EnviarConfiguracoes(e.numero);
                     if (ret != EasyInner.RET_COMANDO_OK) { Log.Aviso("Catraca " + e.numero + ": EnviarConfiguracoes retornou " + ret + " (tentativa " + tentativa + ")"); Thread.Sleep(1000); }
                 }
@@ -136,7 +137,7 @@ namespace PonteCatraca
                 e.conectada = true;
                 e.pingsFalhos = 0;
                 e.desdePing.Restart();
-                Log.Info("Catraca " + e.numero + " conectada, em modo online.");
+                Log.Info("Catraca " + e.numero + " conectada, em modo online" + (e.invertida ? " (montada invertida)." : "."));
             }
             catch (Exception ex)
             {
@@ -145,7 +146,7 @@ namespace PonteCatraca
             }
         }
 
-        void MontarConfiguracao(byte vAlta)
+        void MontarConfiguracao(byte vAlta, bool invertida)
         {
                 // Configuração igual à do exemplo oficial da Topdata (FrmOnlineController.MontaConfiguracaoInner).
                 // Fica num buffer da DLL até EnviarConfiguracoes, por isso vai uma catraca de cada vez.
@@ -165,7 +166,7 @@ namespace PonteCatraca
                     // ATENÇÃO: 8 = catraca livre nos DOIS sentidos (qualquer um passa). Não usar.
                     // Catraca invertida (como no exemplo oficial, Acionamento_Catraca_Saida_Liberada + CatInvertida):
                     // 7 = CATRACA_ENTRADA_LIBERADA e leitor "somente saída", que na prática é a entrada do prédio.
-                    if (cfg.catracaInvertida)
+                    if (invertida)
                     {
                         Ok(EasyInner.ConfigurarAcionamento1(7, (byte)cfg.tempoLiberacaoSegundos), "ConfigurarAcionamento1");
                         Ok(EasyInner.ConfigurarLeitor1(2), "ConfigurarLeitor1");
@@ -186,6 +187,8 @@ namespace PonteCatraca
                 Ok(EasyInner.DefinirFuncaoDefaultSensorBiometria(funcaoPadrao), "DefinirFuncaoDefaultSensorBiometria");
                 if (vAlta >= 5) { EasyInner.SetarBioVariavel(1); EasyInner.ConfigurarBioVariavel(1); }
                 Ok(EasyInner.ReceberDataHoraDadosOnLine(1), "ReceberDataHoraDadosOnLine");
+                // Sem isso o menu de cadastro da catraca fica bloqueado (padrão da DLL é 0 = não permitir).
+                Ok(EasyInner.PermitirCadastroInnerBioVerid((byte)(cfg.permitirCadastroNaCatraca ? 1 : 0)), "PermitirCadastroInnerBioVerid");
         }
 
         public void Desconectar()
@@ -202,7 +205,8 @@ namespace PonteCatraca
         void Rearmar(Estado e)
         {
             e.aguardandoGiro = false;
-            EasyInner.EnviarMensagemPadraoOnLine(e.numero, 0, Linhas("COLOQUE O", "DEDO"));
+            // O número no visor ajuda a saber qual catraca é qual (ex.: para preencher "catracasInvertidas").
+            EasyInner.EnviarMensagemPadraoOnLine(e.numero, 0, Linhas("CATRACA " + e.numero, "COLOQUE O DEDO"));
             Ok(EasyInner.EnviarFormasEntradasOnLine(e.numero, 0, 0, FORMA_LEITOR1_IDENTIFICACAO_BIO, 10, 17),
                 "EnviarFormasEntradasOnLine");
         }
@@ -290,7 +294,7 @@ namespace PonteCatraca
 
                 case ORIGEM_GIRO:
                     Rearmar(e);
-                    return new Leitura { tipo = TipoLeitura.Giro, equipamento = e.numero, origem = (compl == 1) != cfg.catracaInvertida ? "entrada" : "saida" };
+                    return new Leitura { tipo = TipoLeitura.Giro, equipamento = e.numero, origem = (compl == 1) != e.invertida ? "entrada" : "saida" };
 
                 case ORIGEM_FIM_TEMPO:
                     var estava = e.aguardandoGiro;
@@ -316,7 +320,7 @@ namespace PonteCatraca
             EasyInner.EnviarMensagemTemporariaOnLine(e.numero, 0, Linhas(linha1, linha2), (byte)cfg.tempoLiberacaoSegundos);
             byte r;
             if (!apenasEntrada) r = EasyInner.LiberarCatracaDoisSentidos(e.numero);
-            else if (cfg.catracaInvertida) r = EasyInner.LiberarCatracaEntradaInvertida(e.numero);
+            else if (e.invertida) r = EasyInner.LiberarCatracaEntradaInvertida(e.numero);
             else r = EasyInner.LiberarCatracaEntrada(e.numero);
             Ok(r, "LiberarCatraca");
             e.aguardandoGiro = true;

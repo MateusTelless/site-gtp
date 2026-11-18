@@ -39,6 +39,7 @@ namespace PonteCatraca
         [DllImport(Dll, CallingConvention = Cc)] public static extern byte DefinirFuncaoDefaultSensorBiometria(byte funcao);
         [DllImport(Dll, CallingConvention = Cc)] public static extern byte DefinirFuncaoDefaultLeitoresProximidade(byte funcao);
         [DllImport(Dll, CallingConvention = Cc)] public static extern byte RegistrarAcessoNegado(byte tipoRegistro);
+        [DllImport(Dll, CallingConvention = Cc)] public static extern byte PermitirCadastroInnerBioVerid(byte permite);
         [DllImport(Dll, CallingConvention = Cc)] public static extern void SetarBioVariavel(int maior);
         [DllImport(Dll, CallingConvention = Cc)] public static extern void ConfigurarBioVariavel(int maior);
         [DllImport(Dll, CallingConvention = Cc)]

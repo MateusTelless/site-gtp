@@ -9,6 +9,7 @@
   "portaCatraca": 3570,
   "tempoLiberacaoSegundos": 5,
   "liberarSaidaSempre": false,
+  "catracasInvertidas": [],
   "qtdDigitosCodigo": 14,
 
   "codigosSempreLiberados": [],

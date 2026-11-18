@@ -23,9 +23,11 @@ namespace PonteCatraca
         // false: o dedo libera só a entrada (a saída do GTP já é livre na catraca).
         // true: o dedo libera os dois sentidos (para catracas que pedem o dedo também na saída).
         public bool liberarSaidaSempre = false;
-        // Catraca montada "invertida" (lado esquerdo, no SDK da Topdata): o que a placa chama de saída é a entrada do prédio.
-        // No GTP as duas são assim (teste de 17/11/2026: sem isso a entrada ficou livre e a saída travada).
-        public bool catracaInvertida = true;
+        // Números das catracas montadas "invertidas" (CatInvertida no SDK da Topdata): o que a placa chama de saída
+        // é a entrada do prédio. No GTP é só a da direita (teste de 17/11/2026). O visor mostra "CATRACA n" para identificar.
+        public List<int> catracasInvertidas = new List<int>();
+        // Deixa cadastrar digital pelo menu da própria catraca (como hoje: menu, número, dedo 3 vezes).
+        public bool permitirCadastroNaCatraca = true;
         public int qtdDigitosCodigo = 14;
 
         // Códigos que sempre passam (professores, equipe), mesmo sem internet
@@ -46,6 +48,7 @@ namespace PonteCatraca
             var json = File.ReadAllText(caminho);
             var cfg = new JavaScriptSerializer().Deserialize<Config>(json);
             if (cfg.codigosSempreLiberados == null) cfg.codigosSempreLiberados = new List<string>();
+            if (cfg.catracasInvertidas == null) cfg.catracasInvertidas = new List<int>();
             if (cfg.inners == null || cfg.inners.Count == 0) cfg.inners = new List<int> { cfg.numeroInner };
             foreach (var n in cfg.inners)
                 if (n < 1 || n > 99) throw new Exception("Número de catraca inválido em \"inners\": " + n);
