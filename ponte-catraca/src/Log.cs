@@ -23,14 +23,18 @@ namespace PonteCatraca
             var linha = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " [" + nivel + "] " + msg;
             lock (trava)
             {
-                Console.WriteLine(linha);
-                if (pasta == null) return;
-                try
+                // Arquivo primeiro: se a janela travar (alguém clicou nela e ela ficou em "Selecionar"),
+                // o log em disco já tem a linha. No teste de 19/11/2026 o log parou por causa disso.
+                if (pasta != null)
                 {
-                    File.AppendAllText(Path.Combine(pasta, DateTime.Now.ToString("yyyy-MM-dd") + ".log"),
-                        linha + Environment.NewLine);
+                    try
+                    {
+                        File.AppendAllText(Path.Combine(pasta, DateTime.Now.ToString("yyyy-MM-dd") + ".log"),
+                            linha + Environment.NewLine);
+                    }
+                    catch { }
                 }
-                catch { }
+                Console.WriteLine(linha);
             }
         }
     }

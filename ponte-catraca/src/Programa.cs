@@ -6,7 +6,7 @@ namespace PonteCatraca
 {
     public static class Programa
     {
-        public const string Versao = "0.2.1";
+        public const string Versao = "0.2.2";
 
         /// Uso:
         ///   PonteCatraca.exe              -> roda como serviço do Windows (instalado com instalar-servico.ps1)
@@ -26,6 +26,7 @@ namespace PonteCatraca
                 return 0;
             }
 
+            DesligarSelecaoNaJanela();
             var ponte = Montar(Path.Combine(pasta, "config.json"), semInternet);
             ponte.Iniciar();
             Console.WriteLine("Ponte rodando. Ctrl+C para sair.");
@@ -34,6 +35,24 @@ namespace PonteCatraca
             fim.WaitOne();
             ponte.Parar();
             return 0;
+        }
+
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")] static extern IntPtr GetStdHandle(int nStdHandle);
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")] static extern bool GetConsoleMode(IntPtr h, out uint modo);
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")] static extern bool SetConsoleMode(IntPtr h, uint modo);
+
+        /// Clicar na janela do teste ativa a "Edição Rápida" do Windows, que congela o programa até apertar Esc
+        /// (as catracas param de ser atendidas). Desliga isso só nesta janela.
+        static void DesligarSelecaoNaJanela()
+        {
+            try
+            {
+                const uint EDICAO_RAPIDA = 0x0040, FLAGS_ESTENDIDAS = 0x0080;
+                var h = GetStdHandle(-10);   // entrada da janela
+                uint modo;
+                if (GetConsoleMode(h, out modo)) SetConsoleMode(h, (modo & ~EDICAO_RAPIDA) | FLAGS_ESTENDIDAS);
+            }
+            catch { }
         }
 
         public static Ponte Montar(string caminhoConfig, bool semInternet)
