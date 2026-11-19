@@ -30,6 +30,9 @@ namespace PonteCatraca
         // Como liberar a entrada numa catraca invertida: "entradaInvertida" (LiberarCatracaEntradaInvertida, como no
         // exemplo oficial para leitor invertido) ou "saida" (LiberarCatracaSaida), caso a primeira não destrave.
         public string liberarInvertidaCom = "entradaInvertida";
+        // Comando de liberar a entrada por catraca, quando o padrão não destrava o braço certo.
+        // Ex.: { "1": "saida", "2": "saida" }. Valores: entrada, saida, entradaInvertida, saidaInvertida.
+        public Dictionary<string, string> comandoLiberar = new Dictionary<string, string>();
         // Deixa cadastrar digital pelo menu da própria catraca (como hoje: menu, número, dedo 3 vezes).
         public bool permitirCadastroNaCatraca = true;
         public int qtdDigitosCodigo = 14;
@@ -57,6 +60,7 @@ namespace PonteCatraca
             var cfg = new JavaScriptSerializer().Deserialize<Config>(json);
             if (cfg.codigosSempreLiberados == null) cfg.codigosSempreLiberados = new List<string>();
             if (cfg.catracasInvertidas == null) cfg.catracasInvertidas = new List<int>();
+            if (cfg.comandoLiberar == null) cfg.comandoLiberar = new Dictionary<string, string>();
             if (cfg.inners == null || cfg.inners.Count == 0) cfg.inners = new List<int> { cfg.numeroInner };
             foreach (var n in cfg.inners)
                 if (n < 1 || n > 99) throw new Exception("Número de catraca inválido em \"inners\": " + n);

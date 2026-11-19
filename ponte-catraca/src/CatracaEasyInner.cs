@@ -152,7 +152,8 @@ namespace PonteCatraca
                 e.conectada = true;
                 e.pingsFalhos = 0;
                 e.desdePing.Restart();
-                Log.Info("Catraca " + e.numero + " conectada, em modo online" + (e.invertida ? " (montada invertida)." : "."));
+                Log.Info("Catraca " + e.numero + " conectada, em modo online" + (e.invertida ? " (montada invertida)" : "")
+                    + "; libera a entrada com \"" + ComandoLiberar(e) + "\".");
             }
             catch (Exception ex)
             {
@@ -338,16 +339,28 @@ namespace PonteCatraca
         {
             var e = De(equipamento);
             EasyInner.EnviarMensagemTemporariaOnLine(e.numero, 0, Linhas(linha1, linha2), (byte)cfg.tempoLiberacaoSegundos);
-            byte r;
-            if (!apenasEntrada) r = EasyInner.LiberarCatracaDoisSentidos(e.numero);
-            else if (e.invertida)
-                r = cfg.liberarInvertidaCom == "entradaInvertida"
-                    ? EasyInner.LiberarCatracaEntradaInvertida(e.numero)
-                    : EasyInner.LiberarCatracaSaida(e.numero);
-            else r = EasyInner.LiberarCatracaEntrada(e.numero);
-            Ok(r, "LiberarCatraca");
+            Ok(apenasEntrada ? LiberarEntrada(e) : EasyInner.LiberarCatracaDoisSentidos(e.numero), "LiberarCatraca");
             e.aguardandoGiro = true;
             e.desdeLiberacao.Restart();
+        }
+
+        /// Comando que destrava a entrada do prédio nesta catraca (depende de como ela foi montada).
+        string ComandoLiberar(Estado e)
+        {
+            string c;
+            if (cfg.comandoLiberar.TryGetValue(e.numero.ToString(), out c) && !string.IsNullOrEmpty(c)) return c;
+            return e.invertida ? cfg.liberarInvertidaCom : "entrada";
+        }
+
+        byte LiberarEntrada(Estado e)
+        {
+            switch (ComandoLiberar(e))
+            {
+                case "saida": return EasyInner.LiberarCatracaSaida(e.numero);
+                case "entradaInvertida": return EasyInner.LiberarCatracaEntradaInvertida(e.numero);
+                case "saidaInvertida": return EasyInner.LiberarCatracaSaidaInvertida(e.numero);
+                default: return EasyInner.LiberarCatracaEntrada(e.numero);
+            }
         }
 
         public void Negar(int equipamento, string linha1, string linha2)

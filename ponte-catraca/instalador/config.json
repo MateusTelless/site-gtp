@@ -10,7 +10,8 @@
   "tempoLiberacaoSegundos": 5,
   "liberarSaidaSempre": false,
   "catracasInvertidas": [2],
-  "liberarInvertidaCom": "entradaInvertida",
+  "liberarInvertidaCom": "saida",
+  "comandoLiberar": { "1": "entrada", "2": "saida" },
   "qtdDigitosCodigo": 14,
 
   "codigosSempreLiberados": [],
