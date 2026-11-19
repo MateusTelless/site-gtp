@@ -255,7 +255,10 @@ namespace PonteCatraca
             var ret = EasyInner.ReceberDadosOnLine(e.numero, ref origem, ref compl, cartao,
                 ref dia, ref mes, ref ano, ref hora, ref min, ref seg);
             if (ret == EasyInner.RET_COMANDO_OK)
+            {
+                if (origem != ORIGEM_RESPOSTA_BIO) desdeUltimoDedo.Restart();   // pausa a cópia de digitais
                 return Interpretar(e, origem, compl, cartao.ToString().Trim());
+            }
 
             // Sem evento (qualquer retorno diferente de 0): a cada 3 s manda PingOnLine, como o exemplo oficial.
             if (e.desdePing.ElapsedMilliseconds > 3000)

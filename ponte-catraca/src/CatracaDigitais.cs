@@ -28,10 +28,17 @@ namespace PonteCatraca
         readonly Queue<TarefaDigital> tarefasDigitais = new Queue<TarefaDigital>();
         readonly Stopwatch desdeListagemDigitais = new Stopwatch();
         readonly Stopwatch desdeRodadaDigitais = Stopwatch.StartNew();
+        readonly Stopwatch desdeUltimoDedo = new Stopwatch();
         bool listagemDigitaisFeita;
         // Usuários que aparecem na lista mas a catraca diz que não têm digital (retorno 132): não tenta de novo.
         readonly HashSet<string> semDigital = new HashSet<string>(StringComparer.Ordinal);
         int copiadasNaRodada, falhasNaRodada, backupsNaRodada;
+
+        bool HorarioDeManutencao()
+        {
+            int h = DateTime.Now.Hour, ini = cfg.horaInicioManutencao, fim = cfg.horaFimManutencao;
+            return ini <= fim ? (h >= ini && h < fim) : (h >= ini || h < fim);
+        }
 
         string PastaBackupDigitais(int tipoBio)
         {
@@ -42,7 +49,10 @@ namespace PonteCatraca
         {
             if (!cfg.sincronizarDigitais) return;
             if (catracas.Any(e => !e.conectada || e.aguardandoGiro || e.tipoBio < 0)) return;
-            if (desdeRodadaDigitais.ElapsedMilliseconds < 2000) return;
+            // Nunca atrapalha quem está passando: espera 20 s sem nenhum dedo nas catracas (teste de 19/11/2026:
+            // com blocos de 1,5 s a liberação chegava atrasada e a catraca travava antes do giro).
+            if (desdeUltimoDedo.IsRunning && desdeUltimoDedo.Elapsed.TotalSeconds < 20) return;
+            if (desdeRodadaDigitais.ElapsedMilliseconds < 1000) return;
             desdeRodadaDigitais.Restart();
 
             bool falouComBio = false;
@@ -61,7 +71,8 @@ namespace PonteCatraca
 
                 falouComBio = true;
                 var t = Stopwatch.StartNew();
-                while (tarefasDigitais.Count > 0 && t.ElapsedMilliseconds < 1500)
+                // Uma tarefa por vez (cada uma leva ~0,3 s); a próxima só depois de nova volta pelas catracas.
+                while (tarefasDigitais.Count > 0 && t.ElapsedMilliseconds < 300)
                     ExecutarTarefaDigital(tarefasDigitais.Dequeue());
 
                 if (tarefasDigitais.Count == 0 && (copiadasNaRodada + falhasNaRodada + backupsNaRodada) > 0)
@@ -106,7 +117,7 @@ namespace PonteCatraca
                     tarefasDigitais.Enqueue(new TarefaDigital { usuario = u, origem = origem.numero, destino = destino.numero });
                     faltando[destino.numero] = (faltando.ContainsKey(destino.numero) ? faltando[destino.numero] : 0) + 1;
                 }
-                if (cfg.backupDigitais)
+                if (cfg.backupDigitais && HorarioDeManutencao())
                 {
                     var dono = catracas.First(o => porCatraca[o.numero].Contains(u));
                     if (!File.Exists(Path.Combine(PastaBackupDigitais(dono.tipoBio), u + ".bin")))
@@ -120,6 +131,7 @@ namespace PonteCatraca
         void ExecutarTarefaDigital(TarefaDigital t)
         {
             if (semDigital.Contains(t.usuario)) return;
+            if (t.destino == 0 && !HorarioDeManutencao()) return;   // cópia de segurança fora de hora: deixa para a noite
             var origem = De(t.origem);
             var template = LerDigital(origem, t.usuario);
             if (template == null)

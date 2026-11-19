@@ -40,8 +40,12 @@ namespace PonteCatraca
         // Digitais: a ponte copia de uma catraca para a outra o que estiver faltando (cadastro feito numa só).
         // As digitais nunca saem da rede da escola: vão de catraca para catraca, com cópia de segurança em dados\digitais.
         public bool sincronizarDigitais = true;
-        public int intervaloSyncDigitaisMinutos = 5;
+        public int intervaloSyncDigitaisMinutos = 30;
         public bool backupDigitais = true;
+        // A cópia de segurança lê todas as digitais e ocupa o leitor: só nesse horário (teste de 19/11/2026: de dia
+        // ela deixava a catraca 15-20 s sem responder ao dedo).
+        public int horaInicioManutencao = 23;
+        public int horaFimManutencao = 5;
 
         public string pastaDados = "dados";
 
