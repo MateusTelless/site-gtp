@@ -21,8 +21,8 @@ type Rec={id:string;title:string;visible:boolean;fields:Record<string,string>};
 type Content={[key:string]:unknown;cursos:Rec[];carrossel:Rec[];apostilas:Rec[];provas:Rec[];paginas:Rec[];comunidade:Rec[];visual?:unknown};
 type ContentRow={id:string;body:string;revision:number};
 // Interesses do cadastro da comunidade (o mesmo índice em public/newsletter.js e public/admin-panel.js).
-// 0 APMBB, 1 EPCAR, 2 Colégio Naval, 3 EsPCEx, 4 ESA, 5 EEAR, 6 AFA, 7 Soldado PMESP, 8 Ainda estou escolhendo.
-const choices=['0','1','2','3','4','5','6','7','8'];
+// 0 APMBB, 1 EPCAR, 2 Colégio Naval, 3 EsPCEx, 4 ESA, 5 EEAR, 6 Soldado PMESP, 7 Ainda estou escolhendo.
+const choices=['0','1','2','3','4','5','6','7'];
 // Comunidade GETEPE no WhatsApp: um único link de convite, colado no painel (aba Comunidade). Os grupos por academia ficam dentro dela.
 const communityDefaults:Rec[]=[{id:'comunidade',title:'Comunidade GETEPE',visible:true,fields:{'Link da comunidade (WhatsApp)':''}}];
 async function body(req:Request,max=500000){const raw=await req.text();if(raw.length>max)fail('Conteúdo muito grande.',413);try{return JSON.parse(raw)}catch{fail('Dados inválidos.')}}
