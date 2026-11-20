@@ -593,3 +593,8 @@ html,body{overflow-x:clip}
 /* Cursos gravados: bloco do texto e botão um pouco mais à esquerda (professores também deslocados na arte). */
 
 @media(min-width:621px){.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source[srcset*="-tablet"]) .campaign-mobile-copy{transform:translateX(14px)}}@media(min-width:1025px){.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source[srcset*="-tablet"]) .campaign-mobile-copy{transform:translateX(1.6vw)}}
+/* Computador: APMBB e EsPCEx com o texto mais perto da foto (coluna começa logo após a arte). */
+@media(min-width:1025px){
+.hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]):has(source[srcset*="-tablet"]) .campaign-mobile-copy{width:50%;max-width:50%;padding-left:clamp(18px,1.8vw,36px)}
+.hero:has(.campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]) source[srcset*="-tablet"]) .hero-bottom{width:50%}
+}
