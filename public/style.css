@@ -466,3 +466,24 @@ html,body{overflow-x:clip}
 @media(max-width:620px){
 .hero .campaign-banner:has(source) picture img{-webkit-mask-image:linear-gradient(to bottom,#000 75%,transparent 100%);mask-image:linear-gradient(to bottom,#000 75%,transparent 100%)}
 }
+/* Ajuste: o fundo encosta na foto exatamente no tom da borda da arte (#051c3a); a névoa fica só atrás do texto, longe da emenda. */
+@media(min-width:621px) and (max-width:1024px){
+.hero:has(.campaign-banner source){background:radial-gradient(24% 55% at 79% 46%,#0b2747 0%,#08213f 55%,#051c3a 100%) #051c3a}
+}
+@media(max-width:620px){
+.hero:has(.campaign-banner source){background:radial-gradient(70% 30% at 50% 72%,#0a2545 0%,#051c3a 100%) #051c3a}
+}
+/* Divisão foto/texto mais suave: a foto esmaece numa faixa larga. */
+@media(min-width:621px) and (max-width:1024px){
+.hero .campaign-banner:has(source) picture img{-webkit-mask-image:linear-gradient(to right,#000 55%,rgba(0,0,0,.6) 75%,transparent 100%),linear-gradient(to bottom,#000 70%,transparent 100%);mask-image:linear-gradient(to right,#000 55%,rgba(0,0,0,.6) 75%,transparent 100%),linear-gradient(to bottom,#000 70%,transparent 100%)}
+}
+@media(max-width:620px){
+.hero .campaign-banner:has(source) picture img{-webkit-mask-image:linear-gradient(to bottom,#000 60%,rgba(0,0,0,.6) 80%,transparent 100%);mask-image:linear-gradient(to bottom,#000 60%,rgba(0,0,0,.6) 80%,transparent 100%)}
+}
+/* EsPCEx · ESA · EEAR: fundo em verde militar (tons do banner do computador). */
+@media(min-width:621px) and (max-width:1024px){
+.hero:has(.campaign-banner[data-art="carrossel-espcex-janeiro"] source){background:radial-gradient(24% 55% at 79% 46%,#1d3a22 0%,#13291a 55%,#0b1d10 100%) #0b1d10}
+}
+@media(max-width:620px){
+.hero:has(.campaign-banner[data-art="carrossel-espcex-janeiro"] source){background:radial-gradient(70% 30% at 50% 72%,#1a3520 0%,#0b1d10 100%) #0b1d10}
+}
