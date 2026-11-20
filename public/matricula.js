@@ -8,7 +8,7 @@ const UF='AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR S
 const WEEK=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
 let turmas=[],step=1,schedule=null,meta={};
 // Desconto de 5%: ex-aluno (o site confere pelo CPF e nascimento) ou militar/dependente com documento anexado. Não se somam.
-const PCT=5,DISC_TEXT={ex_aluno:'ex-aluno do GETEPE',militar:'militar',dependente_militar:'dependente de militar'};
+const PCT=5,DISC_TEXT={ex_aluno:'ex-aluno do GETEPÊ',militar:'militar',dependente_militar:'dependente de militar'};
 // Militar: frente e verso do documento. Dependente: também o documento do vínculo, o parentesco e o nome do militar.
 let exAluno=false,exChecked='',proof={kind:'',docs:{},sending:'',kin:'',mil:''};
 const KIN=['Filho(a)','Cônjuge','Companheiro(a)','Enteado(a)','Outro'];
@@ -104,12 +104,12 @@ const discBody=()=>{const r=discReason();return r==='ex_aluno'?{desconto:'ex_alu
 // Quadro do desconto, no alto do pagamento: ex-aluno já reconhecido, ou a opção de militar/dependente com o documento.
 function drawDiscount(){
  const box=$('#discount');
- if(exAluno){box.innerHTML=`<div class="enroll-disc ok"><b>Você tem 5% de desconto no valor total</b><span>porque é ex-aluno do GETEPE. Os valores abaixo já estão com o desconto.</span></div>`;return}
+ if(exAluno){box.innerHTML=`<div class="enroll-disc ok"><b>Você tem 5% de desconto no valor total</b><span>porque é ex-aluno do GETEPÊ. Os valores abaixo já estão com o desconto.</span></div>`;return}
  const k=proof.kind,dep=k==='dependente_militar';
  const LBL={frente:'Frente do documento militar',verso:'Verso do documento militar',vinculo:'Documento que mostra o vínculo (certidão de nascimento ou casamento, ou RG com o nome dos pais)'};
  const fileRow=p=>{const d=proof.docs[p];return `<div class="enroll-filerow"><label class="enroll-file">${d?'✓ '+LBL[p]+': '+esc(d.name)+' <small>(trocar)</small>':LBL[p]+' — PDF ou foto, até 5 MB'}<input type="file" name="documento_${p}" data-part="${p}" accept="application/pdf,image/jpeg,image/png,image/webp"></label>${proof.sending===p?'<span class="enroll-note">Enviando…</span>':''}</div>`};
  box.innerHTML=`<fieldset class="enroll-disc"><legend>É militar ou dependente de militar? Você tem 5% de desconto no valor total.</legend><div class="enroll-chips">${[['','Não'],['militar','Sou militar'],['dependente_militar','Sou dependente de militar']].map(([v,l])=>`<label class="enroll-chip"><input type="radio" name="desconto_tipo" value="${v}"${v===k?' checked':''}><span>${l}</span></label>`).join('')}</div>`+
-  (k?`<p class="enroll-note">Envie ${dep?'a frente e o verso do documento do militar (identidade militar) e o documento que mostra o vínculo':'a frente e o verso da sua identidade militar'}. Os documentos são conferidos; se algo não bater, a equipe confere antes do contrato.</p><p class="enroll-note enroll-lgpd">Usamos os documentos só para conferir o desconto: eles passam por leitura automática (Anthropic, EUA) e pela equipe do GETEPE.</p>`+
+  (k?`<p class="enroll-note">Envie ${dep?'a frente e o verso do documento do militar (identidade militar) e o documento que mostra o vínculo':'a frente e o verso da sua identidade militar'}. Os documentos são conferidos; se algo não bater, a equipe confere antes do contrato.</p><p class="enroll-note enroll-lgpd">Usamos os documentos só para conferir o desconto: eles passam por leitura automática (Anthropic, EUA) e pela equipe do GETEPÊ.</p>`+
    (dep?`<div class="enroll-grid"><label>Seu vínculo com o militar<select name="parentesco_militar"><option value="">Selecione</option>${KIN.map(x=>`<option${x===proof.kin?' selected':''}>${x}</option>`).join('')}</select></label><label>Nome completo do militar<input name="nome_militar" maxlength="120" value="${esc(proof.mil)}" autocomplete="off"></label></div>`:'')+
    proofParts().map(fileRow).join('')+
    (proofDone()?'<p class="enroll-ok">✓ Tudo enviado. O desconto de 5% já está nos valores abaixo.</p>':'<p class="enroll-note">O desconto entra quando tudo acima estiver enviado.</p>'):'')+`</fieldset>`;

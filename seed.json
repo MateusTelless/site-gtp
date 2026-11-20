@@ -89,7 +89,7 @@
         "Nome curto": "Matemática",
         "Encerramento": "",
         "Imagem do produto": "/curso-gravado-matematica.png",
-        "Texto alternativo da imagem": "GETEPE — curso gravado de Matemática — Mestre Joselias",
+        "Texto alternativo da imagem": "GETEPÊ — curso gravado de Matemática — Mestre Joselias",
         "Preço e parcelamento": "",
         "O que está incluído": "",
         "WhatsApp de matrícula": "",
@@ -109,7 +109,7 @@
         "Nome curto": "Biologia",
         "Encerramento": "",
         "Imagem do produto": "/curso-gravado-biologia.png",
-        "Texto alternativo da imagem": "GETEPE — curso gravado de Biologia — Mestre Okuma",
+        "Texto alternativo da imagem": "GETEPÊ — curso gravado de Biologia — Mestre Okuma",
         "Preço e parcelamento": "",
         "O que está incluído": "",
         "WhatsApp de matrícula": "",
@@ -129,7 +129,7 @@
         "Tipo de curso": "recorded",
         "Encerramento": "",
         "Imagem do produto": "/curso-gravado-gramatica.png",
-        "Texto alternativo da imagem": "GETEPE — curso gravado de Gramática — Mestre Fernando",
+        "Texto alternativo da imagem": "GETEPÊ — curso gravado de Gramática — Mestre Fernando",
         "Preço e parcelamento": "",
         "O que está incluído": "",
         "WhatsApp de matrícula": "",
@@ -151,7 +151,7 @@
         "Texto do botão": "Mais informações",
         "Destino do botão": "#informacoes/apmbb-janeiro",
         "Imagem": "/carrossel-apmbb-janeiro.png",
-        "Texto alternativo": "GETEPE — nova turma APMBB · Barro Branco, início em 12/01, presencial e online.",
+        "Texto alternativo": "GETEPÊ — nova turma APMBB · Barro Branco, início em 12/01, presencial e online.",
         "Formato": "banner"
       }
     },
@@ -165,7 +165,7 @@
         "Texto do botão": "Mais informações",
         "Destino do botão": "#informacoes/espcex-janeiro",
         "Imagem": "/carrossel-espcex-janeiro.png",
-        "Texto alternativo": "GETEPE — nova turma EsPCEx · ESA · EEAR, início em 12/01, presencial e online.",
+        "Texto alternativo": "GETEPÊ — nova turma EsPCEx · ESA · EEAR, início em 12/01, presencial e online.",
         "Formato": "banner"
       }
     },
@@ -179,7 +179,7 @@
         "Texto do botão": "Ver aula grátis!",
         "Destino do botão": "#aula-teste",
         "Imagem": "/carrossel-cursos-gravados.png",
-        "Texto alternativo": "GETEPE — cursos gravados por matéria: Gramática com Mestre Fernando, Matemática com Mestre Joselias e Biologia com Mestre Okuma. Estude no seu ritmo.",
+        "Texto alternativo": "GETEPÊ — cursos gravados por matéria: Gramática com Mestre Fernando, Matemática com Mestre Joselias e Biologia com Mestre Okuma. Estude no seu ritmo.",
         "Formato": "banner"
       }
     }
