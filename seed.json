@@ -232,6 +232,30 @@
         "Texto alternativo": "Capa de Caderno de Gramática",
         "Turma": "gramatica"
       }
+    },
+    {
+      "id": "epcar-caderno-01",
+      "title": "EPCAR · Caderno 01",
+      "visible": true,
+      "fields": {
+        "Descrição": "Curso EPCAR · Turma setembro 2026 · 505 páginas",
+        "Imagem": "https://cdn.awsli.com.br/300x300/1981/1981431/produto/403973012/7075f4de95524ca3bfa95aa3341d4af0-ou25hb04z4.png",
+        "Link de compra": "https://www.lojavirtualgetepe.com.br/curso-epcar-caderno-01-turma-setembro-2026",
+        "Texto alternativo": "Capa de EPCAR · Caderno 01",
+        "Turma": "epcar"
+      }
+    },
+    {
+      "id": "epcar-semana-basica",
+      "title": "EPCAR · Semana Básica",
+      "visible": true,
+      "fields": {
+        "Descrição": "Curso EPCAR · Turma setembro 2026",
+        "Imagem": "https://cdn.awsli.com.br/300x300/1981/1981431/produto/404386561/1761ee23b30c40d1b72f20c8769217e1-6b1hd1yqpx.png",
+        "Link de compra": "https://www.lojavirtualgetepe.com.br/curso-epcar-semana-basica-turma-setembro-2026",
+        "Texto alternativo": "Capa de EPCAR · Semana Básica",
+        "Turma": "epcar"
+      }
     }
   ],
   "__storeCatalogV1": true,
