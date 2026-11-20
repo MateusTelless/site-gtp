@@ -324,7 +324,7 @@ body:has(.student-shell) .whatsapp-float{display:none}
 .visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
 /* Topo no tablet (621 a 1024 px): mesma arte vertical do celular ao lado do texto real, com altura igual em todos os destaques. */
-@media(min-width:621px) and (max-width:1024px){
+@media(min-width:621px){
 .hero,.hero:has(.campaign-banner){height:auto;border-radius:0}
 .hero .campaign-banner:has(source){display:grid;grid-template-columns:minmax(0,11fr) minmax(0,9fr);padding-bottom:0;background:#061b35}
 .hero .campaign-banner:has(source)>a{aspect-ratio:7/5;min-height:100%}
@@ -441,16 +441,16 @@ html,body{overflow-x:clip}
 
 /* Marca GETEPÊ sobre a foto do carrossel no celular e no tablet (as artes móveis não têm o logo). */
 .campaign-brand{display:none}
-@media(max-width:1024px){
+@media(min-width:0px){
 .hero .campaign-banner:has(source)>a{position:relative}
 .hero .campaign-banner:has(source) .campaign-brand{display:flex;position:absolute;left:0;right:0;top:0;z-index:2;align-items:center;gap:10px;padding:14px 16px 34px;background:linear-gradient(180deg,rgba(6,27,53,.88) 0%,rgba(6,27,53,.55) 55%,rgba(6,27,53,0) 100%);color:#fff;pointer-events:none}
 .hero .campaign-banner:has(source) .campaign-brand img{width:48px;height:48px;flex:none;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))}
 .hero .campaign-banner:has(source) .campaign-brand>span{display:flex;flex-direction:column;font-weight:800;font-size:24px;line-height:1;letter-spacing:.5px;text-shadow:0 1px 4px rgba(0,0,0,.45)}
 .hero .campaign-banner:has(source) .campaign-brand small{margin-top:5px;font-size:9.5px;font-weight:600;letter-spacing:2px}
 }
-@media(min-width:621px) and (max-width:1024px){.hero .campaign-banner:has(source) .campaign-brand{padding:18px 20px 40px}.hero .campaign-banner:has(source) .campaign-brand img{width:56px;height:56px}.hero .campaign-banner:has(source) .campaign-brand>span{font-size:28px}}
+@media(min-width:621px){.hero .campaign-banner:has(source) .campaign-brand{padding:18px 20px 40px}.hero .campaign-banner:has(source) .campaign-brand img{width:56px;height:56px}.hero .campaign-banner:has(source) .campaign-brand>span{font-size:28px}}
 /* Celular e tablet: painel do texto e faixa das setas no mesmo azul com névoa das artes (bordas #051c3a, brilho #0b2644). */
-@media(max-width:1024px){
+@media(min-width:0px){
 .hero:has(.campaign-banner source){background:#051c3a}
 .hero .campaign-banner:has(source){background:#051c3a}
 .hero .campaign-banner:has(source) .campaign-mobile-copy{background:radial-gradient(130% 95% at 35% 40%,#103057 0%,#0a2546 42%,#051c3a 100%)}
@@ -458,7 +458,7 @@ html,body{overflow-x:clip}
 }
 @media(max-width:620px){.hero .campaign-banner:has(source) .campaign-mobile-copy{background:radial-gradient(140% 110% at 50% 0%,#0d2b4f 0%,#08223f 50%,#051c3a 100%)}}
 /* Celular e tablet: o carrossel inteiro é um fundo só no azul com névoa; a foto esmaece nas bordas e o texto e as setas ficam sobre o mesmo fundo. */
-@media(max-width:1024px){
+@media(min-width:0px){
 .hero:has(.campaign-banner source){background:radial-gradient(120% 110% at 28% 32%,#0f2d51 0%,#0a2545 40%,#051c3a 78%,#041a35 100%)}
 .hero .campaign-banner:has(source),.hero .campaign-banner:has(source) .campaign-mobile-copy,.hero:has(.campaign-banner source) .hero-bottom{background:transparent}
 .hero .campaign-banner:has(source) picture img{-webkit-mask-image:linear-gradient(to right,#000 80%,transparent 100%),linear-gradient(to bottom,#000 80%,transparent 100%);-webkit-mask-composite:source-in;mask-image:linear-gradient(to right,#000 80%,transparent 100%),linear-gradient(to bottom,#000 80%,transparent 100%);mask-composite:intersect}
@@ -467,42 +467,42 @@ html,body{overflow-x:clip}
 .hero .campaign-banner:has(source) picture img{-webkit-mask-image:linear-gradient(to bottom,#000 75%,transparent 100%);mask-image:linear-gradient(to bottom,#000 75%,transparent 100%)}
 }
 /* Ajuste: o fundo encosta na foto exatamente no tom da borda da arte (#051c3a); a névoa fica só atrás do texto, longe da emenda. */
-@media(min-width:621px) and (max-width:1024px){
+@media(min-width:621px){
 .hero:has(.campaign-banner source){background:radial-gradient(24% 55% at 79% 46%,#0b2747 0%,#08213f 55%,#051c3a 100%) #051c3a}
 }
 @media(max-width:620px){
 .hero:has(.campaign-banner source){background:radial-gradient(70% 30% at 50% 72%,#0a2545 0%,#051c3a 100%) #051c3a}
 }
 /* Divisão foto/texto mais suave: a foto esmaece numa faixa larga. */
-@media(min-width:621px) and (max-width:1024px){
+@media(min-width:621px){
 .hero .campaign-banner:has(source) picture img{-webkit-mask-image:linear-gradient(to right,#000 55%,rgba(0,0,0,.6) 75%,transparent 100%),linear-gradient(to bottom,#000 70%,transparent 100%);mask-image:linear-gradient(to right,#000 55%,rgba(0,0,0,.6) 75%,transparent 100%),linear-gradient(to bottom,#000 70%,transparent 100%)}
 }
 @media(max-width:620px){
 .hero .campaign-banner:has(source) picture img{-webkit-mask-image:linear-gradient(to bottom,#000 60%,rgba(0,0,0,.6) 80%,transparent 100%);mask-image:linear-gradient(to bottom,#000 60%,rgba(0,0,0,.6) 80%,transparent 100%)}
 }
 /* EsPCEx · ESA · EEAR: fundo em verde militar (tons do banner do computador). */
-@media(min-width:621px) and (max-width:1024px){
+@media(min-width:621px){
 .hero:has(.campaign-banner[data-art="carrossel-espcex-janeiro"] source){background:radial-gradient(24% 55% at 79% 46%,#1d3a22 0%,#13291a 55%,#0b1d10 100%) #0b1d10}
 }
 @media(max-width:620px){
 .hero:has(.campaign-banner[data-art="carrossel-espcex-janeiro"] source){background:radial-gradient(70% 30% at 50% 72%,#1a3520 0%,#0b1d10 100%) #0b1d10}
 }
 /* APMBB e EsPCEx (fotos claras): esmaecimento ainda mais longo e gradual até o fundo. */
-@media(min-width:621px) and (max-width:1024px){
+@media(min-width:621px){
 .hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]):has(source) picture img{-webkit-mask-image:linear-gradient(to right,#000 30%,rgba(0,0,0,.85) 45%,rgba(0,0,0,.6) 60%,rgba(0,0,0,.32) 75%,rgba(0,0,0,.12) 88%,transparent 100%),linear-gradient(to bottom,#000 60%,rgba(0,0,0,.5) 82%,transparent 100%);mask-image:linear-gradient(to right,#000 30%,rgba(0,0,0,.85) 45%,rgba(0,0,0,.6) 60%,rgba(0,0,0,.32) 75%,rgba(0,0,0,.12) 88%,transparent 100%),linear-gradient(to bottom,#000 60%,rgba(0,0,0,.5) 82%,transparent 100%)}
 }
 @media(max-width:620px){
 .hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]):has(source) picture img{-webkit-mask-image:linear-gradient(to bottom,#000 45%,rgba(0,0,0,.7) 65%,rgba(0,0,0,.3) 85%,transparent 100%);mask-image:linear-gradient(to bottom,#000 45%,rgba(0,0,0,.7) 65%,rgba(0,0,0,.3) 85%,transparent 100%)}
 }
 /* Cursos gravados: a arte já tem o mesmo azul do fundo; esmaece só a borda, para não apagar o Mestre Okuma. */
-@media(min-width:621px) and (max-width:1024px){
+@media(min-width:621px){
 .hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) picture img{-webkit-mask-image:linear-gradient(to right,#000 94%,transparent 100%),linear-gradient(to bottom,#000 90%,transparent 100%);mask-image:linear-gradient(to right,#000 94%,transparent 100%),linear-gradient(to bottom,#000 90%,transparent 100%)}
 }
 @media(max-width:620px){
 .hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) picture img{-webkit-mask-image:linear-gradient(to bottom,#000 90%,transparent 100%);mask-image:linear-gradient(to bottom,#000 90%,transparent 100%)}
 }
 /* Tablet (621–1024px): arte estendida (-tablet) inteira, sem esmaecer a foto; o texto fica sobre a parte que já virou fundo. */
-@media(min-width:621px) and (max-width:1024px){
+@media(min-width:621px){
 .hero .campaign-banner:has(source[srcset*="-tablet"]){display:grid;grid-template-columns:1fr;position:relative}
 .hero .campaign-banner:has(source[srcset*="-tablet"])>a{grid-area:1/1;aspect-ratio:1640/714;min-height:0}
 .hero .campaign-banner:has(source[srcset*="-tablet"]) picture img{aspect-ratio:1640/714;width:100%;height:100%;object-fit:cover;-webkit-mask-image:none;mask-image:none}
@@ -511,33 +511,33 @@ html,body{overflow-x:clip}
 .hero:has(.campaign-banner[data-art="carrossel-espcex-janeiro"] source[srcset*="-tablet"]){background:#0b1d10}
 }
 /* Tablet: setas e bolinhas sobre a arte, embaixo do texto (sem faixa separada). */
-@media(min-width:621px) and (max-width:1024px){
+@media(min-width:621px){
 .hero:has(.campaign-banner source[srcset*="-tablet"]){position:relative}
 .hero:has(.campaign-banner source[srcset*="-tablet"]) .hero-bottom{position:absolute;left:auto;right:0;bottom:10px;transform:none;width:39%;height:36px;justify-content:center;background:transparent;z-index:3}
 .hero:has(.campaign-banner source[srcset*="-tablet"]) .hero-bottom button{filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
 }
 /* Celular e tablet: "Nova turma · início em 12/01" como etiqueta dourada em destaque. */
-@media(max-width:1024px){
+@media(min-width:0px){
 .hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{display:inline-flex;align-self:flex-start;width:auto;margin:0 0 12px;padding:7px 14px;border-radius:999px;background:#d8b46a;color:#061b35;font-size:13px;font-weight:800;letter-spacing:1.2px;line-height:1.2;box-shadow:0 2px 10px rgba(0,0,0,.25)}
 }
-@media(min-width:621px) and (max-width:1024px){.hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{font-size:12px;padding:6px 12px}}
+@media(min-width:621px){.hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{font-size:12px;padding:6px 12px}}
 /* Tablet: o carrossel não passa da largura da tela (o texto não corta na borda). */
-@media(min-width:621px) and (max-width:1024px){
+@media(min-width:621px){
 .hero:has(.campaign-banner source[srcset*="-tablet"]){overflow:hidden}
 .hero .campaign-banner:has(source[srcset*="-tablet"]){grid-template-columns:minmax(0,1fr);width:100%;max-width:100%}
 .hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy{box-sizing:border-box;max-width:39%}
 }
 /* Etiqueta "Nova turma · início em 12/01" maior. */
-@media(max-width:1024px){
+@media(min-width:0px){
 .hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{font-size:16px;padding:10px 18px;letter-spacing:1.4px;margin-bottom:14px}
 }
-@media(min-width:621px) and (max-width:1024px){.hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{font-size:15px;padding:9px 16px}}
+@media(min-width:621px){.hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{font-size:15px;padding:9px 16px}}
 /* Cursos gravados: sem etiqueta; o texto de cima volta a ser simples (o dourado fica só no botão). */
-@media(max-width:1024px){
+@media(min-width:0px){
 .hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) .campaign-mobile-copy .eyebrow{display:block;padding:0;margin:0 0 10px;border-radius:0;background:transparent;box-shadow:none;color:#d8b46a;font-size:12px;font-weight:700;letter-spacing:1.6px}
 }
 /* Tablet: todos os destaques com a mesma altura (a da arte); etiqueta numa linha só. */
-@media(min-width:621px) and (max-width:1024px){
+@media(min-width:621px){
 .hero .campaign-banner:has(source[srcset*="-tablet"]){aspect-ratio:1640/714;grid-template-rows:minmax(0,1fr)}
 .hero .campaign-banner:has(source[srcset*="-tablet"])>a{aspect-ratio:auto;height:100%}
 .hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy{max-height:100%;overflow:hidden;padding-top:12px;padding-bottom:46px}
@@ -549,4 +549,44 @@ html,body{overflow-x:clip}
 @media(max-width:620px){
 .hero .campaign-banner:has(source) .campaign-mobile-copy{min-height:360px!important;display:flex;flex-direction:column;box-sizing:border-box}
 .hero .campaign-banner:has(source) .campaign-mobile-copy .button{margin-top:auto}
+}
+/* Celular e tablet: navegação é pelo dedo; ficam só as bolinhas (mostram quantos destaques há e qual está aberto), centralizadas. */
+@media(min-width:0px){
+.hero:has(.campaign-banner source) .hero-bottom .slide-controls{display:none!important}
+.hero:has(.campaign-banner source) .hero-bottom{justify-content:center}
+.hero:has(.campaign-banner source) .hero-bottom .dots{margin:0 auto;gap:9px}
+.hero:has(.campaign-banner source) .hero-bottom .dots button{width:9px;height:9px;padding:0}
+.hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{font-size:17px;padding:10px 18px}
+}
+@media(min-width:621px){
+.hero:has(.campaign-banner source[srcset*="-tablet"]) .hero-bottom{right:0;width:39%;bottom:14px}
+.hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{font-size:14.5px;padding:9px 15px;letter-spacing:1.1px}
+}
+@media(min-width:0px){.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) .campaign-mobile-copy .eyebrow{white-space:normal!important;font-size:12px!important;padding:0!important;letter-spacing:1.6px!important}}
+/* Carrossel no celular e tablet: só o selo, sem o nome escrito. */
+@media(min-width:0px){.hero .campaign-banner:has(source) .campaign-brand>span{display:none}.hero .campaign-banner:has(source) .campaign-brand img{width:58px;height:58px}}
+@media(min-width:621px){.hero .campaign-banner:has(source) .campaign-brand img{width:64px;height:64px}}
+/* Tablet: espaços iguais — topo do carrossel→etiqueta = etiqueta→título; texto→botão = botão→bolinhas. */
+@media(min-width:621px){
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy{align-self:stretch;height:100%;max-height:100%;display:flex;flex-direction:column;justify-content:flex-start;padding-top:0;padding-bottom:37px;overflow:visible}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy .eyebrow{margin-top:auto!important;margin-bottom:auto!important}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy h2{margin-top:0}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy p:not(.eyebrow){margin-bottom:0}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy .button{margin-top:auto;margin-bottom:auto;align-self:flex-start}
+}
+/* Computador (1025px+): mesma composição do tablet, na proporção 3:1 da arte larga, com textos maiores. */
+@media(min-width:1025px){
+.hero .campaign-banner:has(source[srcset*="-tablet"]){aspect-ratio:2142/714}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) picture img{aspect-ratio:2142/714}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy,.hero:has(.campaign-banner source[srcset*="-tablet"]) .hero-bottom{width:42%;max-width:42%}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy{padding-left:clamp(24px,3vw,56px);padding-right:clamp(24px,4vw,72px);padding-bottom:calc(37px + 1vw)}
+.hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{font-size:clamp(15px,1.15vw,20px);padding:.65em 1.15em}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy h2{font-size:clamp(32px,3vw,56px);line-height:1.08}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy p:not(.eyebrow){font-size:clamp(16px,1.2vw,21px);line-height:1.5;max-width:34em}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy .button{font-size:clamp(15px,1.05vw,19px);padding:.85em 1.5em}
+.hero .campaign-banner:has(source) .campaign-brand{padding:clamp(16px,1.6vw,30px) clamp(18px,2vw,36px)}
+.hero .campaign-banner:has(source) .campaign-brand img{width:clamp(72px,5.5vw,104px);height:clamp(72px,5.5vw,104px)}
+.hero:has(.campaign-banner source[srcset*="-tablet"]) .hero-bottom{bottom:clamp(10px,1vw,18px)}
+.hero:has(.campaign-banner source) .hero-bottom .dots button{width:11px;height:11px}
+.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) .campaign-mobile-copy .eyebrow{font-size:clamp(13px,.95vw,16px)!important}
 }
