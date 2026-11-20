@@ -590,3 +590,6 @@ html,body{overflow-x:clip}
 .hero:has(.campaign-banner source) .hero-bottom .dots button{width:11px;height:11px}
 .hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) .campaign-mobile-copy .eyebrow{font-size:clamp(13px,.95vw,16px)!important}
 }
+/* Cursos gravados: bloco do texto e botão um pouco mais à esquerda (professores também deslocados na arte). */
+
+@media(min-width:621px){.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source[srcset*="-tablet"]) .campaign-mobile-copy{transform:translateX(14px)}}@media(min-width:1025px){.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source[srcset*="-tablet"]) .campaign-mobile-copy{transform:translateX(1.6vw)}}
