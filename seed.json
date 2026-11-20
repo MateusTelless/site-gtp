@@ -146,7 +146,7 @@
       "title": "APMBB · Barro Branco",
       "visible": true,
       "fields": {
-        "Chamada superior": "NOVA TURMA · INÍCIO EM 12/01",
+        "Chamada superior": "NOVA TURMA · INÍCIO 12/01",
         "Descrição": "Preparação presencial e online. Escolha sua modalidade e consulte horários, valores e materiais com a equipe.",
         "Texto do botão": "Mais informações",
         "Destino do botão": "#informacoes/apmbb-janeiro",
@@ -160,7 +160,7 @@
       "title": "EsPCEx · ESA · EEAR",
       "visible": true,
       "fields": {
-        "Chamada superior": "NOVA TURMA · INÍCIO EM 12/01",
+        "Chamada superior": "NOVA TURMA · INÍCIO 12/01",
         "Descrição": "Preparação presencial e online. Escolha sua modalidade e consulte horários, valores e materiais com a equipe.",
         "Texto do botão": "Mais informações",
         "Destino do botão": "#informacoes/espcex-janeiro",
