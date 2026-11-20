@@ -59,8 +59,8 @@ async function handle(req:Request){
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||name.length<2||name.length>100||b.consent!==true||!Array.isArray(b.interests)||!b.interests.length||b.interests.length>5||b.interests.some((i:unknown)=>!choices.includes(i as string)))fail('Confira nome, e-mail, interesses e autorização.');
   await rateLimit(DB,req,'newsletter',10);
   // Repeated public submissions cannot change an existing subscriber's preferences.
-  await DB.prepare('INSERT OR IGNORE INTO contacts(id,email,name,interests,consent,created_at,status) VALUES(?,?,?,?,?,?,?)').bind(crypto.randomUUID(),email,name,JSON.stringify([...new Set(b.interests)]),'Autorizo o GETEPE a guardar meu nome, e-mail e interesses para me enviar novidades desses concursos. Posso pedir para sair a qualquer momento. v2 (canais do WhatsApp)',now(),'whatsapp').run();
-  return json({ok:true,message:'Cadastro feito. Agora é só seguir o canal no WhatsApp.'});
+  await DB.prepare('INSERT OR IGNORE INTO contacts(id,email,name,interests,consent,created_at,status) VALUES(?,?,?,?,?,?,?)').bind(crypto.randomUUID(),email,name,JSON.stringify([...new Set(b.interests)]),'Autorizo o GETEPE a guardar meu nome, e-mail e interesses para me convidar à comunidade e enviar novidades desses concursos. Sei que no grupo do WhatsApp os participantes veem meu número. Posso pedir para sair a qualquer momento. v3 (comunidade no WhatsApp)',now(),'comunidade').run();
+  return json({ok:true,message:'Cadastro feito. Agora é só entrar no grupo da comunidade.'});
  }
  if(path==='aula-teste'&&req.method==='POST'){
   const b=await body(req,4096);if(b.website)return json({ok:true});
