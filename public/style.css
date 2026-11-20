@@ -436,3 +436,5 @@ html,body{overflow-x:clip}
 .site-footer{padding-left:max(32px,calc((100% - 1440px)/2));padding-right:max(32px,calc((100% - 1440px)/2))}
 .course-grid{grid-template-columns:repeat(4,1fr)}
 }
+/* Carrossel de ponta a ponta sem passar por baixo da barra de rolagem (--sbw = largura da barra, medida em app). */
+.hero{width:calc(100vw - var(--sbw,0px));margin-left:calc(50% - 50vw + var(--sbw,0px) / 2)}
