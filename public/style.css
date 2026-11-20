@@ -510,3 +510,9 @@ html,body{overflow-x:clip}
 .hero:has(.campaign-banner source[srcset*="-tablet"]){background:#051c3a}
 .hero:has(.campaign-banner[data-art="carrossel-espcex-janeiro"] source[srcset*="-tablet"]){background:#0b1d10}
 }
+/* Tablet: setas e bolinhas sobre a arte, embaixo do texto (sem faixa separada). */
+@media(min-width:621px) and (max-width:1024px){
+.hero:has(.campaign-banner source[srcset*="-tablet"]){position:relative}
+.hero:has(.campaign-banner source[srcset*="-tablet"]) .hero-bottom{position:absolute;left:auto;right:0;bottom:10px;transform:none;width:39%;height:36px;justify-content:center;background:transparent;z-index:3}
+.hero:has(.campaign-banner source[srcset*="-tablet"]) .hero-bottom button{filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+}
