@@ -438,3 +438,14 @@ html,body{overflow-x:clip}
 }
 /* Carrossel de ponta a ponta sem passar por baixo da barra de rolagem (--sbw = largura da barra, medida em app). */
 .hero{width:calc(100vw - var(--sbw,0px));margin-left:calc(50% - 50vw + var(--sbw,0px) / 2)}
+
+/* Marca GETEPÊ sobre a foto do carrossel no celular e no tablet (as artes móveis não têm o logo). */
+.campaign-brand{display:none}
+@media(max-width:1024px){
+.hero .campaign-banner:has(source)>a{position:relative}
+.hero .campaign-banner:has(source) .campaign-brand{display:flex;position:absolute;left:0;right:0;top:0;z-index:2;align-items:center;gap:10px;padding:14px 16px 34px;background:linear-gradient(180deg,rgba(6,27,53,.88) 0%,rgba(6,27,53,.55) 55%,rgba(6,27,53,0) 100%);color:#fff;pointer-events:none}
+.hero .campaign-banner:has(source) .campaign-brand img{width:48px;height:48px;flex:none;filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))}
+.hero .campaign-banner:has(source) .campaign-brand>span{display:flex;flex-direction:column;font-weight:800;font-size:24px;line-height:1;letter-spacing:.5px;text-shadow:0 1px 4px rgba(0,0,0,.45)}
+.hero .campaign-banner:has(source) .campaign-brand small{margin-top:5px;font-size:9.5px;font-weight:600;letter-spacing:2px}
+}
+@media(min-width:621px) and (max-width:1024px){.hero .campaign-banner:has(source) .campaign-brand{padding:18px 20px 40px}.hero .campaign-banner:has(source) .campaign-brand img{width:56px;height:56px}.hero .campaign-banner:has(source) .campaign-brand>span{font-size:28px}}
