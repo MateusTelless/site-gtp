@@ -62,6 +62,10 @@ assert.equal(sent.length,1);assert.equal(sent[0].url,apiEnv.SHEETS_WEBHOOK_URL);
 globalThis.fetch=async()=>{throw new TypeError('rede fora')};assert.equal((await call('aula-teste','POST',trial)).status,200,'falha da planilha chegou ao visitante');
 apiEnv.SHEETS_WEBHOOK_URL='https://evil.test/coleta';assert.equal((await call('aula-teste','POST',trial)).status,200);assert.equal(sent.length,1,'enviou para URL fora do Apps Script');
 globalThis.fetch=realFetch;delete apiEnv.SHEETS_WEBHOOK_URL;delete apiEnv.SHEETS_WEBHOOK_SECRET;
+// Medição: sem IDs, nada; com IDs válidos, saem; formato estranho é descartado.
+assert.deepEqual(await (await call('medicao')).json(),{ga4:'',pixel:''});
+apiEnv.GA4_ID='G-ABC123XYZ';apiEnv.META_PIXEL_ID='1234567890';assert.deepEqual(await (await call('medicao')).json(),{ga4:'G-ABC123XYZ',pixel:'1234567890'});
+apiEnv.GA4_ID='<script>';apiEnv.META_PIXEL_ID='12ab';assert.deepEqual(await (await call('medicao')).json(),{ga4:'',pixel:''});delete apiEnv.GA4_ID;delete apiEnv.META_PIXEL_ID;
 user={userId:'owner',email:'owner@example.test',displayName:'Equipe'};assert.deepEqual((await (await call('admin/aula-teste')).json()).requests.slice(0,3).map(r=>r.sheet_status).sort(),['enviado','erro','erro']);
 // Sem ADMIN_EMAILS ninguém é administrador (não existe e-mail padrão no código).
 delete apiEnv.ADMIN_EMAILS;assert.equal((await call('admin/state')).status,403);apiEnv.ADMIN_EMAILS='owner@example.test';

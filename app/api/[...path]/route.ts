@@ -11,7 +11,7 @@ import { catracaApi, catracaPainel } from '../../catraca';
 import seed from '../../../seed.json';
 import pageDefaults from '../../../page-defaults.json';
 
-const bindings=()=>env as unknown as {DB:D1Database;BUCKET:R2Bucket;ADMIN_EMAILS?:string;AUTH_PROVIDER?:string;SHEETS_WEBHOOK_URL?:string;SHEETS_WEBHOOK_SECRET?:string;MATRICULAS_SHEET_URL?:string;MATRICULAS_SHEET_SECRET?:string;ANTHROPIC_API_KEY?:string;CATRACA_TOKEN?:string;CATRACA_TOLERANCIA_DIAS?:string;DOCUSEAL_API_KEY?:string;DOCUSEAL_API_URL?:string;DOCUSEAL_GETEPE_ASSINATURA?:string;DOCUSEAL_GETEPE_EMAIL?:string;DOCUSEAL_WEBHOOK_TOKEN?:string;RA_ULTIMO_LEXUS?:string};
+const bindings=()=>env as unknown as {DB:D1Database;BUCKET:R2Bucket;ADMIN_EMAILS?:string;AUTH_PROVIDER?:string;SHEETS_WEBHOOK_URL?:string;SHEETS_WEBHOOK_SECRET?:string;MATRICULAS_SHEET_URL?:string;MATRICULAS_SHEET_SECRET?:string;ANTHROPIC_API_KEY?:string;CATRACA_TOKEN?:string;CATRACA_TOLERANCIA_DIAS?:string;DOCUSEAL_API_KEY?:string;DOCUSEAL_API_URL?:string;DOCUSEAL_GETEPE_ASSINATURA?:string;DOCUSEAL_GETEPE_EMAIL?:string;DOCUSEAL_WEBHOOK_TOKEN?:string;RA_ULTIMO_LEXUS?:string;GA4_ID?:string;META_PIXEL_ID?:string};
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 function fail(message:string,status=400):never{throw Object.assign(new Error(message),{status})}
 const now=()=>new Date().toISOString();
@@ -42,10 +42,12 @@ async function handle(req:Request){
  // Ponte da catraca: programa no PC do curso, autenticado por token (não manda Origin). Fica antes da checagem de origem.
  if(path.startsWith('catraca/')){const r=await catracaApi(req,path,bindings());if(r)return r}
  // Aviso do DocuSeal (contrato assinado): vem do servidor do DocuSeal, sem Origin. O código secreto vai no endereço.
- if(path.startsWith('docuseal/webhook/')&&req.method==='POST'){if(!await webhookTokenOk(path.slice(17),bindings().DOCUSEAL_WEBHOOK_TOKEN))fail('Não autorizado.',401);return docusealWebhook(req,DB,makeContractApi(bindings(),()=>loadContractModel(BUCKET)),sendEnrollmentToSheet)}
+ if(path.startsWith('docuseal/webhook/')&&req.method==='POST'){if(!await webhookTokenOk(path.slice(17),bindings().DOCUSEAL_WEBHOOK_TOKEN))fail('Não autorizado.',401);return docusealWebhook(req,DB,makeContractApi(bindings(),()=>loadContractModel(BUCKET)),sendEnrollmentToSheet,BUCKET)}
  if(req.method!=='GET'&&req.headers.get('origin')!==url.origin)fail('Origem não autorizada.',403);
  if(path.startsWith('auth/'))return passwordAction(req,path);
  if(path==='content'&&req.method==='GET'){const row=await DB.prepare('SELECT body,revision FROM content WHERE id=?').bind('published').first<any>();return json({data:normalized(row?JSON.parse(row.body):seed),revision:row?.revision||0,serverNow:Date.now()});}
+ // IDs públicos de medição (ficam nas variáveis do Cloudflare, não no repositório). Só formatos válidos saem.
+ if(path==='medicao'&&req.method==='GET'){const e=bindings(),ga4=/^G-[A-Z0-9]{4,20}$/.test(e.GA4_ID||'')?e.GA4_ID:'',pixel=/^\d{6,20}$/.test(e.META_PIXEL_ID||'')?e.META_PIXEL_ID:'';return new Response(JSON.stringify({ga4,pixel}),{headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'public, max-age=300','X-Content-Type-Options':'nosniff'}});}
  if(path.startsWith('media/')&&req.method==='GET'){const key=path.slice(6);if(!/^[\w-]+\.(png|jpg|webp|pdf)$/.test(key))fail('Arquivo não encontrado.',404);const file=await BUCKET.get(key);if(!file)fail('Arquivo não encontrado.',404);return new Response(file.body,{headers:{'Content-Type':file.httpMetadata?.contentType||'application/octet-stream','Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff',...(key.endsWith('.pdf')?{'Content-Disposition':'attachment; filename="material-getepe.pdf"','Content-Security-Policy':'sandbox'}:{})}});}
  if(path==='newsletter'&&req.method==='POST'){
   const b=await body(req,4096);if(b.website)return json({ok:true});
@@ -53,8 +55,8 @@ async function handle(req:Request){
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||name.length<2||name.length>100||b.consent!==true||!Array.isArray(b.interests)||!b.interests.length||b.interests.length>5||b.interests.some((i:any)=>!choices.includes(i)))fail('Confira nome, e-mail, interesses e autorização.');
   await rateLimit(DB,req,'newsletter',10);
   // Repeated public submissions cannot change an existing subscriber's preferences.
-  await DB.prepare('INSERT OR IGNORE INTO contacts(id,email,name,interests,consent,created_at,status) VALUES(?,?,?,?,?,?,?)').bind(crypto.randomUUID(),email,name,JSON.stringify([...new Set(b.interests)]),'Quero receber conteúdos e novidades do GETEPE por e-mail. Poderei cancelar o recebimento a qualquer momento. v1',now(),'pending_email').run();
-  return json({ok:true,message:'Recebemos seu pedido de cadastro. Os boletins serão enviados após a ativação do serviço de e-mail do GETEPE.'});
+  await DB.prepare('INSERT OR IGNORE INTO contacts(id,email,name,interests,consent,created_at,status) VALUES(?,?,?,?,?,?,?)').bind(crypto.randomUUID(),email,name,JSON.stringify([...new Set(b.interests)]),'Autorizo o GETEPE a guardar meu nome, e-mail e interesses para me enviar novidades desses concursos. Posso pedir para sair a qualquer momento. v2 (canais do WhatsApp)',now(),'whatsapp').run();
+  return json({ok:true,message:'Cadastro feito. Agora é só seguir o canal no WhatsApp.'});
  }
  if(path==='aula-teste'&&req.method==='POST'){
   const b=await body(req,4096);if(b.website)return json({ok:true});

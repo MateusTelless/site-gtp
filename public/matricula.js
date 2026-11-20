@@ -173,6 +173,7 @@ form.addEventListener('submit',async e=>{e.preventDefault();const problem=check(
   if(!exAluno&&proofDone())Object.assign(body,{desconto:proof.kind,documentos:Object.fromEntries(Object.entries(proof.docs).map(([k,v])=>[k,v.id])),...(proof.kind==='dependente_militar'?{parentesco:proof.kin,nome_militar:proof.mil.trim()}:{})});
   if(m==='pix')Object.assign(body,{parcelas_pix:pixN(),vencimento:pixN()>1?dueDay():undefined,primeira_parcela:val('primeira_parcela')});else Object.assign(body,{parcelas_cartao:Number(val('parcelas_cartao')),visita:val('visita')});
   const r=await api('matricula',body);
+  window.getepeTrack&&window.getepeTrack('matricula',{forma:m});
   form.hidden=true;$('.enroll-steps').hidden=true;$('#done-message').textContent=r.message||'Matrícula recebida.';
   $('#done-pay').textContent=m==='cartao'?'No dia '+date(val('visita'))+', venha à unidade passar o cartão.':'Pague as parcelas por Pix; a primeira vence em '+date(val('primeira_parcela'))+'.';
   $('#done').hidden=false;$('#done').focus()}

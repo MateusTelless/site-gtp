@@ -60,7 +60,10 @@ async function syncEnrollment(DB:D1Database,sync:SheetSync|undefined,id:string){
 // (docusealWebhook), que confere direto na API antes de marcar. Regra de envio (dono, 17/11/2026): automático logo após a matrícula,
 // menos quando há desconto de militar ou dependente a conferir; aí a equipe aprova o desconto (o contrato sai junto) ou envia pelo botão.
 export type ContractData={codigo:string;contratante:{nome:string;email:string};campos:Record<string,string>};
-export type ContractApi={send:(d:ContractData)=>Promise<string>;signedAt:(ref:string)=>Promise<string|null>;documentUrl:(ref:string)=>Promise<string|null>};
+export type ContractApi={send:(d:ContractData)=>Promise<string>;signedAt:(ref:string)=>Promise<string|null>;documentUrl:(ref:string)=>Promise<string|null>;signedPdf?:(ref:string)=>Promise<Uint8Array|null>};
+// Cópia do contrato assinado (as duas assinaturas) no arquivo privado do GETEPE: R2, numa pasta que a rota pública de mídia não serve.
+// Fica guardada mesmo se a conta do DocuSeal mudar. O SHA-256 vai no registro de alterações, para provar depois que o arquivo é o mesmo.
+export const signedContractKey=(id:string)=>'privado/contratos/'+id+'.pdf';
 // Word do contrato (com as [[variáveis]] e as duas assinaturas), enviado pelo administrador no painel.
 // Fica no R2 numa pasta que a rota pública de mídia não serve. Trocar o arquivo muda os próximos contratos, sem mexer no código.
 export const CONTRACT_MODEL_KEY='privado/contrato/modelo.docx';
@@ -118,15 +121,29 @@ async function sendContract(DB:D1Database,req:Request,contracts:ContractApi,id:s
   return true;
  }catch(err){console.error('Envio do contrato ao DocuSeal falhou',(err as Error)?.message);await audit(DB,req,staff,'contrato_envio_falhou','enrollment',id,{por:'DocuSeal'}).run().catch(()=>{});return false}
 }
+// Guarda o PDF assinado (uma vez por matrícula). Falha não derruba nada: fica no registro e a equipe tenta de novo pelo painel.
+async function archiveSignedContract(DB:D1Database,req:Request,bucket:R2Bucket|undefined,contracts:ContractApi|undefined,staff:Staff|null,id:string,ref:string){
+ if(!bucket||!contracts?.signedPdf)return false;
+ const key=signedContractKey(id);if(await bucket.head(key))return true;
+ try{
+  const pdf=await contracts.signedPdf(ref);if(!pdf)return false;
+  const sha=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new Uint8Array(pdf)))].map(b=>b.toString(16).padStart(2,'0')).join(''),at=nowIso();
+  await bucket.put(key,pdf,{httpMetadata:{contentType:'application/pdf'},customMetadata:{contrato:ref,sha256:sha,guardado_em:at}});
+  await audit(DB,req,staff,'contrato_guardado','enrollment',id,{contrato:ref,sha256:sha,bytes:pdf.length}).run();
+  return true;
+ }catch(err){console.error('Cópia do contrato assinado falhou',(err as Error)?.message);await audit(DB,req,staff,'contrato_guardar_falhou','enrollment',id,{contrato:ref}).run().catch(()=>{});return false}
+}
 // Aviso do DocuSeal (route.ts confere o código secreto do endereço). Só "assinado" interessa; o site confere na API antes de marcar.
-export async function docusealWebhook(req:Request,DB:D1Database,contracts:ContractApi|undefined,sync?:SheetSync):Promise<Response>{
+export async function docusealWebhook(req:Request,DB:D1Database,contracts:ContractApi|undefined,sync?:SheetSync,bucket?:R2Bucket):Promise<Response>{
  if(!contracts)return json({error:'DocuSeal não configurado.'},503);
  let b:Row;try{b=await readBody(req,2_000_000)}catch{return json({ok:true})}
  const ev=String(b.event_type||''),d=(b.data&&typeof b.data==='object'?b.data:{}) as Row;
  if(ev!=='form.completed'&&ev!=='submission.completed')return json({ok:true});
  const ref=String(ev==='form.completed'?(d.submission as Row)?.id??'':d.id??'');if(!/^\d{1,15}$/.test(ref))return json({ok:true});
  const e=await DB.prepare('SELECT id,status,contract_signed_at FROM enrollments WHERE contract_ref=?').bind(ref).first<Row>();
- if(!e||e.contract_signed_at||e.status==='cancelada')return json({ok:true});
+ if(!e||e.status==='cancelada')return json({ok:true});
+ // Aviso repetido de contrato já marcado: só completa a cópia guardada, se ainda faltar.
+ if(e.contract_signed_at){await archiveSignedContract(DB,req,bucket,contracts,null,e.id,ref);return json({ok:true})}
  // Se o DocuSeal estiver fora do ar, responde erro para ele tentar de novo mais tarde.
  let at:string|null;try{at=await contracts.signedAt(ref)}catch{return json({error:'Tente de novo.'},503)}
  if(!at)return json({ok:true});
@@ -134,6 +151,7 @@ export async function docusealWebhook(req:Request,DB:D1Database,contracts:Contra
  await DB.batch([DB.prepare('UPDATE enrollments SET contract_signed_at=?,status=?,updated_at=? WHERE id=? AND contract_signed_at IS NULL').bind(new Date(Date.parse(at)||Date.now()).toISOString(),status,now,e.id),
   audit(DB,req,null,'contrato_assinado','enrollment',e.id,{por:'DocuSeal',contrato:ref,antes:e.status,depois:status})]);
  await syncEnrollment(DB,sync,e.id);
+ await archiveSignedContract(DB,req,bucket,contracts,null,e.id,ref);
  return json({ok:true});
 }
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
@@ -250,6 +268,22 @@ function person(raw:unknown,label:string,today:string):PersonIn{
  const street=text(r.logradouro,3,150),number=text(r.numero,1,20),complement=text(r.complemento??'',0,80),district=text(r.bairro,2,80),city=text(r.cidade,2,80),state=String(r.uf||'').toUpperCase();
  if(!street||!number||complement===null||!district||!city||!UF.includes(state))fail(`Confira o endereço ${label}.`);
  return {full_name,cpf,rg,birth_date,email,phone,cep,street,number,complement,district,city,state};
+}
+// Cadastro antigo (importado do Lexus/planilha) pode não ter CPF, nascimento ou endereço.
+// No painel, o que vier vazio fica vazio; o que vier preenchido passa pela mesma conferência da matrícula.
+const isLegacyPerson=(p:Row)=>!validCpf(String(p.cpf||''))||!isDate(String(p.birth_date||''))||!String(p.cep||'')||!String(p.street||'');
+function personLoose(raw:unknown,today:string):PersonIn{
+ if(!raw||typeof raw!=='object')fail('Preencha os dados.');const r=raw as Row,blank=(v:unknown)=>String(v??'').trim()==='';
+ const full_name=text(r.nome,5,120);if(!full_name||full_name.split(' ').length<2)fail('Digite o nome completo.');
+ const birth_date=String(r.nascimento||'');if(birth_date&&(!isDate(birth_date)||birth_date>today||age(birth_date,today)>110))fail('Confira a data de nascimento.');
+ const email=String(r.email||'').trim().toLowerCase();if(email&&(email.length>254||!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$/.test(email)))fail('Confira o e-mail.');
+ const phone=String(r.celular||'').replace(/\D/g,'');if(phone&&(phone.length<10||phone.length>11))fail('Confira o celular com DDD.');
+ const addr=[r.cep,r.logradouro,r.numero,r.bairro,r.cidade,r.uf].some(v=>!blank(v));
+ if(!addr)return {full_name,cpf:'',rg:'',birth_date,email,phone,cep:'',street:'',number:'',complement:'',district:'',city:'',state:''};
+ const cep=String(r.cep||'').replace(/\D/g,'');if(cep.length!==8)fail('Confira o CEP.');
+ const street=text(r.logradouro,3,150),number=text(r.numero,1,20),complement=text(r.complemento??'',0,80),district=text(r.bairro,2,80),city=text(r.cidade,2,80),state=String(r.uf||'').toUpperCase();
+ if(!street||!number||complement===null||!district||!city||!UF.includes(state))fail('Confira o endereço completo (ou deixe o endereço todo em branco).');
+ return {full_name,cpf:'',rg:'',birth_date,email,phone,cep,street,number,complement,district,city,state};
 }
 const masked=(p:PersonIn|Row)=>({...p,cpf:maskCpf(String(p.cpf||''))});
 
@@ -459,13 +493,30 @@ export async function enrollmentAdmin(req:Request,path:string,DB:D1Database,staf
   if(!await sendContract(DB,req,contracts,id,staff))fail('O DocuSeal não aceitou o envio. Tente de novo em alguns minutos.',502);
   return json({ok:true});
  }
- // Contrato assinado: link novo do PDF a cada clique (os links do DocuSeal valem 40 minutos).
+ // Contrato assinado: a cópia guardada pelo GETEPE (guarda na hora, se ainda faltar). Sem cópia, link novo do DocuSeal (vale 40 minutos).
  if(path==='admin/matriculas/contrato-pdf'&&GET){
-  can('admin','secretaria');if(!contracts)fail('O DocuSeal ainda não está ligado no site.',503);
-  const e=await DB.prepare('SELECT contract_ref FROM enrollments WHERE id=?').bind(q('id')).first<Row>();if(!e?.contract_ref)fail('Esta matrícula não tem contrato no DocuSeal.',404);
+  can('admin','secretaria');
+  const e=await DB.prepare('SELECT id,contract_ref,contract_signed_at FROM enrollments WHERE id=?').bind(q('id')).first<Row>();if(!e?.contract_ref)fail('Esta matrícula não tem contrato no DocuSeal.',404);
+  if(bucket&&e.contract_signed_at){
+   let obj=await bucket.get(signedContractKey(e.id));
+   if(!obj&&await archiveSignedContract(DB,req,bucket,contracts,staff,e.id,e.contract_ref))obj=await bucket.get(signedContractKey(e.id));
+   if(obj){
+    await audit(DB,req,staff,'ver_contrato','enrollment',e.id,{contrato:e.contract_ref,copia:'arquivo do GETEPE'}).run();
+    return new Response(obj.body,{headers:{'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="contrato-'+enrollmentCode(e.id)+'.pdf"','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':'sandbox'}});
+   }
+  }
+  if(!contracts)fail('O DocuSeal ainda não está ligado no site.',503);
   const link=await contracts.documentUrl(e.contract_ref).catch(()=>null);if(!link||!/^https:\/\//.test(link))fail('O DocuSeal não devolveu o documento agora. Tente de novo.',502);
   await audit(DB,req,staff,'ver_contrato','enrollment',q('id'),{contrato:e.contract_ref}).run();
   return new Response(null,{status:302,headers:{Location:link,'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});
+ }
+ // Guarda a cópia dos contratos assinados que ainda não têm (assinados antes desta função ou com falha). Até 20 por clique.
+ if(path==='admin/matriculas/guardar-contratos'&&POST){
+  can('admin');if(!bucket||!contracts?.signedPdf)fail('O DocuSeal ainda não está ligado no site.',503);
+  const rows=(await DB.prepare('SELECT id,contract_ref FROM enrollments WHERE contract_signed_at IS NOT NULL AND contract_ref IS NOT NULL ORDER BY contract_signed_at').all<Row>()).results;
+  let guardados=0,ja=0,falhas=0;
+  for(const r of rows){if(await bucket.head(signedContractKey(r.id))){ja++;continue}if(guardados+falhas>=20)continue;if(await archiveSignedContract(DB,req,bucket,contracts,staff,r.id,r.contract_ref))guardados++;else falhas++}
+  return json({ok:true,guardados,ja_guardados:ja,falhas,faltam:rows.length-ja-guardados});
  }
  if(path==='admin/matriculas/contrato'&&POST){
   can('admin','secretaria');const b=await readBody(req,1000),signedOn=b.data||today;
@@ -491,7 +542,8 @@ export async function enrollmentAdmin(req:Request,path:string,DB:D1Database,staf
   // Documentos anexados (comprovante de militar ou dependente): só administrador e secretaria abrem o arquivo.
   const docs=(await DB.prepare('SELECT id,kind,part,content_type,size,uploaded_at FROM enrollment_documents WHERE enrollment_id=? ORDER BY uploaded_at').bind(e.id).all<Row>()).results;
   const parse=(s:string|null)=>{try{return s?JSON.parse(s):null}catch{return null}};
-  return json({matricula:{...enrollment,discount_info:parse(e.discount_info),discount_check:parse(e.discount_check),codigo:enrollmentCode(e.id),documentos:docs,desconto_texto:e.discount_reason?DISCOUNT_LABEL[e.discount_reason]||e.discount_reason:null},aluno:await personOf(e.person_id),pagador:await personOf(e.payer_person_id),responsaveis:guardians,
+  const kept=e.contract_signed_at&&bucket?await bucket.head(signedContractKey(e.id)).catch(()=>null):null;
+  return json({matricula:{...enrollment,contrato_guardado_em:kept?(kept.customMetadata?.guardado_em||kept.uploaded?.toISOString?.()||'sim'):null,discount_info:parse(e.discount_info),discount_check:parse(e.discount_check),codigo:enrollmentCode(e.id),documentos:docs,desconto_texto:e.discount_reason?DISCOUNT_LABEL[e.discount_reason]||e.discount_reason:null},aluno:await personOf(e.person_id),pagador:await personOf(e.payer_person_id),responsaveis:guardians,
    enviado:e.needs_review?JSON.parse(submitted):null,
    financeiro:['admin','financeiro'].includes(staff.role)?{parcelas:parcels.map(p=>({...p,payments:JSON.parse(p.payments||'[]')}))}:{em_dia:!overdue,vencidas:overdue}});
  }
@@ -616,7 +668,7 @@ export async function enrollmentAdmin(req:Request,path:string,DB:D1Database,staf
  if(path==='admin/pessoas/editar'&&POST){
   can('admin','secretaria');const b=await readBody(req,4000);
   const before=await DB.prepare('SELECT * FROM people WHERE id=?').bind(String(b.id)).first<Row>();if(!before)fail('Cadastro não encontrado.',404);
-  const p=person({...b.dados,cpf:before.cpf},'',today);
+  const p=isLegacyPerson(before)?personLoose(b.dados,today):person({...b.dados,cpf:before.cpf},'',today);
   await DB.batch([DB.prepare('UPDATE people SET full_name=?,birth_date=?,email=?,phone=?,cep=?,street=?,number=?,complement=?,district=?,city=?,state=?,updated_at=? WHERE id=?').bind(p.full_name,p.birth_date,p.email,p.phone,p.cep,p.street,p.number,p.complement,p.district,p.city,p.state,now,before.id),
    audit(DB,req,staff,'editar_cadastro','person',before.id,{antes:masked(before),depois:masked(p)})]);
   return json({ok:true});

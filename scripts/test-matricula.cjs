@@ -7,7 +7,7 @@ const DB={prepare:statement,async batch(list){db.exec('BEGIN');try{const out=[];
 const strip=f=>stripTypeScriptTypes(fs.readFileSync(f,'utf8').replace(/export /g,''));
 const enrollment=new Function(strip('app/enrollment.ts')+';return {enrollmentPublic,enrollmentAdmin,staffRole,docusealWebhook,pixSchedule,pixMax,validCpf,todaySP,cardOptions,nameKey,nameHash}')();
 const backups=new Function(strip('app/backups.ts')+';return {makeBackup,listBackups,verifyBackup,recoverBackup,exportBackup}')();
-let user=null;const team='owner@example.test,fin@example.test,sec@example.test,ver@example.test';const apiEnv={DB,BUCKET:{files:new Map(),async put(k,v,o){this.files.set(k,{bytes:v,type:o?.httpMetadata?.contentType,meta:o?.customMetadata})},async get(k){const x=this.files.get(k);return x?{body:x.bytes,httpMetadata:{contentType:x.type},customMetadata:x.meta}:null},async head(){},async list(){return {objects:[],truncated:false}}},ADMIN_EMAILS:team};
+let user=null;const team='owner@example.test,fin@example.test,sec@example.test,ver@example.test';const apiEnv={DB,BUCKET:{files:new Map(),async put(k,v,o){this.files.set(k,{bytes:v,type:o?.httpMetadata?.contentType,meta:o?.customMetadata})},async get(k){const x=this.files.get(k);return x?{body:x.bytes,httpMetadata:{contentType:x.type},customMetadata:x.meta}:null},async head(k){const x=this.files.get(k);return x?{customMetadata:x.meta}:null},async list(){return {objects:[],truncated:false}}},ADMIN_EMAILS:team};
 let source=fs.readFileSync('app/api/[...path]/route.ts','utf8').replace(/^import .*;\r?\n/gm,'').replace(/export \{safe as GET,safe as POST,safe as PUT,safe as DELETE\};/,'');
 const handle=new Function('env','seed','pageDefaults','getAdminIdentity','validateVisual','validateCampaigns','makeBackup','listBackups','verifyBackup','recoverBackup','exportBackup','enrollmentPublic','enrollmentAdmin','staffRole','makeDocVerifier','makeContractApi','webhookTokenOk','docusealWebhook',stripTypeScriptTypes(source)+'\nreturn safe;')(apiEnv,JSON.parse(fs.readFileSync('seed.json','utf8')),JSON.parse(fs.readFileSync('page-defaults.json','utf8')),async()=>user,x=>x,()=>{},...['makeBackup','listBackups','verifyBackup','recoverBackup','exportBackup'].map(k=>backups[k]),enrollment.enrollmentPublic,enrollment.enrollmentAdmin,enrollment.staffRole,()=>undefined,()=>globalThis.__contracts,async(t,k)=>!!k&&k.length>=24&&t===k,enrollment.docusealWebhook);
 const call=(path,method='GET',data,origin='https://getepe.test')=>handle(new Request('https://getepe.test/api/'+path,{method,headers:{...(method!=='GET'?{origin}:{}),'Content-Type':'application/json','cf-connecting-ip':'203.0.113.9'},body:data===undefined?undefined:JSON.stringify(data)}));
@@ -116,6 +116,12 @@ async function run(){
  detail=await ok(await call('admin/matriculas/detalhe?id='+review.id));assert.equal(detail.enviado.aluno.email,'outro@example.test');
  await ok(await call('admin/pessoas/editar','POST',{id:detail.aluno.id,dados:{...adult,email:'outro@example.test'}}));await ok(await call('admin/matriculas/revisada','POST',{id:review.id}));
  assert.equal(db.prepare('SELECT email FROM people WHERE cpf=?').get(adult.cpf).email,'outro@example.test');const editLog=db.prepare("SELECT detail FROM audit_log WHERE action='editar_cadastro'").get().detail;assert.ok(!editLog.includes(adult.cpf)&&editLog.includes('***.'));
+ // Cadastro antigo (importado sem CPF, nascimento e endereço): a secretaria salva só o que tem; o resto fica vazio.
+ db.prepare("INSERT INTO people(id,full_name,cpf,birth_date,email,phone,cep,street,number,complement,district,city,state,created_at,updated_at,rg) VALUES('legado-1','Aluno Antigo Teste','PLANILHA-1','','','','','','','','','','','2026-01-01','2026-01-01','')").run();
+ await ok(await call('admin/pessoas/editar','POST',{id:'legado-1',dados:{nome:'Aluno Antigo Teste',celular:'11999990000'}}));
+ assert.deepEqual({...db.prepare("SELECT cpf,phone,birth_date,street FROM people WHERE id='legado-1'").get()},{cpf:'PLANILHA-1',phone:'11999990000',birth_date:'',street:''});
+ assert.equal((await call('admin/pessoas/editar','POST',{id:'legado-1',dados:{nome:'Aluno Antigo Teste',cep:'01001000'}})).status,400,'endereço pela metade aceito');
+ assert.equal((await call('admin/pessoas/editar','POST',{id:detail.aluno.id,dados:{nome:adult.nome}})).status,400,'cadastro completo aceitou dados faltando');
  // Situação e biometria.
  assert.equal((await call('admin/matriculas/situacao','POST',{id:e.id,situacao:'cancelada'})).status,400,'cancelar sem motivo');
  await ok(await call('admin/matriculas/situacao','POST',{id:e.id,situacao:'aguardando_pagamento'}));
@@ -274,7 +280,7 @@ async function run(){
  assert.equal(db.prepare('SELECT e.discount_status FROM enrollments e JOIN students s ON s.id=e.student_id JOIN people p ON p.id=s.person_id WHERE p.cpf=?').get(dep3.cpf).discount_status,'pendente');
  as('owner@example.test');
  // Contrato pelo DocuSeal (falso): sai sozinho sem desconto a conferir; com desconto a conferir, espera a equipe; o aviso de assinado é conferido na API.
- const fake={sent:[],signed:new Set(),failNext:false,async send(d){if(this.failNext){this.failNext=false;throw new Error('DocuSeal fora')}this.sent.push(d);return String(5000+this.sent.length)},async signedAt(ref){return this.signed.has(ref)?'2026-11-17T18:00:00.000Z':null},async documentUrl(ref){return 'https://docuseal.test/doc/'+ref}};
+ const fake={sent:[],signed:new Set(),failNext:false,async send(d){if(this.failNext){this.failNext=false;throw new Error('DocuSeal fora')}this.sent.push(d);return String(5000+this.sent.length)},async signedAt(ref){return this.signed.has(ref)?'2026-11-17T18:00:00.000Z':null},async documentUrl(ref){return 'https://docuseal.test/doc/'+ref},async signedPdf(ref){if(this.pdfFails)throw new Error('DocuSeal fora');return new TextEncoder().encode('%PDF-1.7 contrato '+ref)}};
  globalThis.__contracts=fake;as(null);db.exec('DELETE FROM limits');apiEnv.RA_ULTIMO_LEXUS='9000';
  const byCpf=c=>db.prepare('SELECT e.* FROM enrollments e JOIN students s ON s.id=e.student_id JOIN people p ON p.id=s.person_id WHERE p.cpf=?').get(c);
  const ctA={...adult,nome:'Contrato Automatico Teste',cpf:cpf(161616161),email:'contrato@example.test'};
@@ -320,7 +326,18 @@ async function run(){
  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM audit_log WHERE action='contrato_assinado' AND entity_id=?").get(cA.id).n,1,'aviso repetido não duplica');
  await ok(await hook(apiEnv.DOCUSEAL_WEBHOOK_TOKEN,{event_type:'form.viewed',data:{submission:{id:5002}}}));assert.equal(byCpf(ctMinor.cpf).contract_signed_at,null);
  // Contrato assinado no painel: link novo do DocuSeal; financeiro não abre.
- as('sec@example.test');const pdfLink=await call('admin/matriculas/contrato-pdf?id='+cA.id);assert.equal(pdfLink.status,302);assert.equal(pdfLink.headers.get('Location'),'https://docuseal.test/doc/5001');
+ // Cópia do contrato assinado guardada no arquivo do GETEPE na hora do aviso, com o SHA-256 no registro.
+ const keyA='privado/contratos/'+cA.id+'.pdf',keptA=apiEnv.BUCKET.files.get(keyA);assert.ok(keptA,'contrato assinado guardado no R2');assert.equal(keptA.type,'application/pdf');assert.equal(keptA.meta.contrato,'5001');assert.match(keptA.meta.sha256,/^[0-9a-f]{64}$/);
+ assert.equal(db.prepare("SELECT COUNT(*) AS n FROM audit_log WHERE action='contrato_guardado' AND entity_id=?").get(cA.id).n,1,'guardado uma vez, mesmo com aviso repetido');
+ as('sec@example.test');const pdfKept=await call('admin/matriculas/contrato-pdf?id='+cA.id);assert.equal(pdfKept.status,200);assert.equal(pdfKept.headers.get('Content-Type'),'application/pdf');assert.match(pdfKept.headers.get('Content-Disposition'),/^attachment/);assert.match(new TextDecoder().decode(await pdfKept.arrayBuffer()),/^%PDF-1\.7 contrato 5001/);
+ // Sem cópia e com o DocuSeal fora: cai no link do DocuSeal; a equipe não fica sem o contrato.
+ apiEnv.BUCKET.files.delete(keyA);fake.pdfFails=true;const pdfLink=await call('admin/matriculas/contrato-pdf?id='+cA.id);assert.equal(pdfLink.status,302);assert.equal(pdfLink.headers.get('Location'),'https://docuseal.test/doc/5001');
+ assert.equal(db.prepare("SELECT COUNT(*) AS n FROM audit_log WHERE action='contrato_guardar_falhou' AND entity_id=?").get(cA.id).n,1);
+ // Completar os que faltam: só o administrador.
+ assert.equal((await call('admin/matriculas/guardar-contratos','POST',{})).status,403);fake.pdfFails=false;
+ as('owner@example.test');const keep=await (await call('admin/matriculas/guardar-contratos','POST',{})).json();assert.equal(keep.guardados,1);assert.equal(keep.faltam,0);assert.ok(apiEnv.BUCKET.files.get(keyA));
+ const keep2=await (await call('admin/matriculas/guardar-contratos','POST',{})).json();assert.equal(keep2.guardados,0);assert.equal(keep2.ja_guardados,1);
+ const detA=await (await call('admin/matriculas/detalhe?id='+cA.id)).json();assert.ok(detA.matricula.contrato_guardado_em,'ficha mostra a cópia guardada');
  as('fin@example.test');assert.equal((await call('admin/matriculas/contrato-pdf?id='+cA.id)).status,403);
  delete globalThis.__contracts;delete apiEnv.DOCUSEAL_WEBHOOK_TOKEN;delete apiEnv.RA_ULTIMO_LEXUS;as('owner@example.test');
  // Cliente do DocuSeal: lê o modelo, manda só os campos que existem, a parte do GETEPE já assinada e o contratante com e-mail.
@@ -334,7 +351,11 @@ async function run(){
   assert.deepEqual(post.variables,{NomeResponsavel:'Pessoa X',RA:'9001'});assert.deepEqual(post.documents,[{name:'Contrato GETEPE ABCD1234.docx',file:'UEsDBA=='}]);assert.equal(post.send_email,true);
   assert.deepEqual(post.submitters[0],{role:'GETEPE',name:'GETEPE - Curso General Telles Pires',completed:true,send_email:false,fields:[{name:'AssinaturaGETEPE',default_value:'GETEPE - Curso General Telles Pires',readonly:true}]});
   assert.deepEqual(post.submitters[1],{role:'Contratante',name:'Pessoa X',email:'x@example.test',external_id:'ABCD1234'});
-  assert.equal(await api.signedAt('9001'),'2026-11-17T19:00:00Z');assert.equal(await api.documentUrl('9001'),'https://docuseal.com/file/x.pdf') }
+  assert.equal(await api.signedAt('9001'),'2026-11-17T19:00:00Z');assert.equal(await api.documentUrl('9001'),'https://docuseal.com/file/x.pdf');
+  // PDF final: baixa do link do DocuSeal e recusa o que não for PDF.
+  const prevFetch=globalThis.fetch;globalThis.fetch=async(url,opts)=>url==='https://docuseal.com/file/x.pdf'?new Response('%PDF-1.7 final'):prevFetch(url,opts);
+  assert.equal(new TextDecoder().decode(await api.signedPdf('9001')),'%PDF-1.7 final');
+  globalThis.fetch=async(url,opts)=>url==='https://docuseal.com/file/x.pdf'?new Response('<html>erro</html>'):prevFetch(url,opts);await assert.rejects(api.signedPdf('9001'),/não devolveu um PDF/);globalThis.fetch=prevFetch }
  // Modelo do contrato no painel: só o administrador envia; Word de verdade (zip); secretaria baixa; nada na rota pública.
  { globalThis.fetch=realFetch;const up=(name,bytes)=>{const fd=new FormData();fd.append('arquivo',new Blob([bytes]),name);return handle(new Request('https://getepe.test/api/admin/matriculas/modelo-contrato',{method:'POST',headers:{origin:'https://getepe.test'},body:fd}))};
   as('owner@example.test');assert.equal((await ok(await call('admin/matriculas/modelo-contrato'))).enviado,false);

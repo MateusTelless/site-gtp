@@ -4,13 +4,15 @@
 //   viram texto no próprio parágrafo, com a formatação do contrato. As assinaturas são campos ({{AssinaturaContratante;...}}).
 //   O papel "GETEPE" vai marcado como já assinado (completed: true), com a assinatura da instituição; o "Contratante" recebe o e-mail.
 // - Conferência: GET /submissions/{id}. O aviso (webhook) do DocuSeal não tem assinatura; por isso o site confere aqui antes de marcar.
-// - Os links dos PDFs valem 40 minutos: o site guarda só o número do contrato e pede um link novo quando a equipe abre.
+// - Os links dos PDFs valem 40 minutos. Quando o contrato é assinado, o site baixa o PDF final e guarda uma cópia no R2
+//   (enrollment.ts, archiveSignedContract), para o GETEPE ter o registro mesmo sem o DocuSeal.
 import type { ContractApi, ContractData } from './enrollment';
 
 type Env = { DOCUSEAL_API_KEY?: string; DOCUSEAL_API_URL?: string; DOCUSEAL_GETEPE_ASSINATURA?: string; DOCUSEAL_GETEPE_EMAIL?: string };
 type Submission = { status?: string; completed_at?: string | null; combined_document_url?: string | null; documents?: { url?: string }[] };
 
 const DEFAULT_SIGNATURE = 'GETEPE - Curso General Telles Pires';
+const MAX_PDF = 25 * 1024 * 1024;
 
 // Base64 sem depender de Buffer (o Worker pode não ter compatibilidade com Node).
 function base64(bytes: Uint8Array) {
@@ -30,6 +32,10 @@ export function makeContractApi(env: Env, loadModel: () => Promise<Uint8Array | 
     return await r.json() as T;
   }
   const getSubmission = (ref: string) => call<Submission>('/submissions/' + encodeURIComponent(ref));
+  async function documentUrl(ref: string) {
+    const s = await getSubmission(ref);
+    return s.combined_document_url || s.documents?.find(x => x.url)?.url || null;
+  }
   return {
     async send(d: ContractData) {
       const doc = await loadModel();
@@ -52,9 +58,17 @@ export function makeContractApi(env: Env, loadModel: () => Promise<Uint8Array | 
       const s = await getSubmission(ref);
       return s.status === 'completed' ? (s.completed_at || new Date().toISOString()) : null;
     },
-    async documentUrl(ref: string) {
-      const s = await getSubmission(ref);
-      return s.combined_document_url || s.documents?.find(x => x.url)?.url || null;
+    documentUrl,
+    // PDF final (com as duas assinaturas) para o arquivo do GETEPE. Só aceita https, até 25 MB e arquivo que começa com %PDF.
+    async signedPdf(ref: string) {
+      const url = await documentUrl(ref);
+      if (!url || !/^https:\/\//i.test(url)) return null;
+      const r = await fetch(url, { signal: AbortSignal.timeout(25_000) });
+      if (!r.ok) throw new Error('DocuSeal respondeu ' + r.status + ' ao baixar o PDF');
+      if (Number(r.headers.get('content-length') || 0) > MAX_PDF) throw new Error('PDF do contrato grande demais');
+      const bytes = new Uint8Array(await r.arrayBuffer());
+      if (bytes.length > MAX_PDF || bytes.length < 5 || String.fromCharCode(...bytes.subarray(0, 5)) !== '%PDF-') throw new Error('O DocuSeal não devolveu um PDF');
+      return bytes;
     },
   };
 }
