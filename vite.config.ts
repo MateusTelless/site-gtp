@@ -50,6 +50,8 @@ function deployBindingConfig() {
     d1_databases: d1 ? [{ binding: d1, database_name: deployConfig.d1.database_name, database_id: deployConfig.d1.database_id, migrations_dir: "../../drizzle" }] : [],
     r2_buckets: r2 ? [{ binding: r2, bucket_name: deployConfig.r2.bucket_name }] : [],
     observability: { enabled: true, traces: { enabled: true } },
+    // Domínios ligados ao Worker (custom domain: o Cloudflare cria o DNS e o certificado).
+    routes: deployConfig.routes,
   };
 }
 

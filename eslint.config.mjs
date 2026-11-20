@@ -12,7 +12,14 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Saída do build do Cloudflare (gerada, não é código-fonte).
+    "dist/**",
   ]),
+  {
+    // Scripts de teste em CommonJS (.cjs): require é a forma correta de importar neles.
+    files: ["**/*.cjs"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
   {
     files: ["components/ui/**/*.{ts,tsx}", "hooks/use-mobile.ts"],
     rules: {

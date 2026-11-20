@@ -3,5 +3,9 @@
   "name": "site-gtp",
   "compatibility_date": "2026-11-18",
   "d1": { "database_name": "getepe-db", "database_id": "4a6aa5db-df1d-45a3-b60c-13c6d9a57272" },
-  "r2": { "bucket_name": "getepe-arquivos" }
+  "r2": { "bucket_name": "getepe-arquivos" },
+  "routes": [
+    { "pattern": "getepe.com.br", "custom_domain": true },
+    { "pattern": "www.getepe.com.br", "custom_domain": true }
+  ]
 }
