@@ -237,5 +237,21 @@
   "__storeCatalogV1": true,
   "__grammarCategoryV3": true,
   "__siteEditorVersion": 2,
-  "provas": []
+  "provas": [
+    {
+      "id": "apmbb-2026-matematica",
+      "title": "APMBB 2026 · Matemática",
+      "visible": true,
+      "fields": {
+        "Instituição": "apmbb",
+        "Ano": "2026",
+        "Descrição": "Resolução comentada das questões 45 a 56 de Matemática da prova da APMBB 2026 (ingresso em 2027), feita pelos mestres do GETEPÊ.",
+        "Link da prova": "",
+        "Link do gabarito": "",
+        "Link da resolução": "/provas/apmbb-2026-matematica.pdf",
+        "Link do vídeo": "",
+        "Resolução comentada": ""
+      }
+    }
+  ]
 }
