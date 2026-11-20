@@ -536,3 +536,17 @@ html,body{overflow-x:clip}
 @media(max-width:1024px){
 .hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) .campaign-mobile-copy .eyebrow{display:block;padding:0;margin:0 0 10px;border-radius:0;background:transparent;box-shadow:none;color:#d8b46a;font-size:12px;font-weight:700;letter-spacing:1.6px}
 }
+/* Tablet: todos os destaques com a mesma altura (a da arte); etiqueta numa linha só. */
+@media(min-width:621px) and (max-width:1024px){
+.hero .campaign-banner:has(source[srcset*="-tablet"]){aspect-ratio:1640/714;grid-template-rows:minmax(0,1fr)}
+.hero .campaign-banner:has(source[srcset*="-tablet"])>a{aspect-ratio:auto;height:100%}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy{max-height:100%;overflow:hidden;padding-top:12px;padding-bottom:46px}
+.hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{white-space:nowrap;font-size:13px;padding:8px 14px;margin-bottom:10px}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy h2{margin-bottom:8px}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy p:not(.eyebrow){margin-bottom:14px}
+}
+/* Celular: todos os destaques com a mesma altura (o texto ocupa o mesmo espaço; o botão fica sempre na mesma posição). */
+@media(max-width:620px){
+.hero .campaign-banner:has(source) .campaign-mobile-copy{min-height:360px!important;display:flex;flex-direction:column;box-sizing:border-box}
+.hero .campaign-banner:has(source) .campaign-mobile-copy .button{margin-top:auto}
+}
