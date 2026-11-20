@@ -253,5 +253,15 @@
         "Resolução comentada": ""
       }
     }
+  ],
+  "comunidade": [
+    {
+      "id": "comunidade",
+      "title": "Comunidade GETEPÊ",
+      "visible": true,
+      "fields": {
+        "Link da comunidade (WhatsApp)": "https://chat.whatsapp.com/GW0U2cUcwK43oKQOj2XpYl"
+      }
+    }
   ]
 }
