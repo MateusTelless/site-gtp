@@ -11,7 +11,7 @@ import { catracaApi, catracaPainel } from '../../catraca';
 import seed from '../../../seed.json';
 import pageDefaults from '../../../page-defaults.json';
 
-const bindings=()=>env as unknown as {DB:D1Database;BUCKET:R2Bucket;ADMIN_EMAILS?:string;AUTH_PROVIDER?:string;SHEETS_WEBHOOK_URL?:string;SHEETS_WEBHOOK_SECRET?:string;MATRICULAS_SHEET_URL?:string;MATRICULAS_SHEET_SECRET?:string;ANTHROPIC_API_KEY?:string;CATRACA_TOKEN?:string;CATRACA_TOLERANCIA_DIAS?:string;DOCUSEAL_API_KEY?:string;DOCUSEAL_API_URL?:string;DOCUSEAL_GETEPE_ASSINATURA?:string;DOCUSEAL_GETEPE_EMAIL?:string;DOCUSEAL_WEBHOOK_TOKEN?:string;RA_ULTIMO_LEXUS?:string;GA4_ID?:string;META_PIXEL_ID?:string};
+const bindings=()=>env as unknown as {DB:D1Database;BUCKET:R2Bucket;ADMIN_EMAILS?:string;AUTH_PROVIDER?:string;SHEETS_WEBHOOK_URL?:string;SHEETS_WEBHOOK_SECRET?:string;MATRICULAS_SHEET_URL?:string;MATRICULAS_SHEET_SECRET?:string;ANTHROPIC_API_KEY?:string;CATRACA_TOKEN?:string;CATRACA_TOLERANCIA_DIAS?:string;DOCUSEAL_API_KEY?:string;DOCUSEAL_API_URL?:string;DOCUSEAL_GETEPE_ASSINATURA?:string;DOCUSEAL_GETEPE_EMAIL?:string;DOCUSEAL_WEBHOOK_TOKEN?:string;RA_ULTIMO_LEXUS?:string;GA4_ID?:string;META_PIXEL_ID?:string;PRIVACY_EMAIL?:string};
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 function fail(message:string,status=400):never{throw Object.assign(new Error(message),{status})}
 const now=()=>new Date().toISOString();
@@ -55,6 +55,8 @@ async function handle(req:Request){
  if(path.startsWith('auth/'))return passwordAction(req,path);
  if(path==='content'&&req.method==='GET'){const row=await DB.prepare('SELECT body,revision FROM content WHERE id=?').bind('published').first<ContentRow>();return json({data:normalized(row?JSON.parse(row.body):seed),revision:row?.revision||0,serverNow:Date.now()});}
  // IDs públicos de medição (ficam nas variáveis do Cloudflare, não no repositório). Só formatos válidos saem.
+ // E-mail do canal de privacidade (variável PRIVACY_EMAIL no Cloudflare; fora do repositório público).
+ if(path==='contato-privacidade'&&req.method==='GET'){const v=(bindings().PRIVACY_EMAIL||'').trim().toLowerCase(),email=/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(v)?v:'';return new Response(JSON.stringify({email}),{headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'public, max-age=300','X-Content-Type-Options':'nosniff'}});}
  if(path==='medicao'&&req.method==='GET'){const e=bindings(),g=(e.GA4_ID||'').trim(),px=(e.META_PIXEL_ID||'').trim(),ga4=/^G-[A-Z0-9]{4,20}$/.test(g)?g:'',pixel=/^\d{6,20}$/.test(px)?px:'';return new Response(JSON.stringify({ga4,pixel}),{headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'public, max-age=300','X-Content-Type-Options':'nosniff'}});}
  if(path.startsWith('media/')&&req.method==='GET'){const key=path.slice(6);if(!/^[\w-]+\.(png|jpg|webp|pdf)$/.test(key))fail('Arquivo não encontrado.',404);const file=await BUCKET.get(key);if(!file)fail('Arquivo não encontrado.',404);return new Response(file.body,{headers:{'Content-Type':file.httpMetadata?.contentType||'application/octet-stream','Cache-Control':'public, max-age=31536000, immutable','X-Content-Type-Options':'nosniff',...(key.endsWith('.pdf')?{'Content-Disposition':'attachment; filename="material-getepe.pdf"','Content-Security-Policy':'sandbox'}:{})}});}
  if(path==='newsletter'&&req.method==='POST'){
