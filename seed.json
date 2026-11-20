@@ -118,10 +118,10 @@
     },
     {
       "id": "portugues",
-      "title": "Gramática para APMBB",
+      "title": "Gramática",
       "visible": true,
       "fields": {
-        "Metodologia": "Estude Gramática com foco na sua preparação para APMBB.",
+        "Metodologia": "Estude Gramática com foco na sua preparação.",
         "Início": "Prazo conforme o curso",
         "Dias e horários": "",
         "Nome curto": "Gramática",

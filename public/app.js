@@ -12,12 +12,12 @@ const courses=[
 {id:'espcex',hotmartUrl:"https://pay.hotmart.com/W64598861Y?off=0mkou0px&bid=1791300916351",name:'EsPCEx',short:'EsPCEx',type:'live',tone:'green',symbol:'27',description:'Um caminho de preparação para quem sonha com a carreira no Exército.',date:'12 jan 2027',end:'12/09/2027',time:'8h às 12h05'},
 {id:'matematica',hotmartUrl:"https://pay.hotmart.com/B99176376H?bid=1763406142342&off=0wr98yqn",name:'Matemática para APMBB',short:'Matemática',type:'recorded',tone:'gold',symbol:'π',description:'Fortaleça sua base e aprofunde os estudos de Matemática no seu ritmo.',date:'Prazo conforme o curso'},
 {id:'biologia',hotmartUrl:"https://pay.hotmart.com/S96674331R?off=q6r3otkf",name:'Biologia para APMBB',short:'Biologia',type:'recorded',tone:'green',symbol:'Bio',description:'Organize sua preparação em Biologia com aulas gravadas e materiais de apoio.',date:'Prazo conforme o curso'},
-{id:'portugues',hotmartUrl:"https://pay.hotmart.com/X103103953Y?off=bqf3vg34",name:'Gramática para APMBB',short:'Gramática',type:'recorded',tone:'blue',symbol:'Aa',description:'Estude Gramática com foco na sua preparação para APMBB.',date:'Prazo conforme o curso'},
+{id:'portugues',hotmartUrl:"https://pay.hotmart.com/X103103953Y?off=bqf3vg34",name:'Gramática',short:'Gramática',type:'recorded',tone:'blue',symbol:'Aa',description:'Estude Gramática com foco na sua preparação.',date:'Prazo conforme o curso'},
 ];
 function migrateGrammarCourse(data){
  if(data.__grammarCourseV1)return;
  const c=data.cursos?.find(r=>r.id==='portugues');
- if(c){c.title='Gramática para APMBB';c.fields??={};c.fields['Nome curto']='Gramática';c.fields.Metodologia='Estude Gramática com foco na sua preparação para APMBB.';}
+ if(c){c.title='Gramática';c.fields??={};c.fields['Nome curto']='Gramática';c.fields.Metodologia='Estude Gramática com foco na sua preparação.';}
  for(const slide of data.carrossel||[]){if(slide.fields?.Descrição)slide.fields.Descrição=slide.fields.Descrição.replace('Matemática, Biologia, Português e muito mais.','Matemática, Biologia, Gramática e muito mais.');}
  data.__grammarCourseV1=true;
 }
