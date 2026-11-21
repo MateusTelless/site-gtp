@@ -702,3 +702,9 @@ body{font-variant-emoji:text}
 .exam-lead button{justify-self:start}
 .exam-areas{display:grid;gap:10px;margin:12px 0 18px}
 .exam-areas .button{justify-content:space-between;text-align:left}
+/* Página do curso ao vivo: presencial e online lado a lado, cada um com a sua matrícula */
+.detail-modes{display:grid;gap:12px;margin:14px 0 4px}
+.detail-mode{display:grid;gap:8px;padding:14px;border:1px solid #d7deea;border-radius:10px;background:#fff}
+.detail-mode .enrollment-mode{font-weight:700;color:#0b2545}
+.detail-mode small{color:#4b5a6e;line-height:1.45}
+.detail-mode .button{width:100%;justify-content:center}
