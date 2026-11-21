@@ -604,3 +604,11 @@ html,body{overflow-x:clip}
 .hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]):has(source[srcset*="-tablet"]) .campaign-mobile-copy{width:50%;max-width:50%;padding-left:clamp(18px,1.8vw,36px)}
 .hero:has(.campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]) source[srcset*="-tablet"]) .hero-bottom{width:50%}
 }
+/* Página do curso: "O que você terá acesso:" com os diferenciais (no lugar dos checks), no mesmo estilo numerado. */
+.detail .access-block{margin:26px 0 24px}
+.detail .access-title{font-size:21px;letter-spacing:-.4px;color:#0c2340;margin:0 0 6px}
+.detail .access-list{display:grid;grid-template-columns:1fr;gap:0}
+.detail .access-list .benefit-item{padding:16px 0 12px}
+.detail .access-list .benefit-number{margin-bottom:8px}
+.detail .access-list .benefit-item h3{font-size:18px;margin:0}
+.detail .access-list .benefit-item p{font-size:15px;margin:6px 0 0}

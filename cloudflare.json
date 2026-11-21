@@ -6,6 +6,8 @@
   "r2": { "bucket_name": "getepe-arquivos" },
   "routes": [
     { "pattern": "getepe.com.br", "custom_domain": true },
-    { "pattern": "www.getepe.com.br", "custom_domain": true }
+    { "pattern": "www.getepe.com.br", "custom_domain": true },
+    { "pattern": "tellespires.com.br/*", "zone_name": "tellespires.com.br" },
+    { "pattern": "www.tellespires.com.br/*", "zone_name": "tellespires.com.br" }
   ]
 }
