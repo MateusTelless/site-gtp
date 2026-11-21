@@ -676,3 +676,6 @@ header{position:relative}
 
 /* Setas e símbolos sempre como texto (no iPhone viravam emoji). */
 body{font-variant-emoji:text}
+
+/* Escudo clicado: destaca o cartão do curso por um instante. */
+.card.card-flash{box-shadow:0 0 0 3px #d3b476,0 12px 28px rgba(6,27,53,.18);transition:box-shadow .3s}
