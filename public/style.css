@@ -657,3 +657,10 @@ header{position:relative}
 .academy-crests .crests-right{left:calc(100% - 40px)}
 .academy-crests a{height:clamp(52px,3.2vw,68px)}
 }
+
+/* ESA e EEAR no cartão da EsPCEx (imagens já recortadas, sem margem). */
+.academy-cover .crest-frame:has(img[src="escudos/esa.webp"]){--crest-ratio:0.7778}.academy-cover .crest-frame img[src="escudos/esa.webp"]{width:100%;left:0;top:0}
+.academy-cover .crest-frame:has(img[src="escudos/eear.webp"]){--crest-ratio:0.8556}.academy-cover .crest-frame img[src="escudos/eear.webp"]{width:100%;left:0;top:0}
+
+/* Cartão EsPCEx · ESA · EEAR: três escudos menores e nome em duas linhas. */
+.academy-cover.campus-espcex{--crest-height:66px}.purchase .academy-cover.campus-espcex{--crest-height:78px}.academy-cover.campus-espcex .crest-group{gap:6px}.academy-cover.campus-espcex .academy-identity strong{font-size:20px}
