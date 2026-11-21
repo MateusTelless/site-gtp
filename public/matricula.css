@@ -89,3 +89,18 @@
 /* Arquivos do desconto de militar: frente, verso e vínculo. */
 .enroll-filerow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
 #enroll .enroll-filerow .enroll-file{margin-top:0}
+
+/* Apostilas da turma oferecidas durante a matrícula (compra na loja virtual). */
+.enroll-extras{margin-top:34px;padding:22px;border:1px solid #d8e2ee;border-radius:14px;background:#f6f9fc}
+.enroll-extras h2{margin:4px 0 6px}
+.enroll-extras>p:not(.eyebrow){color:#4f6178;margin:0 0 14px}
+.enroll-extras-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.enroll-extra{display:flex;gap:12px;align-items:center;padding:10px;border:1.5px solid #c9d6e6;border-radius:12px;background:#fff;color:#0c2340;text-decoration:none;transition:border-color .15s,box-shadow .15s}
+.enroll-extra:hover,.enroll-extra:focus-visible{border-color:#d3b476;box-shadow:0 4px 14px rgba(6,27,53,.1)}
+.enroll-extra img{width:72px;height:72px;object-fit:cover;border-radius:8px;flex:none}
+.enroll-extra span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.enroll-extra b{font-size:15px}
+.enroll-extra small{color:#607187;font-size:13px}
+.enroll-extra em{font-style:normal;font-weight:700;font-size:13px;color:#8a6e34}
+
+.enroll-extras{display:block}.enroll-extras .eyebrow{display:block;color:#8a6e34;font-size:12px;letter-spacing:1.6px;font-weight:700;margin:0}.enroll-extras h2{font-size:22px;line-height:1.25;color:#0c2340}.enroll-extra,.enroll-extra *{text-decoration:none!important}.enroll-extra b{color:#0c2340}.enroll-extra small{white-space:normal}
