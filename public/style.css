@@ -679,3 +679,10 @@ body{font-variant-emoji:text}
 
 /* Escudo clicado: destaca o cartão do curso por um instante. */
 .card.card-flash{box-shadow:0 0 0 3px #d3b476,0 12px 28px rgba(6,27,53,.18);transition:box-shadow .3s}
+
+/* Acervo: fotos "emolduradas" — moldura dourada/madeira com passe-partout creme. */
+.history-lightbox img{display:block;margin:6px auto 16px;max-width:100%;max-height:68vh;width:auto;height:auto;box-sizing:border-box;padding:clamp(14px,2.4vw,28px);background:#f3ede0;border:clamp(10px,1.6vw,18px) solid #6b4a24;border-image:linear-gradient(135deg,#8a6431,#d8b672 18%,#7a5428 36%,#c9a35b 56%,#6b4a24 76%,#b8904c) 1;box-shadow:inset 0 0 0 1px #d9cfb8,inset 0 3px 8px rgba(0,0,0,.2),0 12px 28px rgba(0,0,0,.35)}
+.history-image-button{background:transparent;padding:0}
+.history-image-button img{box-sizing:border-box;padding:clamp(8px,1.4vw,16px);background:#f3ede0;border:clamp(6px,1vw,11px) solid #6b4a24;border-image:linear-gradient(135deg,#8a6431,#d8b672 18%,#7a5428 36%,#c9a35b 56%,#6b4a24 76%,#b8904c) 1;box-shadow:inset 0 0 0 1px #d9cfb8,inset 0 2px 6px rgba(0,0,0,.2),0 8px 18px rgba(0,0,0,.3)}
+.archive-image{display:flex;align-items:center;justify-content:center;background:transparent;border:0;padding:4px}
+.archive-image img{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:initial;padding:7px;border-width:6px}
