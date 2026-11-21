@@ -486,6 +486,8 @@ html,body{overflow-x:clip}
 }
 @media(max-width:620px){
 .hero:has(.campaign-banner[data-art="carrossel-espcex-janeiro"] source){background:radial-gradient(70% 30% at 50% 72%,#1a3520 0%,#0b1d10 100%) #0b1d10}
+/* APMBB: mesmo brilho de névoa do verde, no azul (centro mais claro, borda no tom da arte). */
+.hero:has(.campaign-banner[data-art="carrossel-apmbb-janeiro"] source){background:radial-gradient(70% 30% at 50% 72%,#123563 0%,#051c3a 100%) #051c3a}
 }
 /* APMBB e EsPCEx (fotos claras): esmaecimento ainda mais longo e gradual até o fundo. */
 @media(min-width:621px){
@@ -549,6 +551,10 @@ html,body{overflow-x:clip}
 @media(max-width:620px){
 .hero .campaign-banner:has(source) .campaign-mobile-copy{min-height:360px!important;display:flex;flex-direction:column;box-sizing:border-box}
 .hero .campaign-banner:has(source) .campaign-mobile-copy .button{margin-top:auto}
+/* Turmas (APMBB e EsPCEx): texto maior e espaço dividido por igual (etiqueta → título e texto → botão), sem buraco antes do botão. */
+.hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]):has(source) .campaign-mobile-copy .eyebrow{margin-bottom:auto!important;align-self:center!important}
+.hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]):has(source) .campaign-mobile-copy h2{font-size:34px;line-height:1.08;margin:0 0 12px}
+.hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]):has(source) .campaign-mobile-copy p:not(.eyebrow){font-size:17px;line-height:1.55;margin:0}
 }
 /* Celular e tablet: navegação é pelo dedo; ficam só as bolinhas (mostram quantos destaques há e qual está aberto), centralizadas. */
 @media(min-width:0px){
