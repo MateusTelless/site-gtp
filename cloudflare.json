@@ -8,6 +8,7 @@
     { "pattern": "getepe.com.br", "custom_domain": true },
     { "pattern": "www.getepe.com.br", "custom_domain": true },
     { "pattern": "tellespires.com.br/*", "zone_name": "tellespires.com.br" },
-    { "pattern": "www.tellespires.com.br/*", "zone_name": "tellespires.com.br" }
+    { "pattern": "www.tellespires.com.br/*", "zone_name": "tellespires.com.br" },
+    { "pattern": "m.tellespires.com.br/*", "zone_name": "tellespires.com.br" }
   ]
 }

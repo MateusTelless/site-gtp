@@ -52,6 +52,8 @@ function deployBindingConfig() {
     observability: { enabled: true, traces: { enabled: true } },
     // Domínios ligados ao Worker (custom domain: o Cloudflare cria o DNS e o certificado).
     routes: deployConfig.routes,
+    // A página inicial passa pelo Worker (que devolve a mesma página): assim o tellespires.com.br/ também é redirecionado.
+    assets: { run_worker_first: ["/"] },
   };
 }
 

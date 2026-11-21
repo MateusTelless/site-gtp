@@ -4,7 +4,7 @@ import { runWithConnectorBinding } from "../lib/connector-context";
 import type { ConnectorBinding } from "../lib/connector-contract.mjs";
 
 // Site antigo (tellespires.com.br, Wix): toda página vai, com 301, para a equivalente no getepe.com.br.
-const OLD_HOSTS=new Set(['tellespires.com.br','www.tellespires.com.br']);
+const OLD_HOSTS=new Set(['tellespires.com.br','www.tellespires.com.br','m.tellespires.com.br']);
 const OLD_PAGES:Record<string,string>={'':'/','/blog':'/guias/','/fale-conosco':'/#contato','/depoimentos':'/resultados/','/provas-anteriores':'/provas-anteriores-resolvidas/','/provas-soldado':'/provas-anteriores-resolvidas/','/gabarito-apmbb-2021':'/provas-anteriores-resolvidas/','/copia-apmbb':'/curso-apmbb-barro-branco/','/filosofiaesociologiaapmbb':'/curso-apmbb-barro-branco/','/cursoapmbb':'/curso-apmbb-barro-branco/','/cursoespcex':'/curso-espcex/','/cursoepcarcn':'/curso-epcar/','/soldadopmesp':'/#curso/soldado-pm','/matematicaapmbb':'/#curso/matematica','/portuguesapmbb':'/#curso/portugues','/biologiaapmbb':'/#curso/biologia'};
 function oldSiteTarget(pathname:string){
   const p=pathname.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\/+$/,'');
