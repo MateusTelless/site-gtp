@@ -673,3 +673,6 @@ header{position:relative}
 
 /* Telas largas: o texto começa logo depois da foto (a arte ocupa 1424 px; a foto vai até ~860 px), sem vazio no meio. */
 @media(min-width:1440px){.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy,.hero:has(.campaign-banner source[srcset*="-tablet"]) .hero-bottom{width:calc(100% - 880px);max-width:calc(100% - 880px)}.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy{padding-left:clamp(36px,3vw,64px);padding-right:clamp(36px,7vw,160px)}}
+
+/* Setas e símbolos sempre como texto (no iPhone viravam emoji). */
+body{font-variant-emoji:text}

@@ -53,17 +53,17 @@ function drawClasses(){
  if(course){
   turmas=turmas.filter(t=>t.course_id===course);
   if(courseName){$('.guide-intro h1').textContent='Matrícula · '+courseName;title.textContent='Sua turma'}
-  if(!turmas.length){box.innerHTML=`<p>A matrícula pelo site${courseName?' para '+esc(courseName):''} ainda não está aberta. Fale com a equipe pelo <a href="${esc(whatsapp('Olá! Quero me matricular'+(courseName?' na turma de '+courseName:'')+'.'))}" target="_blank" rel="noopener noreferrer">WhatsApp ↗</a> ou veja <a href="/matricula/">todas as turmas abertas</a>.</p>`;$('#next').hidden=true;return}
+  if(!turmas.length){box.innerHTML=`<p>A matrícula pelo site${courseName?' para '+esc(courseName):''} ainda não está aberta. Fale com a equipe pelo <a href="${esc(whatsapp('Olá! Quero me matricular'+(courseName?' na turma de '+courseName:'')+'.'))}" target="_blank" rel="noopener noreferrer">WhatsApp ↗︎</a> ou veja <a href="/matricula/">todas as turmas abertas</a>.</p>`;$('#next').hidden=true;return}
   if(turmas.length===1){const t=turmas[0];
    box.innerHTML=`<p class="enroll-chosen-label">Você está se matriculando em</p>`+classCard(t,`<input type="radio" name="turma" value="${esc(t.id)}"${t.vagas?' checked':' disabled'}>`).replace('enroll-option','enroll-option enroll-chosen');
-   if(!t.vagas)box.innerHTML+=`<p>As vagas desta turma acabaram. Fale com a equipe pelo <a href="${esc(whatsapp('Olá! Quero entrar na lista de espera da turma '+t.name+'.'))}" target="_blank" rel="noopener noreferrer">WhatsApp ↗</a>.</p>`;
+   if(!t.vagas)box.innerHTML+=`<p>As vagas desta turma acabaram. Fale com a equipe pelo <a href="${esc(whatsapp('Olá! Quero entrar na lista de espera da turma '+t.name+'.'))}" target="_blank" rel="noopener noreferrer">WhatsApp ↗︎</a>.</p>`;
    return}
   title.textContent='Escolha o período';
   box.setAttribute('aria-label','Períodos');
   box.innerHTML=`<p class="enroll-chosen-label">Este curso tem ${turmas.length} períodos. Escolha o seu:</p>`+turmas.map(t=>classCard(t,`<input type="radio" name="turma" value="${esc(t.id)}"${t.vagas?'':' disabled'}>`,true)).join('');
   return;
  }
- box.innerHTML=turmas.length?turmas.map(t=>classCard(t,`<input type="radio" name="turma" value="${esc(t.id)}"${t.vagas?'':' disabled'}>`)).join(''):`<p>Nenhuma turma com matrícula aberta pelo site agora. Fale com a equipe pelo <a href="${esc(whatsapp('Olá! Quero informações para matrícula.'))}" target="_blank" rel="noopener noreferrer">WhatsApp ↗</a>.</p>`;
+ box.innerHTML=turmas.length?turmas.map(t=>classCard(t,`<input type="radio" name="turma" value="${esc(t.id)}"${t.vagas?'':' disabled'}>`)).join(''):`<p>Nenhuma turma com matrícula aberta pelo site agora. Fale com a equipe pelo <a href="${esc(whatsapp('Olá! Quero informações para matrícula.'))}" target="_blank" rel="noopener noreferrer">WhatsApp ↗︎</a>.</p>`;
 }
 
 // Pagamento: primeiro Pix ou cartão; depois as escolhas de cada um.
