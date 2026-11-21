@@ -397,9 +397,10 @@ export async function enrollmentPublic(req:Request,path:string,DB:D1Database,syn
   // Militar ou dependente: conferência automática dos documentos, quando ligada. Se falhar ou demorar, fica para a equipe.
   if(disc.status==='pendente'&&verify&&bucket)await runDocCheck(DB,req,bucket,verify,id);
   // Contrato: sai na hora, menos com desconto ainda a conferir (a equipe envia depois de olhar).
-  if(contracts&&(await DB.prepare('SELECT discount_status FROM enrollments WHERE id=?').bind(id).first<Row>())?.discount_status!=='pendente')await sendContract(DB,req,contracts,id,null);
+  const later=(await DB.prepare('SELECT discount_status FROM enrollments WHERE id=?').bind(id).first<Row>())?.discount_status==='pendente';
+  const sent=!later&&!!contracts&&await sendContract(DB,req,contracts,id,null);
   await syncEnrollment(DB,sync,id);
-  return json({ok:true,message});
+  return json({ok:true,message,contrato:sent?'agora':'depois'});
  }
  return null;
 }

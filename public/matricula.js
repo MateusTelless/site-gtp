@@ -174,7 +174,9 @@ form.addEventListener('submit',async e=>{e.preventDefault();const problem=check(
   if(m==='pix')Object.assign(body,{parcelas_pix:pixN(),vencimento:pixN()>1?dueDay():undefined,primeira_parcela:val('primeira_parcela')});else Object.assign(body,{parcelas_cartao:Number(val('parcelas_cartao')),visita:val('visita')});
   const r=await api('matricula',body);
   if(window.getepeTrack)window.getepeTrack('matricula',{forma:m});
-  form.hidden=true;$('.enroll-steps').hidden=true;$('#done-message').textContent=r.message||'Matrícula recebida.';
+  form.hidden=true;$('.enroll-steps').hidden=true;const mail=(body.responsavel&&body.responsavel.email)||body.aluno.email||'';
+  const dm=$('#done-message');dm.textContent=(r.contrato==='depois'?'A equipe vai enviar o contrato para assinar para ':'Enviamos o contrato para assinar para ');const b=document.createElement('strong');b.textContent=mail;dm.append(b,'. Se não encontrar, confira o spam e a aba Promoções.');
+  $('#done-contract').textContent=r.contrato==='depois'?'Assine o contrato quando ele chegar a esse e-mail.':'Assine o contrato que chegou a esse e-mail.';
   $('#done-pay').textContent=m==='cartao'?'No dia '+date(val('visita'))+', venha à unidade passar o cartão.':'Pague as parcelas por Pix; a primeira vence em '+date(val('primeira_parcela'))+'.';
   $('#done').hidden=false;$('#done').focus()}
  catch(err){fail(err.message);btn.disabled=false;btn.textContent='Confirmar e enviar'}});
