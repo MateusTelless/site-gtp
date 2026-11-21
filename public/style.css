@@ -670,8 +670,3 @@ header{position:relative}
 
 /* Computador largo: mesma faixa de escudos abaixo do menu (no lugar das laterais). */
 @media(min-width:1700px){.academy-crests{display:flex;order:20;width:100%;justify-content:center;align-items:center;gap:48px;padding-top:12px;margin-top:2px;border-top:1px solid #e6ecf3}.academy-crests .crests-group{position:static;width:auto;display:flex;gap:48px}.academy-crests a{height:46px}}
-
-/* Telas largas: carrossel no formato exato da arte (1640x714) com 620 px de altura = 1424 px de largura, centralizado. Mesma divisão foto/texto do tablet. */
-@media(min-width:1440px){.hero:has(.campaign-banner source[srcset*="-tablet"]){width:1424px;max-width:1424px;margin-left:calc((100% - 1424px) / 2)!important;margin-right:0!important}.hero .campaign-banner:has(source[srcset*="-tablet"]){height:620px}.hero .campaign-banner:has(source[srcset*="-tablet"]) picture img{object-fit:cover;object-position:left center}}
-
-@media(min-width:1440px){.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy h2{font-size:39px;white-space:nowrap}.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy p:not(.eyebrow){font-size:18px}.hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{font-size:17px!important}.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy .button{font-size:17px}}
