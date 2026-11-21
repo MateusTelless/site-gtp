@@ -1,6 +1,5 @@
 User-agent: *
 Allow: /
-Disallow: /admin
 Disallow: /api/
 Disallow: /boletim-modelo.html
 Sitemap: https://getepe.com.br/sitemap.xml

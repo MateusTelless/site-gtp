@@ -175,11 +175,19 @@ form.addEventListener('submit',async e=>{e.preventDefault();const problem=check(
   const r=await api('matricula',body);
   if(window.getepeTrack)window.getepeTrack('matricula',{forma:m});
   form.hidden=true;$('.enroll-steps').hidden=true;const mail=(body.responsavel&&body.responsavel.email)||body.aluno.email||'';
-  const dm=$('#done-message');dm.textContent=(r.contrato==='depois'?'A equipe vai enviar o contrato para assinar para ':'Enviamos o contrato para assinar para ');const b=document.createElement('strong');b.textContent=mail;dm.append(b,'. Se não encontrar, confira o spam e a aba Promoções.');
-  $('#done-contract').textContent=r.contrato==='depois'?'Assine o contrato quando ele chegar a esse e-mail.':'Assine o contrato que chegou a esse e-mail.';
+  const dm=$('#done-message');dm.textContent=(r.contrato==='agora'?'Enviamos o contrato para assinar para ':'A equipe vai enviar o contrato para assinar para ');const b=document.createElement('strong');b.textContent=mail;dm.append(b,'. Se não encontrar, confira o spam e a aba Promoções.');
+  $('#done-contract').textContent=r.contrato!=='agora'?'Assine o contrato quando ele chegar a esse e-mail.':'Assine o contrato que chegou a esse e-mail.';
   $('#done-pay').textContent=m==='cartao'?'No dia '+date(val('visita'))+', venha à unidade passar o cartão.':'Pague as parcelas por Pix; a primeira vence em '+date(val('primeira_parcela'))+'.';
   $('#done').hidden=false;$('#done').focus()}
  catch(err){fail(err.message);btn.disabled=false;btn.textContent='Confirmar e enviar'}});
+// Máscaras enquanto digita: CPF 000.000.000-00, RG 00.000.000-0 (formato de SP; outro tamanho fica como digitado), CEP 00000-000 e celular (11) 90000-0000.
+// O servidor guarda só os dígitos, então a máscara não muda o que é gravado.
+const group=(d,parts,seps)=>{let out='',i=0;parts.forEach((n,k)=>{const p=d.slice(i,i+n);if(!p)return;out+=(k?seps[k-1]:'')+p;i+=n});return out};
+const MASK={cpf:v=>group(v.replace(/\D/g,'').slice(0,11),[3,3,3,2],['.','.','-']),
+ rg:v=>{const d=v.toUpperCase().replace(/[^0-9X]/g,'');return d.length>9?d:group(d,[2,3,3,1],['.','.','-'])},
+ cep:v=>group(v.replace(/\D/g,'').slice(0,8),[5,3],['-']),
+ celular:v=>{const d=v.replace(/\D/g,'').slice(0,11);return d.length<3?d:'('+d.slice(0,2)+') '+(d.length>10?group(d.slice(2),[5,4],['-']):group(d.slice(2),[4,4],['-']))}};
+form.addEventListener('input',e=>{const k=String(e.target.name||'').split('.').pop(),f=MASK[k];if(!f||!e.target.value)return;const v=f(e.target.value);if(v!==e.target.value)e.target.value=v});
 $('[data-step-label="3"]').hidden=true;$('#back').hidden=true;
 api('matricula/opcoes').then(r=>{turmas=r.turmas;meta={hoje:r.hoje,pix_primeira_ate:r.pix_primeira_ate,visita_ate:r.visita_ate};drawClasses()}).catch(e=>{$('#classes').innerHTML='<p>'+esc(e.message)+'</p>'});
 })();

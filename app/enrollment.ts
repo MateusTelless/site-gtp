@@ -83,7 +83,9 @@ async function contractData(DB:D1Database,id:string):Promise<ContractData|null>{
  const payer=(await DB.prepare('SELECT p.* FROM people p WHERE p.id=?').bind(e.payer_person_id).first<Row>())||student,minor=payer.id!==student.id;
  // Cadastro já existente não é alterado pelo formulário: o RG enviado na matrícula completa o que faltar.
  let sent:Row={};try{sent=JSON.parse(e.submitted||'{}')}catch{/* sem dados enviados */}
- const rg=payer.rg||String((minor?sent.responsavel?.rg:sent.aluno?.rg)||'');
+ const rgRaw=String(payer.rg||(minor?sent.responsavel?.rg:sent.aluno?.rg)||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
+ // RG de SP (9 caracteres) sai como 00.000.000-0; outros formatos ficam como foram digitados.
+ const rg=rgRaw.length===9?rgRaw.slice(0,2)+'.'+rgRaw.slice(2,5)+'.'+rgRaw.slice(5,8)+'-'+rgRaw.slice(8):rgRaw;
  const parcels=(await DB.prepare("SELECT number,amount_cents,due_on FROM installments WHERE enrollment_id=? AND status<>'cancelada' ORDER BY number").bind(id).all<Row>()).results,sum=total(parcels as {amount_cents:number}[]);
  const pct=e.discount_pct&&e.discount_status!=='recusado'?e.discount_pct:0,off=(c:number)=>Math.round(c*(100-pct)/100),disc=pct?' (com '+pct+'% de desconto por ser '+(DISCOUNT_LABEL[e.discount_reason]||e.discount_reason)+')':'';
  // Cláusula 3ª §3º: no cartão, o valor total do contrato é o preço à vista; a forma de pagamento mostra as parcelas e o total no cartão.
