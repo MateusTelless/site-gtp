@@ -687,4 +687,4 @@ body{font-variant-emoji:text}
 .archive-image{display:flex;align-items:center;justify-content:center;background:transparent;border:0;padding:4px}
 .archive-image img{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:initial;padding:7px;border-width:6px}
 /* Acervo histórico: frase ao lado do título em dourado. */
-.story-archive-heading>p{color:#d3b476}
+.history-archive-heading>p{color:#d3b476}
