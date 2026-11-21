@@ -1,5 +1,4 @@
 // Matrícula pelo site e financeiro: roda o código real da API com node:sqlite em memória e as migrações de drizzle/.
-/* eslint-disable @typescript-eslint/no-require-imports -- script CommonJS executado direto pelo Node, como os demais testes */
 const assert=require('node:assert/strict'),fs=require('node:fs'),{DatabaseSync}=require('node:sqlite'),{stripTypeScriptTypes}=require('node:module');
 const db=new DatabaseSync(':memory:');for(const f of fs.readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort())db.exec(fs.readFileSync('drizzle/'+f,'utf8'));
 const statement=(sql,args=[])=>({bind(...values){return statement(sql,values)},async first(){return db.prepare(sql).get(...args)||null},async all(){return {results:db.prepare(sql).all(...args)}},async run(){if(/^SELECT/i.test(sql))return {results:db.prepare(sql).all(...args)};const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes)}}}});

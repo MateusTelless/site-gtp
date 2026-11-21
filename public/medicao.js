@@ -4,8 +4,8 @@
 (()=>{'use strict';
  const KEY='getepe_cookies_v1',W=window,D=document;
  let ids=null,ligado=false;
- const ler=()=>{try{return localStorage.getItem(KEY)}catch(e){return null}};
- const gravar=v=>{try{localStorage.setItem(KEY,v)}catch(e){}};
+ const ler=()=>{try{return localStorage.getItem(KEY)}catch{return null}};
+ const gravar=v=>{try{localStorage.setItem(KEY,v)}catch{}};
  // Eventos do site -> nomes do Google e da Meta.
  const MAPA={
   aula_teste:['generate_lead','Lead'],
@@ -23,7 +23,7 @@
    carregar('https://www.googletagmanager.com/gtag/js?id='+encodeURIComponent(ids.ga4));
   }
   if(ids.pixel&&!W.fbq){
-   const f=W.fbq=function(){f.callMethod?f.callMethod.apply(f,arguments):f.queue.push(arguments)};
+   const f=W.fbq=function(){if(f.callMethod)f.callMethod.apply(f,arguments);else f.queue.push(arguments)};
    if(!W._fbq)W._fbq=f;f.push=f;f.loaded=true;f.version='2.0';f.queue=[];
    carregar('https://connect.facebook.net/en_US/fbevents.js');
    W.fbq('init',ids.pixel);W.fbq('track','PageView');
@@ -33,8 +33,8 @@
  W.getepeTrack=function(evento,dados){
   if(!ligado)return;const m=MAPA[evento];if(!m)return;const d=Object.assign({},dados||{});
   if(d.valor){d.value=Number(d.valor);d.currency='BRL';delete d.valor}
-  try{if(W.gtag&&ids.ga4)W.gtag('event',m[0],d)}catch(e){}
-  try{if(W.fbq&&ids.pixel)W.fbq('track',m[1],d.value?{value:d.value,currency:'BRL'}:{})}catch(e){}
+  try{if(W.gtag&&ids.ga4)W.gtag('event',m[0],d)}catch{}
+  try{if(W.fbq&&ids.pixel)W.fbq('track',m[1],d.value?{value:d.value,currency:'BRL'}:{})}catch{}
  };
  function aviso(){
   if(D.getElementById('getepe-cookies'))return;
@@ -51,9 +51,9 @@
  D.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[href]');if(a&&/(^|\/\/)(wa\.me|api\.whatsapp\.com|chat\.whatsapp\.com|(www\.)?whatsapp\.com)\//i.test(a.href))W.getepeTrack('whatsapp',{link:a.href.split('?')[0]})},true);
  let iniciou=false;D.addEventListener('input',e=>{if(iniciou||!location.pathname.startsWith('/matricula'))return;if(e.target.closest&&e.target.closest('form')){iniciou=true;W.getepeTrack('matricula_iniciada',{})}},true);
  // Permite reabrir o aviso (ex.: link "Preferências de cookies" no rodapé).
- W.getepeCookies=function(){try{localStorage.removeItem(KEY)}catch(e){}if(ids&&(ids.ga4||ids.pixel))aviso()};
+ W.getepeCookies=function(){try{localStorage.removeItem(KEY)}catch{}if(ids&&(ids.ga4||ids.pixel))aviso()};
  fetch('/api/medicao',{credentials:'omit'}).then(r=>r.ok?r.json():null).then(j=>{
   if(!j||!(j.ga4||j.pixel))return;ids=j;const v=ler();
-  if(v==='sim')ligar();else if(v!=='nao'){D.readyState==='loading'?D.addEventListener('DOMContentLoaded',aviso):aviso()}
+  if(v==='sim')ligar();else if(v!=='nao'){if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',aviso);else aviso()}
  }).catch(()=>{});
 })();
