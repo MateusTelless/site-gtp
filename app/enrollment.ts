@@ -230,7 +230,10 @@ export function nameKey(name:string){return name.normalize('NFD').replace(/[̀-�
 export async function nameHash(name:string){const k=nameKey(name);if(k.split(' ').length<2)return '';const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k));return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('')}
 // Ex-aluno: já assinou contrato numa matrícula do sistema, veio do cadastro antigo com código (CPF + nascimento),
 // ou tem o mesmo nome completo de um aluno do Lexus com matrícula não cancelada (decisão do dono, 17/11/2026).
+// Quem ainda está estudando (matrícula não cancelada nem encerrada, numa turma que não terminou) não é ex-aluno: não ganha o desconto
+// ao se matricular em outra turma (decisão do dono, 21/11/2026). Quem cancelou ou já terminou continua com o desconto.
 async function exStudent(DB:D1Database,cpf:string,birth:string,name:string):Promise<{fonte:string;ra?:string}|null>{
+ if(cpf&&birth&&await DB.prepare("SELECT 1 FROM students s JOIN people p ON p.id=s.person_id JOIN enrollments e ON e.student_id=s.id JOIN classes c ON c.id=e.class_id WHERE p.cpf=? AND p.birth_date=? AND e.status NOT IN ('cancelada','encerrada') AND (c.ends_on IS NULL OR c.ends_on='' OR c.ends_on>=?) LIMIT 1").bind(cpf,birth,todaySP()).first())return null;
  if(cpf&&birth&&await DB.prepare("SELECT 1 FROM students s JOIN people p ON p.id=s.person_id WHERE p.cpf=? AND p.birth_date=? AND (COALESCE(s.legacy_code,'')<>'' OR EXISTS(SELECT 1 FROM enrollments e WHERE e.student_id=s.id AND e.contract_signed_at IS NOT NULL)) LIMIT 1").bind(cpf,birth).first())return {fonte:'cadastro'};
  const h=name?await nameHash(name):'';if(!h)return null;
  const rows=(await DB.prepare('SELECT ra FROM lexus_ex_alunos WHERE name_hash=? ORDER BY ra LIMIT 5').bind(h).all<{ra:string}>()).results;

@@ -211,6 +211,10 @@ async function run(){
  as('owner@example.test');
  // Desconto de 5%: ex-aluno é reconhecido pelo CPF e nascimento (já assinou contrato); não diz nada sem a data certa.
  as(null);db.exec('DELETE FROM limits');
+ // Ainda estudando (matrícula ativa numa turma em andamento): não ganha. Depois de encerrada ou cancelada, ganha.
+ assert.deepEqual(await ok(await call('matricula/desconto','POST',{cpf:sheetStudent.cpf,nascimento:sheetStudent.nascimento})),{ex_aluno:false,pct:5});
+ const exIds=db.prepare("SELECT e.id,e.status FROM enrollments e JOIN students s ON s.id=e.student_id JOIN people p ON p.id=s.person_id WHERE p.cpf=?").all(sheetStudent.cpf);
+ db.prepare("UPDATE enrollments SET status='encerrada' WHERE id IN ("+exIds.map(()=>'?').join(',')+")").run(...exIds.map(r=>r.id));
  assert.deepEqual(await ok(await call('matricula/desconto','POST',{cpf:sheetStudent.cpf,nascimento:sheetStudent.nascimento})),{ex_aluno:true,pct:5});
  assert.equal((await ok(await call('matricula/desconto','POST',{cpf:sheetStudent.cpf,nascimento:'1990-01-01'}))).ex_aluno,false);
  assert.equal((await ok(await call('matricula/desconto','POST',{cpf:cpf(823456780),nascimento:'2000-01-01'}))).ex_aluno,false,'quem nunca assinou não é ex-aluno');
