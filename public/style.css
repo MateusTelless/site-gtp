@@ -534,10 +534,6 @@ html,body{overflow-x:clip}
 .hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{font-size:16px;padding:10px 18px;letter-spacing:1.4px;margin-bottom:14px}
 }
 @media(min-width:621px){.hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{font-size:15px;padding:9px 16px}}
-/* Cursos gravados: sem etiqueta; o texto de cima volta a ser simples (o dourado fica só no botão). */
-@media(min-width:0px){
-.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) .campaign-mobile-copy .eyebrow{display:block;padding:0;margin:0 0 10px;border-radius:0;background:transparent;box-shadow:none;color:#d8b46a;font-size:12px;font-weight:700;letter-spacing:1.6px}
-}
 /* Tablet: todos os destaques com a mesma altura (a da arte); etiqueta numa linha só. */
 @media(min-width:621px){
 .hero .campaign-banner:has(source[srcset*="-tablet"]){aspect-ratio:1640/714;grid-template-rows:minmax(0,1fr)}
@@ -552,9 +548,9 @@ html,body{overflow-x:clip}
 .hero .campaign-banner:has(source) .campaign-mobile-copy{min-height:360px!important;display:flex;flex-direction:column;box-sizing:border-box}
 .hero .campaign-banner:has(source) .campaign-mobile-copy .button{margin-top:auto}
 /* Turmas (APMBB e EsPCEx): texto maior e espaço dividido por igual (etiqueta → título e texto → botão), sem buraco antes do botão. */
-.hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]):has(source) .campaign-mobile-copy .eyebrow{margin-bottom:auto!important;align-self:center!important}
-.hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]):has(source) .campaign-mobile-copy h2{font-size:34px;line-height:1.08;margin:0 0 12px}
-.hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]):has(source) .campaign-mobile-copy p:not(.eyebrow){font-size:17px;line-height:1.55;margin:0}
+.hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"],[data-art="carrossel-cursos-gravados"]):has(source) .campaign-mobile-copy .eyebrow{margin-bottom:auto!important;align-self:center!important}
+.hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"],[data-art="carrossel-cursos-gravados"]):has(source) .campaign-mobile-copy h2{font-size:34px;line-height:1.08;margin:0 0 12px}
+.hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"],[data-art="carrossel-cursos-gravados"]):has(source) .campaign-mobile-copy p:not(.eyebrow){font-size:17px;line-height:1.55;margin:0}
 }
 /* Celular e tablet: navegação é pelo dedo; ficam só as bolinhas (mostram quantos destaques há e qual está aberto), centralizadas. */
 @media(min-width:0px){
@@ -568,7 +564,6 @@ html,body{overflow-x:clip}
 .hero:has(.campaign-banner source[srcset*="-tablet"]) .hero-bottom{right:0;width:39%;bottom:14px}
 .hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{font-size:14.5px;padding:9px 15px;letter-spacing:1.1px}
 }
-@media(min-width:0px){.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) .campaign-mobile-copy .eyebrow{white-space:normal!important;font-size:12px!important;padding:0!important;letter-spacing:1.6px!important}}
 /* Carrossel no celular e tablet: só o selo, sem o nome escrito. */
 @media(min-width:0px){.hero .campaign-banner:has(source) .campaign-brand>span{display:none}.hero .campaign-banner:has(source) .campaign-brand img{width:58px;height:58px}}
 @media(min-width:621px){.hero .campaign-banner:has(source) .campaign-brand img{width:64px;height:64px}}
@@ -594,7 +589,6 @@ html,body{overflow-x:clip}
 .hero .campaign-banner:has(source) .campaign-brand img{width:clamp(72px,5.5vw,104px);height:clamp(72px,5.5vw,104px)}
 .hero:has(.campaign-banner source[srcset*="-tablet"]) .hero-bottom{bottom:clamp(10px,1vw,18px)}
 .hero:has(.campaign-banner source) .hero-bottom .dots button{width:11px;height:11px}
-.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) .campaign-mobile-copy .eyebrow{font-size:clamp(13px,.95vw,16px)!important}
 }
 /* Cursos gravados: bloco do texto e botão um pouco mais à esquerda (professores também deslocados na arte). */
 
@@ -621,3 +615,7 @@ html,body{overflow-x:clip}
 .purchase-body .more-info{display:flex;width:100%;justify-content:center;margin-top:12px;box-sizing:border-box}
 
 .campaign-information .campaign-more{margin-top:18px}.campaign-information .campaign-more .button{width:100%;justify-content:center;box-sizing:border-box}
+
+/* Cursos gravados: etiqueta mais longa que a das turmas, um pouco menor no celular para caber numa linha. */
+@media(max-width:620px){.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) .campaign-mobile-copy .eyebrow{font-size:14.5px;padding:9px 15px;letter-spacing:1.1px}}
+@media(min-width:621px) and (max-width:1024px){.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) .campaign-mobile-copy .eyebrow{font-size:12px;padding:8px 12px;letter-spacing:.7px}.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source[srcset*="-tablet"]) .campaign-mobile-copy{transform:none}}
