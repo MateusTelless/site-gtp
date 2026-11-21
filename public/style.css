@@ -577,9 +577,7 @@ html,body{overflow-x:clip}
 }
 /* Computador (1025px+): mesma composição do tablet, na proporção 3:1 da arte larga, com textos maiores. */
 @media(min-width:1025px){
-.hero .campaign-banner:has(source[srcset*="-tablet"]){aspect-ratio:2142/714}
-.hero .campaign-banner:has(source[srcset*="-tablet"]) picture img{aspect-ratio:2142/714}
-.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy,.hero:has(.campaign-banner source[srcset*="-tablet"]) .hero-bottom{width:42%;max-width:42%}
+.hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy,.hero:has(.campaign-banner source[srcset*="-tablet"]) .hero-bottom{width:39%;max-width:39%}
 .hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy{padding-left:clamp(24px,3vw,56px);padding-right:clamp(24px,4vw,72px);padding-bottom:calc(23px + 1vw)}
 .hero .campaign-banner:has(source) .campaign-mobile-copy .eyebrow{font-size:clamp(15px,1.15vw,20px);padding:.65em 1.15em}
 .hero .campaign-banner:has(source[srcset*="-tablet"]) .campaign-mobile-copy h2{font-size:clamp(32px,3vw,56px);line-height:1.08}
@@ -592,12 +590,8 @@ html,body{overflow-x:clip}
 }
 /* Cursos gravados: bloco do texto e botão um pouco mais à esquerda (professores também deslocados na arte). */
 
-@media(min-width:621px){.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source[srcset*="-tablet"]) .campaign-mobile-copy{transform:translateX(14px)}}@media(min-width:1025px){.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source[srcset*="-tablet"]) .campaign-mobile-copy{transform:translateX(1.6vw)}}
-/* Computador: APMBB e EsPCEx com o texto mais perto da foto (coluna começa logo após a arte). */
-@media(min-width:1025px){
-.hero .campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]):has(source[srcset*="-tablet"]) .campaign-mobile-copy{width:50%;max-width:50%;padding-left:clamp(18px,1.8vw,36px)}
-.hero:has(.campaign-banner:is([data-art="carrossel-apmbb-janeiro"],[data-art="carrossel-espcex-janeiro"]) source[srcset*="-tablet"]) .hero-bottom{width:50%}
-}
+
+
 /* Página do curso: "O que você terá acesso:" com os diferenciais (no lugar dos checks), no mesmo estilo numerado. */
 .detail .access-block{margin:26px 0 24px}
 .detail .access-title{font-size:21px;letter-spacing:-.4px;color:#0c2340;margin:0 0 6px}
