@@ -616,3 +616,23 @@ html,body{overflow-x:clip}
 
 /* Computador: mesma composição do tablet, mas sem passar de 620 px de altura em telas largas (a foto é recortada em cima e embaixo). */
 @media(min-width:1025px){.hero .campaign-banner:has(source[srcset*="-tablet"]){aspect-ratio:auto;height:min(calc(100vw * 714 / 1640),620px)}.hero .campaign-banner:has(source[srcset*="-tablet"])>a{height:100%}.hero .campaign-banner:has(source[srcset*="-tablet"]) picture img{aspect-ratio:auto;height:100%;object-fit:cover;object-position:left center}}
+
+/* Cartão do curso (página inicial): selo, modalidade, o que terá acesso, início/duração e matrícula. */
+.card .card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.card .card-badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:#d3b476;color:#061b35;font-size:11px;font-weight:800;letter-spacing:.8px}
+.card .card-mode{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.6px}
+.card .card-mode.is-live{background:#fde8e8;color:#b42318}
+.card .card-mode.is-rec{background:#e6efff;color:#1d4ed8}
+.card .card-body>p{min-height:0;margin:10px 0 14px}
+.card .card-list-title{font-size:12px;font-weight:800;letter-spacing:.6px;color:#0c2340;margin:4px 0 8px;min-height:0}
+.card .card-list{list-style:none;padding:0;margin:0 0 16px;display:grid;gap:7px}
+.card .card-list li{position:relative;padding-left:24px;font-size:14px;color:#3d4f66;line-height:1.35}
+.card .card-list li::before{content:"✓";position:absolute;left:0;top:0;width:17px;height:17px;border:1.5px solid #d3b476;border-radius:50%;color:#a8873d;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.card .card-facts{border-top:1px solid var(--line);padding-top:14px;margin:auto 0 0;display:grid;gap:6px}
+.card .card-facts div{display:flex;gap:6px;font-size:14px}
+.card .card-facts dt{font-weight:700;color:#0c2340}
+.card .card-facts dd{margin:0;color:#607187}
+.card .card-price{font-size:20px;font-weight:800;color:#0c2340;margin-top:12px}
+.card .card-enrollment{margin-top:0;padding-top:16px}
+.card .card-details{display:flex;justify-content:center;margin-top:10px;padding:11px 14px;border:1.5px solid #0c2340;border-radius:10px;color:#0c2340;font-weight:700;font-size:14px;text-decoration:none;transition:background .15s,border-color .15s}
+.card .card-details:hover,.card .card-details:focus-visible{background:#d3b476;border-color:#d3b476;color:#061b35}
