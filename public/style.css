@@ -664,3 +664,6 @@ header{position:relative}
 
 /* Cartão EsPCEx · ESA · EEAR: três escudos menores e nome em duas linhas. */
 .academy-cover.campus-espcex{--crest-height:66px}.purchase .academy-cover.campus-espcex{--crest-height:78px}.academy-cover.campus-espcex .crest-group{gap:6px}.academy-cover.campus-espcex .academy-identity strong{font-size:20px}
+
+/* Celular: faixa com os 7 escudos abaixo do menu. */
+@media(max-width:620px){.academy-crests{display:flex;order:20;width:100%;justify-content:space-between;align-items:center;padding:10px 2px 2px;margin-top:6px;border-top:1px solid #e6ecf3}.academy-crests .crests-group{display:contents}.academy-crests a{height:36px}}
