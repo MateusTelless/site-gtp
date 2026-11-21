@@ -613,3 +613,6 @@ html,body{overflow-x:clip}
 /* Cursos gravados: etiqueta mais longa que a das turmas, um pouco menor no celular para caber numa linha. */
 @media(max-width:620px){.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) .campaign-mobile-copy .eyebrow{font-size:14.5px;padding:9px 15px;letter-spacing:1.1px}}
 @media(min-width:621px) and (max-width:1024px){.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) .campaign-mobile-copy .eyebrow{font-size:12px;padding:8px 12px;letter-spacing:.7px}.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source[srcset*="-tablet"]) .campaign-mobile-copy{transform:none}}
+
+/* Computador: mesma composição do tablet, mas sem passar de 620 px de altura em telas largas (a foto é recortada em cima e embaixo). */
+@media(min-width:1025px){.hero .campaign-banner:has(source[srcset*="-tablet"]){aspect-ratio:auto;height:min(calc(100vw * 714 / 1640),620px)}.hero .campaign-banner:has(source[srcset*="-tablet"])>a{height:100%}.hero .campaign-banner:has(source[srcset*="-tablet"]) picture img{aspect-ratio:auto;height:100%;object-fit:cover;object-position:left center}}
