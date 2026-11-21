@@ -179,3 +179,5 @@ function openHistoryImage(id){const item=id==='founder'?{id,title:'Fernando Pere
 document.addEventListener('touchstart',e=>{const h=e.target.closest&&e.target.closest('.hero');if(!h||e.touches.length!==1){x0=null;return}x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
 document.addEventListener('touchend',e=>{if(x0===null||typeof changeSlide!=='function'||!slides.length){x0=null;return}const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;x0=null;if(Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.3)return;changeSlide(dx<0?(slide+1)%slides.length:(slide+slides.length-1)%slides.length)},{passive:true});
 })();
+// Escudo do cabeçalho: se o endereço já é o do curso (ex.: EsPCEx e depois EEAR, que levam ao mesmo cartão), rola e destaca de novo.
+document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('.academy-crests a');if(a&&location.hash===a.getAttribute('href')){e.preventDefault();route()}});
