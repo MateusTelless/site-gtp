@@ -667,3 +667,6 @@ header{position:relative}
 
 /* Celular: faixa com os 7 escudos abaixo do menu. */
 @media(max-width:620px){.academy-crests{display:flex;order:20;width:100%;justify-content:space-between;align-items:center;padding:10px 2px 2px;margin-top:6px;border-top:1px solid #e6ecf3}.academy-crests .crests-group{display:contents}.academy-crests a{height:36px}}
+
+/* Computador largo: mesma faixa de escudos abaixo do menu (no lugar das laterais). */
+@media(min-width:1700px){.academy-crests{display:flex;order:20;width:100%;justify-content:center;align-items:center;gap:48px;padding-top:12px;margin-top:2px;border-top:1px solid #e6ecf3}.academy-crests .crests-group{position:static;width:auto;display:flex;gap:48px}.academy-crests a{height:46px}}
