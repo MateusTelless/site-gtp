@@ -263,6 +263,21 @@
   "__siteEditorVersion": 2,
   "provas": [
     {
+      "id": "apmbb-2026-completa",
+      "title": "APMBB 2026 · Prova completa resolvida",
+      "visible": true,
+      "fields": {
+        "Instituição": "apmbb",
+        "Ano": "2026",
+        "Descrição": "Resolução comentada das 80 questões e orientações da redação da prova da APMBB 2026 (Cadete PM, VUNESP, 16/08/2026), com o gabarito definitivo oficial (questão 47 anulada).",
+        "Link da prova": "",
+        "Link do gabarito": "",
+        "Link da resolução": "/provas/apmbb-2026-prova-completa-resolvida.pdf",
+        "Link do vídeo": "",
+        "Resolução comentada": ""
+      }
+    },
+    {
       "id": "apmbb-2026-matematica",
       "title": "APMBB 2026 · Matemática",
       "visible": true,
