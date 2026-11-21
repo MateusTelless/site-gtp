@@ -615,7 +615,7 @@ html,body{overflow-x:clip}
 @media(min-width:621px) and (max-width:1024px){.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source) .campaign-mobile-copy .eyebrow{font-size:12px;padding:8px 12px;letter-spacing:.7px}.hero .campaign-banner[data-art="carrossel-cursos-gravados"]:has(source[srcset*="-tablet"]) .campaign-mobile-copy{transform:none}}
 
 /* Computador: mesma composição do tablet, mas sem passar de 620 px de altura em telas largas (a foto é recortada em cima e embaixo). */
-@media(min-width:1025px){.hero .campaign-banner:has(source[srcset*="-tablet"]){aspect-ratio:auto;height:min(calc(100vw * 714 / 1640),620px)}.hero .campaign-banner:has(source[srcset*="-tablet"])>a{height:100%}.hero .campaign-banner:has(source[srcset*="-tablet"]) picture img{aspect-ratio:auto;height:100%;object-fit:cover;object-position:left bottom}}
+@media(min-width:1025px){.hero .campaign-banner:has(source[srcset*="-tablet"]){aspect-ratio:auto;height:min(calc(100vw * 714 / 1640),620px)}.hero .campaign-banner:has(source[srcset*="-tablet"])>a{height:100%}.hero .campaign-banner:has(source[srcset*="-tablet"]) picture img{aspect-ratio:auto;height:100%;object-fit:contain;object-position:left center}.hero .campaign-banner:has(source[srcset*="-tablet"])>a{background:#061c3a}.hero .campaign-banner[data-art="carrossel-espcex-janeiro"]:has(source[srcset*="-tablet"])>a{background:#0c1e11}}
 
 /* Cartão do curso (página inicial): selo, modalidade, o que terá acesso, início/duração e matrícula. */
 .card .card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
