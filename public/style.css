@@ -688,3 +688,17 @@ body{font-variant-emoji:text}
 .archive-image img{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:initial;padding:7px;border-width:6px}
 /* Acervo histórico: frase ao lado do título em dourado. */
 .history-archive-heading>p{color:#dec080;font-family:"DM Sans",Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:2.1px;text-transform:uppercase;line-height:1.6}
+
+/* Provas: contato antes da resolução e resolução por área */
+.exam-lead{display:grid;gap:14px}
+.exam-lead h2{margin:0}
+.exam-lead>p{margin:0;color:#4b5a6e}
+.exam-lead label{display:grid;gap:6px;font-weight:600;font-size:14px;color:#0b2545}
+.exam-lead input:not([type=checkbox]),.exam-lead select{font:inherit;font-weight:400;padding:12px 14px;border:1px solid #c9d2de;border-radius:8px;background:#fff;color:#0b2545}
+.exam-lead label.check{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:13px;line-height:1.5;color:#4b5a6e}
+.exam-lead label.check input{margin-top:3px;flex:none}
+.exam-lead .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.exam-lead-error{margin:0;color:#b42318;font-size:14px}
+.exam-lead button{justify-self:start}
+.exam-areas{display:grid;gap:10px;margin:12px 0 18px}
+.exam-areas .button{justify-content:space-between;text-align:left}

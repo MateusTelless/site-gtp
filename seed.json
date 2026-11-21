@@ -274,22 +274,8 @@
         "Link do gabarito": "",
         "Link da resolução": "/provas/apmbb-2026-prova-completa-resolvida.pdf",
         "Link do vídeo": "",
-        "Resolução comentada": ""
-      }
-    },
-    {
-      "id": "apmbb-2026-matematica",
-      "title": "APMBB 2026 · Matemática",
-      "visible": true,
-      "fields": {
-        "Instituição": "apmbb",
-        "Ano": "2026",
-        "Descrição": "Resolução comentada das questões 45 a 56 de Matemática da prova da APMBB 2026 (ingresso em 2027), feita pelos mestres do GETEPÊ. A questão 47 foi anulada no gabarito definitivo.",
-        "Link da prova": "",
-        "Link do gabarito": "",
-        "Link da resolução": "/provas/apmbb-2026-matematica.pdf",
-        "Link do vídeo": "",
-        "Resolução comentada": ""
+        "Resolução comentada": "",
+        "Resolução por área": "Ciências Humanas · questões 01 a 20 | 2\nLinguagens e Códigos · questões 21 a 44 | 6\nMatemática e Ciências da Natureza · questões 45 a 74 | 10\nConhecimentos Específicos · questões 75 a 80 | 15\nRedação · tema e orientações | 16"
       }
     }
   ],

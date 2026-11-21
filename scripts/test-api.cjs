@@ -53,7 +53,17 @@ assert.equal((await call('admin/aula-teste')).status,401);
 user={userId:'owner',email:'owner@example.test',displayName:'Equipe'};let trials=(await (await call('admin/aula-teste')).json()).requests;assert.equal(trials.length,1,'honeypot gravou');assert.equal(trials[0].phone,'11912345678');assert.equal(trials[0].course,'matematica');assert.equal(trials[0].name,'Pessoa Teste');
 user=null;db.exec('DELETE FROM limits');for(let i=0;i<5;i++)assert.equal((await call('aula-teste','POST',trial)).status,200);assert.equal((await call('aula-teste','POST',trial)).status,429);
 user={userId:'owner',email:'owner@example.test',displayName:'Equipe'};await call('admin/aula-teste','DELETE',{id:trials[0].id});assert.equal((await (await call('admin/aula-teste')).json()).requests.length,5);
-// Integração com a planilha: desligada por padrão, envia os dados com a chave, e falhas não afetam o visitante.
+// Contatos das provas: validação, aceite, origem, honeypot, gravação só para a equipe, limite por IP e exclusão.
+user=null;db.exec('DELETE FROM limits');const lead={nome:'Pessoa Prova',whatsapp:'(11) 98765-4321',concurso:'apmbb',prova:'apmbb-2026-completa',aceite:true};
+for(const bad of [{nome:'Ana'},{nome:'<b>Ana</b> Silva'},{whatsapp:'123'},{concurso:'nada'},{aceite:false},{prova:'../x'}])assert.equal((await call('provas/acesso','POST',{...lead,...bad})).status,400,JSON.stringify(bad));
+assert.equal((await call('provas/acesso','POST',lead,'https://evil.test')).status,403);
+assert.equal((await call('provas/acesso','POST',{...lead,website:'spam'})).status,200);
+assert.equal((await call('provas/acesso','POST',lead)).status,200);
+assert.equal((await call('admin/provas-contatos')).status,401);
+user={userId:'owner',email:'owner@example.test',displayName:'Equipe'};let leadRows=(await (await call('admin/provas-contatos')).json()).contatos;assert.equal(leadRows.length,1,'honeypot gravou');assert.equal(leadRows[0].phone,'11987654321');assert.equal(leadRows[0].course,'apmbb');assert.equal(leadRows[0].exam_id,'apmbb-2026-completa');
+await call('admin/provas-contatos','DELETE',{id:leadRows[0].id});assert.equal((await (await call('admin/provas-contatos')).json()).contatos.length,0);
+user=null;db.exec('DELETE FROM limits');for(let i=0;i<10;i++)assert.equal((await call('provas/acesso','POST',lead)).status,200);assert.equal((await call('provas/acesso','POST',lead)).status,429);db.exec('DELETE FROM exam_leads');db.exec('DELETE FROM limits');
+user={userId:'owner',email:'owner@example.test',displayName:'Equipe'};// Integração com a planilha: desligada por padrão, envia os dados com a chave, e falhas não afetam o visitante.
 assert.equal((await (await call('admin/aula-teste')).json()).requests[0].sheet_status,'desligada');
 const realFetch=globalThis.fetch,sent=[];apiEnv.SHEETS_WEBHOOK_URL='https://script.google.com/macros/s/AKfy-test_1/exec';apiEnv.SHEETS_WEBHOOK_SECRET='chave-de-teste';
 globalThis.fetch=async(url,opts)=>{sent.push({url,body:JSON.parse(opts.body)});return new Response(JSON.stringify({ok:true}),{headers:{'Content-Type':'application/json'}})};

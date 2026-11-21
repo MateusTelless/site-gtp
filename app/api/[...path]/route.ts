@@ -34,6 +34,8 @@ const COURSE_DATES:Record<string,Record<string,[string[],string]>>={apmbb:{'Iní
 const PAGE_DATES:Record<string,Record<string,[string[],string]>>={'calendario-de-turmas':{'Texto 005 · p':[['INÍCIO · 29 set 2026'],'INÍCIO · 12 jan 2027'],'Texto 009 · p':[['INÍCIO · 03 nov 2026'],'INÍCIO · 12 jan 2027']},'curso-apmbb-barro-branco':{'Texto 007 · dd':[['29 set 2026'],'12 jan 2027'],'Texto 010 · dd':[['25/06/2027','26/06/2027','27/07/2027'],'27/06/2027']},'curso-espcex':{'Texto 007 · dd':[['03 nov 2026'],'12 jan 2027'],'Texto 010 · dd':[['10/09/2027'],'12/09/2027']},guias:{'Texto 017 · p':[['APMBB e EPCAR / Colégio Naval: 29/09/2026. EsPCEx: 03/11/2026.'],'APMBB e EsPCEx: novas turmas a partir de 12/01/2027. EPCAR / Colégio Naval: turma iniciada em 29/09/2026.']}};
 type Row={id:string;title?:string;visible?:boolean;fields?:Record<string,string>};
 function applyDates(rows:Row[]|undefined,table:Record<string,Record<string,[string[],string]>>){for(const r of rows||[]){const changes=table[r.id];if(!changes||!r.fields)continue;for(const [field,[olds,value]] of Object.entries(changes))if(olds.includes(r.fields[field]))r.fields[field]=value;}}
+// Contatos das provas resolvidas: concursos aceitos e versão do aceite gravada junto (a política fica em /privacidade/).
+const EXAM_LEAD_COURSES=['apmbb','soldado','espcex','esa','eear','epcar','cn','outro'],EXAM_LEAD_CONSENT='provas-v1';
 function upgradeTrialAndDates<T extends {cursos?:Row[];paginas?:Row[];carrossel?:Row[]}>(next:T){applyDates(next.cursos,COURSE_DATES);applyDates(next.paginas,PAGE_DATES);const s=next.carrossel?.find(r=>r.id==='slide-2');if(s?.fields?.Imagem==='/carrossel-cursos-gravados.png'&&s.fields['Destino do botão']==='#gravados'&&s.fields['Texto do botão']==='Conhecer os cursos gravados'){s.fields['Texto do botão']='Ver aula grátis!';s.fields['Destino do botão']='#aula-teste';if(s.fields.Descrição==='Estude no seu ritmo. Gramática com Mestre Fernando, Matemática com Mestre Joselias e Biologia com Mestre Okuma.')s.fields.Descrição='Estude no seu ritmo e se prepare conforme sua necessidade. Gramática com Mestre Fernando, Matemática com Mestre Joselias e Biologia com Mestre Okuma.';}return next}
 // Envia um pedido de aula teste para a planilha da equipe (Apps Script em integracoes/planilha-aula-teste).
 // Desligada sem os dois segredos. Falhas não afetam o visitante: o pedido já está no D1.
@@ -84,6 +86,19 @@ async function handle(req:Request){
   await DB.prepare('UPDATE trial_requests SET sheet_status=? WHERE id=?').bind(sheet,id).run();
   return json({ok:true});
  }
+ // Contato antes da resolução de uma prova (nome, WhatsApp e concurso, com aceite da política). O navegador lembra e não pede de novo.
+ if(path==='provas/acesso'&&req.method==='POST'){
+  const b=await body(req,2048);if(b.website)return json({ok:true});
+  const nome=String(b.nome||'').trim().replace(/\s+/g,' '),telefone=String(b.whatsapp||'').replace(/\D/g,''),curso=String(b.concurso||''),prova=String(b.prova||'').slice(0,80);
+  if(nome.length<5||nome.length>100||nome.split(' ').length<2||/[<>]/.test(nome))fail('Digite seu nome completo.');
+  if(telefone.length<10||telefone.length>13)fail('Digite o WhatsApp com DDD.');
+  if(!EXAM_LEAD_COURSES.includes(curso))fail('Escolha o concurso.');
+  if(b.aceite!==true)fail('Para continuar, aceite a política de privacidade.');
+  if(prova&&!/^[a-z0-9-]+$/.test(prova))fail('Prova inválida.');
+  await rateLimit(DB,req,'provas-acesso',10);
+  await DB.prepare('INSERT INTO exam_leads(id,name,phone,course,exam_id,consent_version,created_at,status) VALUES(?,?,?,?,?,?,?,?)').bind(crypto.randomUUID(),nome,telefone,curso,prova,EXAM_LEAD_CONSENT,now(),'novo').run();
+  return json({ok:true});
+ }
  if(path==='matricula'||path.startsWith('matricula/')){const r=await enrollmentPublic(req,path,DB,sendEnrollmentToSheet,BUCKET,path==='matricula'?makeDocVerifier(bindings().ANTHROPIC_API_KEY):undefined,path==='matricula'?makeContractApi(bindings(),()=>loadContractModel(BUCKET)):undefined,Number(bindings().RA_ULTIMO_LEXUS)||0);if(r)return r;fail('Caminho não encontrado.',404)}
  if(path==='health'&&req.method==='GET'){try{await DB.prepare('SELECT 1 AS ok').first();return json({ok:true})}catch{return json({ok:false},503)}}
  const user=await admin(req);
@@ -117,6 +132,8 @@ async function handle(req:Request){
  }
  if(path==='admin/restore'&&req.method==='POST'){const b=await body(req,2000);const version=await DB.prepare('SELECT body FROM versions WHERE id=?').bind(String(b.id)).first<{body:string}>();if(!version)fail('Versão não encontrada.',404);const result=await DB.prepare('UPDATE content SET body=?,revision=revision+1,updated_at=?,author=? WHERE id=? AND revision=?').bind(version.body,now(),user.email,'draft',b.revision).run();if(!result.meta.changes)fail('O rascunho mudou. Recarregue.',409);return json({ok:true});}
  if(path==='admin/contacts'&&req.method==='GET'){const rows=await DB.prepare('SELECT id,email,name,interests,created_at,status FROM contacts ORDER BY created_at DESC LIMIT 5000').all();return json({contacts:rows.results});}
+ if(path==='admin/provas-contatos'&&req.method==='GET'){const rows=await DB.prepare('SELECT id,name,phone,course,exam_id,created_at,status FROM exam_leads ORDER BY created_at DESC LIMIT 5000').all();return json({contatos:rows.results});}
+ if(path==='admin/provas-contatos'&&req.method==='DELETE'){const b=await body(req,2000);await DB.prepare('DELETE FROM exam_leads WHERE id=?').bind(String(b.id)).run();return json({ok:true});}
  if(path==='admin/aula-teste'&&req.method==='GET'){const rows=await DB.prepare('SELECT id,name,email,phone,course,created_at,status,sheet_status FROM trial_requests ORDER BY created_at DESC LIMIT 5000').all();return json({requests:rows.results});}
  if(path==='admin/aula-teste'&&req.method==='DELETE'){const b=await body(req,2000);await DB.prepare('DELETE FROM trial_requests WHERE id=?').bind(String(b.id)).run();return json({ok:true});}
  if(path==='admin/contact'&&req.method==='DELETE'){const b=await body(req,2000);await DB.prepare('DELETE FROM contacts WHERE id=?').bind(String(b.id)).run();return json({ok:true});}
