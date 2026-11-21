@@ -619,3 +619,5 @@ html,body{overflow-x:clip}
 
 /* Card de matrícula do curso: Mais informações (página da turma) logo abaixo do Matricule-se. */
 .purchase-body .more-info{display:flex;width:100%;justify-content:center;margin-top:12px;box-sizing:border-box}
+
+.campaign-information .campaign-more{margin-top:18px}.campaign-information .campaign-more .button{width:100%;justify-content:center;box-sizing:border-box}
