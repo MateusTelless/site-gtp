@@ -260,7 +260,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('button');i
   if(b.dataset.mMonth!==undefined){const n=Number(b.dataset.mMonth);agenda.month=n?shiftMonth(agenda.month,n):todaySP().slice(0,7);agenda.day='';await loadAgenda()}
   if(b.dataset.mDay!==undefined){agenda.day=b.dataset.mDay===agenda.day?'':b.dataset.mDay;await loadAgenda();$('#m-agenda').scrollIntoView({behavior:'smooth'})}
   if(b.dataset.mSendc){await api('admin/matriculas/enviar-contrato',{id:b.dataset.mSendc});message('Contrato enviado pelo DocuSeal. A pessoa recebe o e-mail para assinar.');await refresh()}
-  if(b.dataset.mKeep){const r=await api('admin/matriculas/guardar-contratos',{});message(r.guardados+' contrato(s) guardado(s) agora; '+r.ja_guardados+' já estavam guardados.'+(r.faltam?' Faltam '+r.faltam+(r.falhas?' ('+r.falhas+' não vieram do DocuSeal agora)':'')+': clique de novo.':''))}
+  if(b.dataset.mKeep){const r=await api('admin/matriculas/guardar-contratos',{});message(r.guardados+' contrato(s) guardado(s) agora; '+r.ja_guardados+' já estavam guardados.'+(r.faltam?' Faltam '+r.faltam+(r.falhas?' ('+r.falhas+' não vieram do DocuSeal agora)':'')+': clique de novo.':'')+(r.drive_enviados!=null?' Drive: '+r.drive_enviados+' enviado(s) para a pasta Contratos assinados'+(r.drive_falhas?', '+r.drive_falhas+' com falha (clique de novo)':'')+'.':''))}
   if(b.dataset.mSigned){await api('admin/matriculas/contrato',{id:b.dataset.mSigned,data:$('#m-signed-on').value});message('Contrato registrado. A matrícula conta como efetivada na turma.');await refresh()}
   if(b.dataset.m==='parcels')await listParcels();
   if(b.dataset.m==='csv')csv();

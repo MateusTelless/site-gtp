@@ -4,14 +4,14 @@ import { env } from 'cloudflare:workers';
 import { getAdminIdentity } from '../../admin-identity';
 import { passwordAction } from '../../password-auth';
 import { validateVisual } from '../../visual-validation';
-import { enrollmentPublic, enrollmentAdmin, staffRole, docusealWebhook, loadContractModel } from '../../enrollment';
+import { enrollmentPublic, enrollmentAdmin, staffRole, docusealWebhook, loadContractModel, type DriveContract } from '../../enrollment';
 import { makeDocVerifier } from '../../doc-check';
 import { makeContractApi, webhookTokenOk } from '../../docuseal';
 import { catracaApi, catracaPainel } from '../../catraca';
 import seed from '../../../seed.json';
 import pageDefaults from '../../../page-defaults.json';
 
-const bindings=()=>env as unknown as {DB:D1Database;BUCKET:R2Bucket;ADMIN_EMAILS?:string;AUTH_PROVIDER?:string;SHEETS_WEBHOOK_URL?:string;SHEETS_WEBHOOK_SECRET?:string;MATRICULAS_SHEET_URL?:string;MATRICULAS_SHEET_SECRET?:string;ANTHROPIC_API_KEY?:string;CATRACA_TOKEN?:string;CATRACA_TOLERANCIA_DIAS?:string;DOCUSEAL_API_KEY?:string;DOCUSEAL_API_URL?:string;DOCUSEAL_GETEPE_ASSINATURA?:string;DOCUSEAL_GETEPE_EMAIL?:string;DOCUSEAL_WEBHOOK_TOKEN?:string;RA_ULTIMO_LEXUS?:string;GA4_ID?:string;META_PIXEL_ID?:string;PRIVACY_EMAIL?:string};
+const bindings=()=>env as unknown as {DB:D1Database;BUCKET:R2Bucket;ADMIN_EMAILS?:string;AUTH_PROVIDER?:string;SHEETS_WEBHOOK_URL?:string;SHEETS_WEBHOOK_SECRET?:string;MATRICULAS_SHEET_URL?:string;MATRICULAS_SHEET_SECRET?:string;CONTRATOS_DRIVE_URL?:string;CONTRATOS_DRIVE_SECRET?:string;ANTHROPIC_API_KEY?:string;CATRACA_TOKEN?:string;CATRACA_TOLERANCIA_DIAS?:string;DOCUSEAL_API_KEY?:string;DOCUSEAL_API_URL?:string;DOCUSEAL_GETEPE_ASSINATURA?:string;DOCUSEAL_GETEPE_EMAIL?:string;DOCUSEAL_WEBHOOK_TOKEN?:string;RA_ULTIMO_LEXUS?:string;GA4_ID?:string;META_PIXEL_ID?:string;PRIVACY_EMAIL?:string};
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 function fail(message:string,status=400):never{throw Object.assign(new Error(message),{status})}
 const now=()=>new Date().toISOString();
@@ -41,6 +41,11 @@ function upgradeTrialAndDates<T extends {cursos?:Row[];paginas?:Row[];carrossel?
 // Desligada sem os dois segredos. Falhas não afetam o visitante: o pedido já está no D1.
 const formatPhone=(t:string)=>t.replace(/^(\d{2})(\d{4,5})(\d{4})$/,'($1) $2-$3');
 async function sendToSheet(row:Record<string,string>):Promise<'enviado'|'erro'|'desligada'>{const {SHEETS_WEBHOOK_URL:url,SHEETS_WEBHOOK_SECRET:secret}=bindings();if(!url||!secret)return 'desligada';if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url)){console.error('SHEETS_WEBHOOK_URL inválida');return 'erro'}try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...row,secret}),redirect:'follow',signal:AbortSignal.timeout(8000)});const b=await r.json().catch(()=>null) as {ok?:boolean}|null;if(r.ok&&b?.ok)return 'enviado';console.error('Planilha recusou o pedido',r.status);return 'erro'}catch(e){console.error('Falha ao enviar à planilha',(e as Error)?.name);return 'erro'}}
+// Manda o PDF do contrato assinado para a pasta "Contratos assinados" do Drive (Apps Script em integracoes/drive-contratos), numa subpasta por turma.
+// Desligado sem os dois segredos. Devolve true só quando o Apps Script confirma que salvou (ou que já estava salvo).
+async function sendContractToDrive(f:DriveContract){const {CONTRATOS_DRIVE_URL:url,CONTRATOS_DRIVE_SECRET:secret}=bindings();if(!url||!secret)return false;if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url)){console.error('CONTRATOS_DRIVE_URL inválida');return false}let bin='';for(let i=0;i<f.pdf.length;i+=0x8000)bin+=String.fromCharCode(...f.pdf.subarray(i,i+0x8000));const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret,codigo:f.codigo,turma:f.turma,aluno:f.aluno,sha256:f.sha256,pdf:btoa(bin)}),redirect:'follow',signal:AbortSignal.timeout(25000)});const b=await r.json().catch(()=>null) as {ok?:boolean;error?:string}|null;if(!r.ok||!b?.ok){console.error('Drive recusou o contrato',r.status,b?.error);return false}return true}
+// DocuSeal com a cópia no Drive, quando o Drive está ligado.
+const contractApi=()=>{const c=makeContractApi(bindings(),()=>loadContractModel(bindings().BUCKET));if(!c)return c;const {CONTRATOS_DRIVE_URL:u,CONTRATOS_DRIVE_SECRET:s}=bindings();return u&&s?{...c,drive:sendContractToDrive}:c};
 // Envia o estado de uma matrícula para a planilha do painel (Apps Script em integracoes/planilha-matriculas).
 // Desligado sem os dois segredos. Falhas não afetam quem se matricula nem a equipe: a matrícula já está no D1.
 async function sendEnrollmentToSheet(row:Record<string,unknown>){const {MATRICULAS_SHEET_URL:url,MATRICULAS_SHEET_SECRET:secret}=bindings();if(!url||!secret)return;if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url)){console.error('MATRICULAS_SHEET_URL inválida');return}try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...row,secret}),redirect:'follow',signal:AbortSignal.timeout(8000)});const b=await r.json().catch(()=>null) as {ok?:boolean}|null;if(!r.ok||!b?.ok)console.error('Planilha de matrículas recusou o envio',r.status)}catch(e){console.error('Falha ao enviar à planilha de matrículas',(e as Error)?.name)}}
@@ -52,7 +57,7 @@ async function handle(req:Request){
  // Ponte da catraca: programa no PC do curso, autenticado por token (não manda Origin). Fica antes da checagem de origem.
  if(path.startsWith('catraca/')){const r=await catracaApi(req,path,bindings());if(r)return r}
  // Aviso do DocuSeal (contrato assinado): vem do servidor do DocuSeal, sem Origin. O código secreto vai no endereço.
- if(path.startsWith('docuseal/webhook/')&&req.method==='POST'){if(!await webhookTokenOk(path.slice(17),bindings().DOCUSEAL_WEBHOOK_TOKEN))fail('Não autorizado.',401);return docusealWebhook(req,DB,makeContractApi(bindings(),()=>loadContractModel(BUCKET)),sendEnrollmentToSheet,BUCKET)}
+ if(path.startsWith('docuseal/webhook/')&&req.method==='POST'){if(!await webhookTokenOk(path.slice(17),bindings().DOCUSEAL_WEBHOOK_TOKEN))fail('Não autorizado.',401);return docusealWebhook(req,DB,contractApi(),sendEnrollmentToSheet,BUCKET)}
  if(req.method!=='GET'&&req.headers.get('origin')!==url.origin)fail('Origem não autorizada.',403);
  if(path.startsWith('auth/'))return passwordAction(req,path);
  if(path==='content'&&req.method==='GET'){const row=await DB.prepare('SELECT body,revision FROM content WHERE id=?').bind('published').first<ContentRow>();return json({data:normalized(row?JSON.parse(row.body):seed),revision:row?.revision||0,serverNow:Date.now()});}
@@ -99,12 +104,12 @@ async function handle(req:Request){
   await DB.prepare('INSERT INTO exam_leads(id,name,phone,course,exam_id,consent_version,created_at,status) VALUES(?,?,?,?,?,?,?,?)').bind(crypto.randomUUID(),nome,telefone,curso,prova,EXAM_LEAD_CONSENT,now(),'novo').run();
   return json({ok:true});
  }
- if(path==='matricula'||path.startsWith('matricula/')){const r=await enrollmentPublic(req,path,DB,sendEnrollmentToSheet,BUCKET,path==='matricula'?makeDocVerifier(bindings().ANTHROPIC_API_KEY):undefined,path==='matricula'?makeContractApi(bindings(),()=>loadContractModel(BUCKET)):undefined,Number(bindings().RA_ULTIMO_LEXUS)||0);if(r)return r;fail('Caminho não encontrado.',404)}
+ if(path==='matricula'||path.startsWith('matricula/')){const r=await enrollmentPublic(req,path,DB,sendEnrollmentToSheet,BUCKET,path==='matricula'?makeDocVerifier(bindings().ANTHROPIC_API_KEY):undefined,path==='matricula'?contractApi():undefined,Number(bindings().RA_ULTIMO_LEXUS)||0);if(r)return r;fail('Caminho não encontrado.',404)}
  if(path==='health'&&req.method==='GET'){try{await DB.prepare('SELECT 1 AS ok').first();return json({ok:true})}catch{return json({ok:false},503)}}
  const user=await admin(req);
  // Perfis da equipe: matrícula, financeiro e registro conferem o perfil em cada rota (app/enrollment.ts).
  const role=await staffRole(DB,user.email);
- if(/^admin\/(matriculas|alunos|pessoas|turmas|planos|financeiro|equipe|registro)(\/|$)/.test(path)){const team=(bindings().ADMIN_EMAILS||'').toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);const r=await enrollmentAdmin(req,path,DB,{email:user.email.toLowerCase(),role},team,sendEnrollmentToSheet,BUCKET,makeContractApi(bindings(),()=>loadContractModel(BUCKET)));if(r)return r;fail('Caminho não encontrado.',404)}
+ if(/^admin\/(matriculas|alunos|pessoas|turmas|planos|financeiro|equipe|registro)(\/|$)/.test(path)){const team=(bindings().ADMIN_EMAILS||'').toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);const r=await enrollmentAdmin(req,path,DB,{email:user.email.toLowerCase(),role},team,sendEnrollmentToSheet,BUCKET,contractApi());if(r)return r;fail('Caminho não encontrado.',404)}
  // Conteúdo do site, contatos e aula teste: só administrador e secretaria.
  if(!['admin','secretaria'].includes(role))fail('Seu perfil não permite esta área.',403);
  if(path==='admin/catraca'&&req.method==='GET')return json(await catracaPainel(DB));

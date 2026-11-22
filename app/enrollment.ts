@@ -60,7 +60,9 @@ async function syncEnrollment(DB:D1Database,sync:SheetSync|undefined,id:string){
 // (docusealWebhook), que confere direto na API antes de marcar. Regra de envio (dono, 17/11/2026): automático logo após a matrícula,
 // menos quando há desconto de militar ou dependente a conferir; aí a equipe aprova o desconto (o contrato sai junto) ou envia pelo botão.
 export type ContractData={codigo:string;contratante:{nome:string;email:string};campos:Record<string,string>};
-export type ContractApi={send:(d:ContractData)=>Promise<string>;signedAt:(ref:string)=>Promise<string|null>;documentUrl:(ref:string)=>Promise<string|null>;signedPdf?:(ref:string)=>Promise<Uint8Array|null>};
+export type ContractApi={send:(d:ContractData)=>Promise<string>;signedAt:(ref:string)=>Promise<string|null>;documentUrl:(ref:string)=>Promise<string|null>;signedPdf?:(ref:string)=>Promise<Uint8Array|null>;drive?:(f:DriveContract)=>Promise<boolean>};
+// Cópia no Drive (pasta "Contratos assinados", uma subpasta por turma; Apps Script em integracoes/drive-contratos). Decisão do dono, 22/11/2026.
+export type DriveContract={codigo:string;turma:string;aluno:string;pdf:Uint8Array;sha256:string};
 // Cópia do contrato assinado (as duas assinaturas) no arquivo privado do GETEPE: R2, numa pasta que a rota pública de mídia não serve.
 // Fica guardada mesmo se a conta do DocuSeal mudar. O SHA-256 vai no registro de alterações, para provar depois que o arquivo é o mesmo.
 export const signedContractKey=(id:string)=>'privado/contratos/'+id+'.pdf';
@@ -126,14 +128,34 @@ async function sendContract(DB:D1Database,req:Request,contracts:ContractApi,id:s
 // Guarda o PDF assinado (uma vez por matrícula). Falha não derruba nada: fica no registro e a equipe tenta de novo pelo painel.
 async function archiveSignedContract(DB:D1Database,req:Request,bucket:R2Bucket|undefined,contracts:ContractApi|undefined,staff:Staff|null,id:string,ref:string){
  if(!bucket||!contracts?.signedPdf)return false;
- const key=signedContractKey(id);if(await bucket.head(key))return true;
+ const key=signedContractKey(id);
+ if(!await bucket.head(key)){
+  try{
+   const pdf=await contracts.signedPdf(ref);if(!pdf)return false;
+   const sha=await sha256Hex(pdf),at=nowIso();
+   await bucket.put(key,pdf,{httpMetadata:{contentType:'application/pdf'},customMetadata:{contrato:ref,sha256:sha,guardado_em:at}});
+   await audit(DB,req,staff,'contrato_guardado','enrollment',id,{contrato:ref,sha256:sha,bytes:pdf.length}).run();
+  }catch(err){console.error('Cópia do contrato assinado falhou',(err as Error)?.message);await audit(DB,req,staff,'contrato_guardar_falhou','enrollment',id,{contrato:ref}).run().catch(()=>{});return false}
+ }
+ await copyContractToDrive(DB,req,bucket,contracts,staff,id);
+ return true;
+}
+const sha256Hex=async(b:Uint8Array)=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new Uint8Array(b)))].map(x=>x.toString(16).padStart(2,'0')).join('');
+const driveSent=async(DB:D1Database,id:string)=>!!await DB.prepare("SELECT 1 FROM audit_log WHERE entity='enrollment' AND entity_id=? AND action='contrato_no_drive' LIMIT 1").bind(id).first();
+// Manda ao Drive a cópia já guardada no R2 (uma vez por matrícula; o registro de alterações marca o envio). Falha fica registrada e é tentada de novo
+// no próximo aviso do DocuSeal ou pelo botão do painel que completa os contratos guardados.
+async function copyContractToDrive(DB:D1Database,req:Request,bucket:R2Bucket,contracts:ContractApi,staff:Staff|null,id:string){
+ if(!contracts.drive)return null;
+ if(await driveSent(DB,id))return true;
  try{
-  const pdf=await contracts.signedPdf(ref);if(!pdf)return false;
-  const sha=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new Uint8Array(pdf)))].map(b=>b.toString(16).padStart(2,'0')).join(''),at=nowIso();
-  await bucket.put(key,pdf,{httpMetadata:{contentType:'application/pdf'},customMetadata:{contrato:ref,sha256:sha,guardado_em:at}});
-  await audit(DB,req,staff,'contrato_guardado','enrollment',id,{contrato:ref,sha256:sha,bytes:pdf.length}).run();
-  return true;
- }catch(err){console.error('Cópia do contrato assinado falhou',(err as Error)?.message);await audit(DB,req,staff,'contrato_guardar_falhou','enrollment',id,{contrato:ref}).run().catch(()=>{});return false}
+  const o=await bucket.get(signedContractKey(id));if(!o)return false;
+  const pdf=new Uint8Array(await new Response(o.body).arrayBuffer());
+  const r=await DB.prepare('SELECT c.name AS turma,p.full_name AS aluno FROM enrollments e JOIN classes c ON c.id=e.class_id JOIN students s ON s.id=e.student_id JOIN people p ON p.id=s.person_id WHERE e.id=?').bind(id).first<Row>();
+  if(!r)return false;
+  const ok=await contracts.drive({codigo:enrollmentCode(id),turma:String(r.turma||''),aluno:String(r.aluno||''),pdf,sha256:await sha256Hex(pdf)});
+  await audit(DB,req,staff,ok?'contrato_no_drive':'contrato_drive_falhou','enrollment',id,{pasta:String(r.turma||'')}).run();
+  return ok;
+ }catch(err){console.error('Envio do contrato ao Drive falhou',(err as Error)?.message);await audit(DB,req,staff,'contrato_drive_falhou','enrollment',id,{}).run().catch(()=>{});return false}
 }
 // Aviso do DocuSeal (route.ts confere o código secreto do endereço). Só "assinado" interessa; o site confere na API antes de marcar.
 export async function docusealWebhook(req:Request,DB:D1Database,contracts:ContractApi|undefined,sync?:SheetSync,bucket?:R2Bucket):Promise<Response>{
@@ -520,9 +542,12 @@ export async function enrollmentAdmin(req:Request,path:string,DB:D1Database,staf
  if(path==='admin/matriculas/guardar-contratos'&&POST){
   can('admin');if(!bucket||!contracts?.signedPdf)fail('O DocuSeal ainda não está ligado no site.',503);
   const rows=(await DB.prepare('SELECT id,contract_ref FROM enrollments WHERE contract_signed_at IS NOT NULL AND contract_ref IS NOT NULL ORDER BY contract_signed_at').all<Row>()).results;
-  let guardados=0,ja=0,falhas=0;
-  for(const r of rows){if(await bucket.head(signedContractKey(r.id))){ja++;continue}if(guardados+falhas>=20)continue;if(await archiveSignedContract(DB,req,bucket,contracts,staff,r.id,r.contract_ref))guardados++;else falhas++}
-  return json({ok:true,guardados,ja_guardados:ja,falhas,faltam:rows.length-ja-guardados});
+  // Também manda ao Drive os já guardados que ainda não foram (até 20 envios por clique, contando os dois tipos).
+  let guardados=0,ja=0,falhas=0,drive=0,driveFalhas=0;
+  for(const r of rows){
+   if(await bucket.head(signedContractKey(r.id))){ja++;if(contracts.drive&&guardados+falhas+drive+driveFalhas<20&&!await driveSent(DB,r.id)){if(await copyContractToDrive(DB,req,bucket,contracts,staff,r.id))drive++;else driveFalhas++}continue}
+   if(guardados+falhas+drive+driveFalhas>=20)continue;if(await archiveSignedContract(DB,req,bucket,contracts,staff,r.id,r.contract_ref))guardados++;else falhas++}
+  return json({ok:true,guardados,ja_guardados:ja,falhas,faltam:rows.length-ja-guardados,...(contracts.drive?{drive_enviados:drive,drive_falhas:driveFalhas}:{})});
  }
  if(path==='admin/matriculas/contrato'&&POST){
   can('admin','secretaria');const b=await readBody(req,1000),signedOn=b.data||today;

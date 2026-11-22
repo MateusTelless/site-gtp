@@ -342,6 +342,20 @@ async function run(){
  const keep2=await (await call('admin/matriculas/guardar-contratos','POST',{})).json();assert.equal(keep2.guardados,0);assert.equal(keep2.ja_guardados,1);
  const detA=await (await call('admin/matriculas/detalhe?id='+cA.id)).json();assert.ok(detA.matricula.contrato_guardado_em,'ficha mostra a cópia guardada');
  as('fin@example.test');assert.equal((await call('admin/matriculas/contrato-pdf?id='+cA.id)).status,403);
+ // Cópia no Drive (pasta "Contratos assinados", subpasta da turma): falha fica registrada e o botão tenta de novo; depois vai uma vez só.
+ { const prev=globalThis.fetch,drv=[];let down=true;apiEnv.CONTRATOS_DRIVE_URL='https://script.google.com/macros/s/AKfy-contratos_1/exec';apiEnv.CONTRATOS_DRIVE_SECRET='chave-drive';
+  globalThis.fetch=async(url,opts)=>{if(String(url)===apiEnv.CONTRATOS_DRIVE_URL){if(down)return Response.json({ok:false,error:'falha'});drv.push(JSON.parse(opts.body));return Response.json({ok:true,id:'x'})}return prev(url,opts)};
+  as('owner@example.test');const k1=await (await call('admin/matriculas/guardar-contratos','POST',{})).json();assert.equal(k1.drive_enviados,0);assert.ok(k1.drive_falhas>=1);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM audit_log WHERE action='contrato_drive_falhou' AND entity_id=?").get(cA.id).n,1);
+  down=false;const k2=await (await call('admin/matriculas/guardar-contratos','POST',{})).json();assert.ok(k2.drive_enviados>=1);
+  const dA=drv.filter(d=>d.codigo===(cA.id.replace(/-/g,'').slice(0,8)).toUpperCase());assert.equal(dA.length,1);
+  const turmaA=db.prepare('SELECT c.name FROM classes c WHERE c.id=?').get(cA.class_id).name;
+  assert.deepEqual([dA[0].secret,dA[0].turma,dA[0].aluno],['chave-drive',turmaA,ctA.nome]);
+  assert.match(atob(dA[0].pdf),/^%PDF-1\.7 contrato 5001/);assert.equal(dA[0].sha256,apiEnv.BUCKET.files.get(keyA).meta.sha256);
+  const k3=await (await call('admin/matriculas/guardar-contratos','POST',{})).json();assert.equal(k3.drive_enviados,0);assert.equal(drv.filter(d=>d.codigo===dA[0].codigo).length,1,'não manda de novo');
+  // Aviso repetido do DocuSeal também não duplica; endereço fora do Apps Script não recebe nada.
+  apiEnv.CONTRATOS_DRIVE_URL='https://evil.test/coleta';const before=drv.length;as('owner@example.test');await call('admin/matriculas/guardar-contratos','POST',{});assert.equal(drv.length,before);
+  globalThis.fetch=prev;delete apiEnv.CONTRATOS_DRIVE_URL;delete apiEnv.CONTRATOS_DRIVE_SECRET }
  delete globalThis.__contracts;delete apiEnv.DOCUSEAL_WEBHOOK_TOKEN;delete apiEnv.RA_ULTIMO_LEXUS;as('owner@example.test');
  // Cliente do DocuSeal: lê o modelo, manda só os campos que existem, a parte do GETEPE já assinada e o contratante com e-mail.
  { const ds=new Function(stripTypeScriptTypes(fs.readFileSync('app/docuseal.ts','utf8').replace(/export /g,''))+';return {makeContractApi,webhookTokenOk}')();
