@@ -99,6 +99,8 @@ box.innerHTML=`<div class="trial-form"><p class="eyebrow">CADASTRO RECEBIDO</p><
 function courseEnrollment(c,mode){
  const presencial=c.type==='live'&&mode==='presencial';
  let hotmart='';try{const u=new URL(c.hotmartUrl||'');if(u.protocol==='https:'&&(u.hostname==='hotmart.com'||u.hostname.endsWith('.hotmart.com')||u.hostname==='hotm.art'))hotmart=u.href;}catch{}
+ const camp=!presencial&&window.GTP_CAMPANHA&&window.GTP_CAMPANHA.linkDe(c.id);
+ if(camp)return {url:camp,label:'Matricule-se',note:window.GTP_CAMPANHA.texto+' A matrícula e o pagamento são realizados na Hotmart.'};
  if(!presencial&&hotmart)return {url:hotmart,label:'Matricule-se',note:'A matrícula e o pagamento são realizados na Hotmart.'};
  if(!presencial)return {url:'',label:'Matricule-se',note:'Matrícula online em breve.'};
  // Presencial: matrícula pelo site, já nas turmas deste curso. Sem turma aberta, a página leva ao WhatsApp da equipe.
