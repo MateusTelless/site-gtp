@@ -53,7 +53,9 @@ async function run(){
  assert.equal(por['777'].liberado,true,'usa o código legado do Secullum, sem zeros');
  assert.equal(por['2000'].motivo,'codigo_duplicado');assert.equal(por['2000'].mensagem,'VER NA RECEPCAO');
  assert.equal(lista.pessoas.filter(p=>p.codigo==='2000').length,2);
- assert.equal(lista.pessoas.length,8,'aluno sem código fica de fora');
+ assert.equal(lista.pessoas.length,16,'aluno sem código fica de fora; cada um vai também com o número do Secullum (código + 26)');
+ assert.deepEqual(por['104226'],{...por['1042'],codigo:'104226'},'digital do Secullum (RA + 26) vale como o RA');
+ assert.equal(por['104326'].motivo,'pagamento_atrasado','o número antigo segue o bloqueio do aluno');
  assert.equal(por['1043'].nome,'JOAO LIMA','sem acento');
 
  // Eventos: grava, liga ao aluno, ignora repetidos e descarta inválidos.
@@ -65,6 +67,9 @@ async function run(){
  const linhas=db.prepare('SELECT * FROM catraca_acessos ORDER BY id').all();
  assert.equal(linhas.length,2,'reenvio não duplica');
  assert.equal(linhas[0].student_id,'s1');assert.equal(linhas[0].codigo,'1042');assert.equal(linhas[1].student_id,null);
+ await ok(await call('catraca/eventos','POST',{eventos:[{...ev,id:'55555555-eeee',codigo:'104226'}]}));
+ assert.equal(db.prepare("SELECT student_id FROM catraca_acessos WHERE id='55555555-eeee'").get().student_id,'s1','passagem com o número do Secullum fica ligada ao aluno');
+ db.prepare("DELETE FROM catraca_acessos WHERE id='55555555-eeee'").run();
  assert.equal((await call('catraca/eventos','POST',{eventos:'x'})).status,400);
  assert.equal((await call('catraca/eventos','POST',{eventos:Array(501).fill(ev)})).status,400);
 

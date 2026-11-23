@@ -26,6 +26,7 @@ function diasAtras(dia:string,n:number){const d=new Date(dia+'T12:00:00Z');d.set
 function nomeVisor(nome:string){const p=nome.trim().split(/\s+/);const curto=p.length>1?p[0]+' '+p[p.length-1]:p[0]||'';return curto.normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().slice(0,16)}
 
 const CODIGO_SQL="COALESCE(NULLIF(s.access_code,''),s.legacy_code)";
+const SUFIXO_SECULLUM='26';
 
 export async function listaLiberados(DB:D1Database,toleranciaDias:number){
  const limite=diasAtras(todaySP(),toleranciaDias);
@@ -46,7 +47,12 @@ export async function listaLiberados(DB:D1Database,toleranciaDias:number){
   if((porCodigo.get(codigo)||0)>1)motivo='codigo_duplicado';
   else if(r.status!=='ativo'||!r.ativa)motivo='matricula_inativa';
   else if(r.vencidas>0)motivo='pagamento_atrasado';
-  pessoas.push({codigo,nome:nomeVisor(r.full_name),liberado:!motivo,mensagem:motivo?MENSAGEM_BLOQUEIO:'',motivo});
+  const p={codigo,nome:nomeVisor(r.full_name),liberado:!motivo,mensagem:motivo?MENSAGEM_BLOQUEIO:'',motivo};
+  pessoas.push(p);
+  // As digitais cadastradas pelo Secullum guardam o RA com "26" (ano) no fim. Manda também esse número,
+  // desde que não seja o código de outra pessoa.
+  const antigo=codigo+SUFIXO_SECULLUM;
+  if(!porCodigo.has(antigo))pessoas.push({...p,codigo:antigo});
  }
  return pessoas;
 }
@@ -82,7 +88,8 @@ export async function catracaApi(req:Request,path:string,env:Env):Promise<Respon
   const validos=b.eventos.map(evento).filter(Boolean) as NonNullable<ReturnType<typeof evento>>[];
   if(validos.length)await DB.batch(validos.map(e=>DB.prepare(
    `INSERT OR IGNORE INTO catraca_acessos(id,codigo,student_id,data_hora,resultado,motivo,equipamento,recebido_em)
-    VALUES(?1,?2,(SELECT s.id FROM students s WHERE ?2<>'' AND ltrim(${CODIGO_SQL},'0')=?2 LIMIT 1),?3,?4,?5,?6,?7)`
+    VALUES(?1,?2,COALESCE((SELECT s.id FROM students s WHERE ?2<>'' AND ltrim(${CODIGO_SQL},'0')=?2 LIMIT 1),
+     (SELECT s.id FROM students s WHERE length(?2)>2 AND substr(?2,-2)='${SUFIXO_SECULLUM}' AND ltrim(${CODIGO_SQL},'0')=substr(?2,1,length(?2)-2) LIMIT 1)),?3,?4,?5,?6,?7)`
   ).bind(e.id,e.codigo,e.dataHora,e.resultado,e.motivo,e.equipamento,agora)));
   // Inválidos são descartados (e contados) para não travar a fila da ponte para sempre.
   return json({recebidos:validos.length,descartados:b.eventos.length-validos.length});
