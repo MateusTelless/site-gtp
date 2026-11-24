@@ -29,9 +29,16 @@ const method=()=>val('forma');
 const plano=()=>method()==='cartao'?cardPlan():pixPlan();
 const dueDay=()=>val('vencimento')==='outro'?Number(val('vencimento_outro')):Number(val('vencimento'));
 const cardOpt=()=>cardPlan()?.cartao.find(o=>String(o.n)===val('parcelas_cartao'));
-// Pix: de 1x até o mês em que o curso termina, contando do mês da primeira parcela (se ela cair no mês seguinte, uma opção a menos).
+// Pix: de 1x até o mês em que o curso termina, contando do mês da primeira parcela. A lista mostra o máximo com a primeira
+// parcela hoje; se a pessoa escolher uma data mais adiante e passar do limite, ela é avisada para escolher menos vezes.
 const monthsTo=(from,to)=>{const [a,b]=from.split('-').map(Number),[c,d]=to.split('-').map(Number);return Math.max(1,(c*12+d)-(a*12+b)+1)};
-const pixOpts=()=>{const p=pixPlan(),t=turma();if(!p||!t)return [];const max=monthsTo(val('primeira_parcela')||meta.hoje,t.ends_on);return p.pix.filter(o=>o.n<=max)};
+const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const mes=d=>MESES[Number(d.slice(5,7))-1];
+// Primeira parcela: um dos próximos 3 dias ou "Outra data" no calendário (até o início do curso; com o curso começado, até o fim do mês).
+const firstDate=()=>val('primeira_parcela')==='outra'?val('primeira_parcela_outra'):val('primeira_parcela');
+const pixOpts=()=>{const p=pixPlan();return p?p.pix:[]};
+const pixMaxFor=first=>{const t=turma();return t&&first?monthsTo(first,t.ends_on):pixOpts().length};
+const pixTooMany=()=>pixN()>0&&!!firstDate()&&pixN()>pixMaxFor(firstDate());
 const pixN=()=>Number(val('parcelas_pix'))||0;
 function age(birth){if(!birth)return 99;const b=new Date(birth+'T12:00:00'),n=new Date();return n.getFullYear()-b.getFullYear()-((n.getMonth()<b.getMonth()||(n.getMonth()===b.getMonth()&&n.getDate()<b.getDate()))?1:0)}
 // A etapa do responsável financeiro só existe para aluno menor de 18 anos.
@@ -75,10 +82,8 @@ function drawPayment(){
  drawDiscount();
  const ncolOf=(name,label,opts,sel,one)=>`<div class="enroll-ncol" role="radiogroup" aria-label="${label}"><p>Em quantas vezes?${discReason()?'<small class="enroll-off">já com 5% de desconto</small>':''}</p>${opts.map(o=>`<label class="enroll-nrow"><input type="radio" name="${name}" value="${o.n}"${String(o.n)===sel?' checked':''}><b>${o.n}x</b><span>${money(off(o.parcela_cents))}</span>${o.n===1?`<small>${one}</small>`:''}</label>`).join('')}</div>`;
  const pOpts=pixOpts();
- // Se a data da primeira parcela diminuiu o máximo do Pix, a escolha que passou do limite é desmarcada.
- if(pixN()>pOpts.length)form.querySelectorAll('[name=parcelas_pix]').forEach(i=>i.checked=false);
  const ncol=m==='cartao'&&card?ncolOf('parcelas_cartao','Em quantas vezes no cartão',card.cartao,val('parcelas_cartao'),'sem juros'):m==='pix'&&pix?ncolOf('parcelas_pix','Em quantas vezes no Pix',pOpts,val('parcelas_pix'),'à vista'):'';
- $('#methods').innerHTML=(pix?radio('forma','pix','Pix','Sem juros, de 1x até '+pOpts.length+'x (até o mês em que o curso termina). A primeira vence em até 3 dias.',m==='pix'):'')+(card?radio('forma','cartao','Cartão de crédito','À vista sem juros ou em até '+card.cartao[card.cartao.length-1].n+'x. Você passa o cartão na unidade, em dia útil.',m==='cartao'):'')+ncol;
+ $('#methods').innerHTML=(pix?radio('forma','pix','Pix','Sem juros, de 1x até '+pOpts.length+'x, com a última parcela no máximo no mês em que o curso termina.',m==='pix'):'')+(card?radio('forma','cartao','Cartão de crédito','À vista sem juros ou em até '+card.cartao[card.cartao.length-1].n+'x. Você passa o cartão na unidade, em dia útil.',m==='cartao'):'')+ncol;
  $('#methods').classList.toggle('with-ncol',!!ncol);
  $('#pay-pix').hidden=m!=='pix';$('#pay-card').hidden=m!=='cartao';
  if(m==='pix'){
@@ -87,8 +92,16 @@ function drawPayment(){
   $('#pix-days-box').hidden=pixN()===1;
   $('#pix-days').innerHTML=days.map(x=>chip('vencimento',x,'Dia '+x,String(x)===d)).join('')+chip('vencimento','outro','Outro dia',d==='outro');
   $('#pix-other-wrap').hidden=d!=='outro';
-  const f=val('primeira_parcela'),hoje=meta.hoje;
-  $('#pix-first').innerHTML=[0,1,2,3].map(i=>{const x=addDays(hoje,i);return chip('primeira_parcela',x,(i===0?'Hoje':i===1?'Amanhã':weekday(x).replace(/^./,c=>c.toUpperCase()))+', '+date(x).slice(0,5),x===f)}).join('');
+  const f=val('primeira_parcela'),hoje=meta.hoje,t=turma(),limite=t?.pix_primeira_limite||addDays(hoje,3),antes=t&&hoje<t.starts_on;
+  $('#pix-first').innerHTML=[0,1,2,3].map(i=>{const x=addDays(hoje,i);return chip('primeira_parcela',x,(i===0?'Hoje':i===1?'Amanhã':weekday(x).replace(/^./,c=>c.toUpperCase()))+', '+date(x).slice(0,5),x===f)}).join('')
+   +(limite>addDays(hoje,3)?chip('primeira_parcela','outra','Outra data',f==='outra'):'');
+  const outra=form.elements.namedItem('primeira_parcela_outra');outra.min=hoje;outra.max=limite;
+  if(outra.value&&(outra.value<hoje||outra.value>limite))outra.value='';
+  $('#pix-first-other-label').textContent=antes?'Escolha a data, até '+date(limite)+' (início do curso)':'Escolha a data, até '+date(limite)+' (fim deste mês)';
+  $('#pix-first-other-wrap').hidden=f!=='outra';
+  const warn=$('#pix-limit-warn'),mx=pixMaxFor(firstDate());
+  warn.hidden=!pixTooMany();
+  if(pixTooMany())warn.textContent='Com a primeira parcela em '+mes(firstDate())+', o Pix vai até '+mx+'x, porque o curso termina em '+mes(t.ends_on)+'. Escolha até '+mx+' vez'+(mx>1?'es':'')+' ou uma data mais cedo.';
   drawSchedule();
  }
  if(m==='cartao'){
@@ -97,7 +110,8 @@ function drawPayment(){
   form.elements.namedItem('visita').innerHTML='<option value="">Escolha o dia</option>'+days.map(x=>`<option value="${x}"${x===v?' selected':''}>${x===meta.hoje?'Hoje, ':''}${weekday(x)}, ${date(x).slice(0,5)}</option>`).join('');
  }
 }
-async function drawSchedule(){schedule=null;const p=plano(),n=pixN(),day=dueDay(),first=val('primeira_parcela');
+async function drawSchedule(){schedule=null;const p=plano(),n=pixN(),day=dueDay(),first=firstDate();
+ if(pixTooMany()){$('#schedule').innerHTML='<tr><td colspan="3">Escolha até '+pixMaxFor(first)+' vezes para ver as parcelas.</td></tr>';return}
  if(!p||!n||(n>1&&!(day>=1&&day<=28))||!first){$('#schedule').innerHTML='<tr><td colspan="3">Escolha em quantas vezes, '+(n===1?'':'o dia de vencimento e ')+'a data da primeira parcela.</td></tr>';return}
  try{schedule=await api('matricula/simular',{plano:p.id,forma:'pix',parcelas_pix:n,vencimento:n>1?day:undefined,primeira_parcela:first,...discBody()});$('#schedule').innerHTML=schedule.parcelas.map(r=>`<tr><td>${n===1?'Parcela única':r.number+'ª parcela'}</td><td>${date(r.due_on)}</td><td>${money(r.amount_cents)}</td></tr>`).join('')+`<tr><th colspan="2">Total${schedule.desconto?' (com 5% de desconto)':''}</th><th>${money(schedule.total_cents)}</th></tr>`;errorBox.hidden=true}catch(e){fail(e.message)}}
 const discBody=()=>{const r=discReason();return r==='ex_aluno'?{desconto:'ex_aluno',cpf:val('aluno.cpf'),nascimento:val('aluno.nascimento'),nome:val('aluno.nome')}:r?{desconto:r}:{}};
@@ -131,7 +145,7 @@ function drawReview(){const t=turma(),a=person('aluno'),g=needsGuardian()?person
  const personLines=p=>line('Nome',p.nome)+line('CPF',p.cpf)+line('Nascimento',p.nascimento?date(p.nascimento):'')+line('E-mail',p.email)+line('Celular',p.celular)+line('Endereço',addr(p));
  let pay;
  if(method()==='cartao'){const o=cardOpt(),v=val('visita');pay=line('Forma','Cartão de crédito')+line('Pagamento',o?(o.n===1?'À vista: '+money(off(o.parcela_cents))+' (sem juros)':o.n+'x de '+money(off(o.parcela_cents))):'')+line('Visita para passar o cartão',v?weekday(v)+', '+date(v):'')+line('Onde','Rua Vergueiro, 819 · Sobreloja 1 · Liberdade')}
- else{const n=pixN(),o=pixOpts().find(x=>x.n===n);pay=line('Forma','Pix (sem juros)')+line('Parcelas',o?(n===1?'À vista: '+money(off(o.parcela_cents)):n+'x de '+money(off(o.parcela_cents))):'')+(n>1?line('Vencimento','Dia '+dueDay()+' de cada mês'):'')+line('Primeira parcela',val('primeira_parcela')?date(val('primeira_parcela')):'')+(schedule?line('Total',money(schedule.total_cents)):'')}
+ else{const n=pixN(),o=pixOpts().find(x=>x.n===n);pay=line('Forma','Pix (sem juros)')+line('Parcelas',o?(n===1?'À vista: '+money(off(o.parcela_cents)):n+'x de '+money(off(o.parcela_cents))):'')+(n>1?line('Vencimento','Dia '+dueDay()+' de cada mês'):'')+line('Primeira parcela',firstDate()?date(firstDate()):'')+(schedule?line('Total',money(schedule.total_cents)):'')}
  const dr=discReason();if(dr)pay=line('Desconto',PCT+'% no valor total por ser '+DISC_TEXT[dr]+(dr==='ex_aluno'?'':' (documento enviado; a equipe confere)'))+pay;
  $('#review').innerHTML=`<div class="enroll-turma-check"><p class="eyebrow">CONFIRA A TURMA</p><h3>${esc(t.name)}</h3><p>${esc(t.shift)} · ${esc(t.schedule)}<br>De ${date(t.starts_on)} a ${date(t.ends_on)} · ${esc(t.unit)}</p><p class="enroll-turma-ask">É esta a turma em que você quer estudar? Se não for, <button type="button" class="enroll-fix" data-go="1">troque aqui</button>${course?' ou <a href="/#cursos">volte aos cursos</a>':''}.</p></div>`
   +block('Aluno',2,personLines(a))
@@ -146,7 +160,7 @@ function check(n){
  if(n===2){const m=missing(form.querySelector('[data-step="2"]'));if(m)return 'Preencha: '+m.closest('label').firstChild.textContent+'.'}
  if(n===3){const m=missing($('#guardian-fields'));if(m)return 'Preencha: '+m.closest('label').firstChild.textContent+'.';if(!val('responsavel.parentesco'))return 'Informe o parentesco com o aluno.'}
  if(n===4){const m=method();if(!m)return 'Escolha Pix ou cartão de crédito.';if(proof.sending)return 'Espere o documento terminar de enviar.';if(!exAluno&&proof.kind&&!proofDone()){if(proof.kind==='dependente_militar'&&!KIN.includes(proof.kin))return 'Diga qual é o seu vínculo com o militar.';if(proof.kind==='dependente_militar'&&proof.mil.trim().split(/\s+/).length<2)return 'Digite o nome completo do militar.';return 'Envie '+(proof.kind==='dependente_militar'?'a frente, o verso e o documento do vínculo':'a frente e o verso do documento')+', ou marque Não no desconto de militar.'}
-  if(m==='pix'){if(!pixN())return 'Escolha em quantas vezes no Pix.';const d=dueDay();if(pixN()>1&&!val('vencimento'))return 'Escolha o dia de vencimento.';if(pixN()>1&&!(d>=1&&d<=28))return 'Digite um dia de vencimento de 1 a 28.';if(!val('primeira_parcela'))return 'Escolha a data da primeira parcela.'}
+  if(m==='pix'){if(!pixN())return 'Escolha em quantas vezes no Pix.';const d=dueDay();if(pixN()>1&&!val('vencimento'))return 'Escolha o dia de vencimento.';if(pixN()>1&&!(d>=1&&d<=28))return 'Digite um dia de vencimento de 1 a 28.';if(!firstDate())return val('primeira_parcela')==='outra'?'Escolha no calendário a data da primeira parcela.':'Escolha a data da primeira parcela.';if(pixTooMany())return $('#pix-limit-warn').textContent}
   else{if(!cardOpt())return 'Escolha à vista ou em quantas vezes.';const v=val('visita');if(!v)return 'Escolha o dia da visita para passar o cartão.';if(v<meta.hoje||v>meta.visita_ate)return 'Escolha um dia de hoje até '+date(meta.visita_ate)+'.';if([0,6].includes(new Date(v+'T12:00:00Z').getUTCDay()))return 'O cartão só é passado em dia útil, de segunda a sexta. Escolha outro dia.'}}
  if(n===5&&!form.elements.namedItem('turma_ok').checked)return 'Confirme que a turma está certa.';
  if(n===5&&!form.elements.namedItem('aceite').checked)return 'Para enviar, aceite a política de privacidade.';
@@ -157,7 +171,7 @@ form.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b){fo
 form.addEventListener('change',e=>{const n=e.target.name;
  if(n==='turma'){schedule=null;form.querySelectorAll('[name=forma],[name=parcelas_pix],[name=parcelas_cartao]').forEach(i=>i.checked=false)}
  // A data da primeira parcela pode mudar o máximo de vezes do Pix: redesenha a coluna.
- if(n==='forma'||n==='parcelas_pix'||n==='vencimento'||n==='parcelas_cartao'||n==='primeira_parcela'){drawPayment()}
+ if(n==='forma'||n==='parcelas_pix'||n==='vencimento'||n==='parcelas_cartao'||n==='primeira_parcela'||n==='primeira_parcela_outra'){drawPayment()}
  if(n==='vencimento_outro')drawSchedule();
  if(n==='desconto_tipo'){proof={kind:e.target.value,docs:{},sending:'',kin:'',mil:''};drawPayment()}
  if(e.target.dataset&&e.target.dataset.part)sendProof(e.target.files&&e.target.files[0],e.target.dataset.part);
@@ -171,13 +185,13 @@ form.addEventListener('submit',async e=>{e.preventDefault();const problem=check(
  const btn=$('#next');btn.disabled=true;btn.textContent='Enviando…';
  try{const m=method(),body={turma:turma().id,plano:plano().id,forma:m,aluno:person('aluno'),responsavel:needsGuardian()?{...person('responsavel'),parentesco:val('responsavel.parentesco')}:undefined,aceite:true,website:val('website')};
   if(!exAluno&&proofDone())Object.assign(body,{desconto:proof.kind,documentos:Object.fromEntries(Object.entries(proof.docs).map(([k,v])=>[k,v.id])),...(proof.kind==='dependente_militar'?{parentesco:proof.kin,nome_militar:proof.mil.trim()}:{})});
-  if(m==='pix')Object.assign(body,{parcelas_pix:pixN(),vencimento:pixN()>1?dueDay():undefined,primeira_parcela:val('primeira_parcela')});else Object.assign(body,{parcelas_cartao:Number(val('parcelas_cartao')),visita:val('visita')});
+  if(m==='pix')Object.assign(body,{parcelas_pix:pixN(),vencimento:pixN()>1?dueDay():undefined,primeira_parcela:firstDate()});else Object.assign(body,{parcelas_cartao:Number(val('parcelas_cartao')),visita:val('visita')});
   const r=await api('matricula',body);
   if(window.getepeTrack)window.getepeTrack('matricula',{forma:m});
   form.hidden=true;$('.enroll-steps').hidden=true;const mail=(body.responsavel&&body.responsavel.email)||body.aluno.email||'';
   const dm=$('#done-message');dm.textContent=(r.contrato==='agora'?'Enviamos o contrato para assinar para ':'A equipe vai enviar o contrato para assinar para ');const b=document.createElement('strong');b.textContent=mail;dm.append(b,'. Se não encontrar, confira o spam e a aba Promoções.');
   $('#done-contract').textContent=r.contrato!=='agora'?'Assine o contrato quando ele chegar a esse e-mail.':'Assine o contrato que chegou a esse e-mail.';
-  $('#done-pay').textContent=m==='cartao'?'No dia '+date(val('visita'))+', venha à unidade passar o cartão.':'Pague as parcelas por Pix; a primeira vence em '+date(val('primeira_parcela'))+'.';
+  $('#done-pay').textContent=m==='cartao'?'No dia '+date(val('visita'))+', venha à unidade passar o cartão.':'Pague as parcelas por Pix; a primeira vence em '+date(firstDate())+'.';
   $('#done').hidden=false;$('#done').focus()}
  catch(err){fail(err.message);btn.disabled=false;btn.textContent='Confirmar e enviar'}});
 // Máscaras enquanto digita: CPF 000.000.000-00, RG 00.000.000-0 (formato de SP; outro tamanho fica como digitado), CEP 00000-000 e celular (11) 90000-0000.

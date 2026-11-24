@@ -4,7 +4,7 @@ const db=new DatabaseSync(':memory:');for(const f of fs.readdirSync('drizzle').f
 const statement=(sql,args=[])=>({bind(...values){return statement(sql,values)},async first(){return db.prepare(sql).get(...args)||null},async all(){return {results:db.prepare(sql).all(...args)}},async run(){if(/^SELECT/i.test(sql))return {results:db.prepare(sql).all(...args)};const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes)}}}});
 const DB={prepare:statement,async batch(list){db.exec('BEGIN');try{const out=[];for(const s of list)out.push(await s.run());db.exec('COMMIT');return out}catch(e){db.exec('ROLLBACK');throw e}}};
 const strip=f=>stripTypeScriptTypes(fs.readFileSync(f,'utf8').replace(/export /g,''));
-const enrollment=new Function(strip('app/enrollment.ts')+';return {enrollmentPublic,enrollmentAdmin,staffRole,docusealWebhook,pixSchedule,pixMax,validCpf,todaySP,cardOptions,nameKey,nameHash}')();
+const enrollment=new Function(strip('app/enrollment.ts')+';return {enrollmentPublic,enrollmentAdmin,staffRole,docusealWebhook,pixSchedule,pixMax,pixFirstLimit,validCpf,todaySP,cardOptions,nameKey,nameHash}')();
 const backups=new Function(strip('app/backups.ts')+';return {makeBackup,listBackups,verifyBackup,recoverBackup,exportBackup}')();
 let user=null;const team='owner@example.test,fin@example.test,sec@example.test,ver@example.test';const apiEnv={DB,BUCKET:{files:new Map(),async put(k,v,o){this.files.set(k,{bytes:v,type:o?.httpMetadata?.contentType,meta:o?.customMetadata})},async get(k){const x=this.files.get(k);return x?{body:x.bytes,httpMetadata:{contentType:x.type},customMetadata:x.meta}:null},async head(k){const x=this.files.get(k);return x?{customMetadata:x.meta}:null},async list(){return {objects:[],truncated:false}}},ADMIN_EMAILS:team};
 let source=fs.readFileSync('app/api/[...path]/route.ts','utf8').replace(/^import .*;\r?\n/gm,'').replace(/export \{safe as GET,safe as POST,safe as PUT,safe as DELETE\};/,'');
@@ -26,6 +26,12 @@ async function run(){
  assert.deepEqual(enrollment.pixSchedule(480000,2,5,'2027-12-01').map(r=>r.due_on),['2027-12-01','2028-01-05'],'virada de ano');
  // Máximo de parcelas: do mês da 1ª parcela até o mês em que o curso termina (novembro a julho = 9x).
  assert.equal(enrollment.pixMax('2026-11-17','2027-07-27'),9);assert.equal(enrollment.pixMax('2026-11-17','2027-06-30'),8,'termina em junho, começa em novembro: até 8x');assert.equal(enrollment.pixMax('2026-12-01','2027-07-27'),8,'1ª parcela no mês seguinte');assert.equal(enrollment.pixMax('2027-08-01','2027-07-27'),1,'curso já terminou');
+ // Data máxima da 1ª parcela: antes do curso, até o início; com o curso começado, até o fim do mês; os 3 dias valem sempre; nunca depois do fim.
+ assert.equal(enrollment.pixFirstLimit('2026-11-23','2027-01-12','2027-06-27'),'2027-01-12','antes do início: até o início do curso');
+ assert.equal(enrollment.pixFirstLimit('2027-02-10','2027-01-12','2027-06-27'),'2027-02-28','curso começado: até o fim do mês');
+ assert.equal(enrollment.pixFirstLimit('2027-03-30','2027-01-12','2027-06-27'),'2027-04-02','os 3 dias valem mesmo virando o mês');
+ assert.equal(enrollment.pixFirstLimit('2027-01-10','2027-01-12','2027-06-27'),'2027-01-13','perto do início: os 3 dias continuam');
+ assert.equal(enrollment.pixFirstLimit('2027-06-20','2027-01-12','2027-06-27'),'2027-06-27','nunca depois do fim do curso');
 
  // Sem login nada do painel abre; sem turma no site, a matrícula não tem opções.
  as(null);assert.equal((await call('admin/matriculas')).status,401);assert.equal((await call('admin/financeiro/resumo')).status,401);
@@ -53,6 +59,16 @@ async function run(){
  assert.deepEqual(po.map(o=>o.n),Array.from({length:pixMaxHoje},(_,i)=>i+1));assert.deepEqual(po[0],{n:1,parcela_cents:480000});
  assert.equal((await call('matricula/simular','POST',{plano:p1,forma:'pix',parcelas_pix:pixMaxHoje+1,vencimento:10,primeira_parcela:plusDays(0)})).status,400,'Pix além do fim do curso');
  assert.equal((await call('matricula/simular','POST',{plano:p1,forma:'pix',parcelas_pix:0,vencimento:10,primeira_parcela:plusDays(0)})).status,400,'Pix sem número de parcelas');
+ // 1ª parcela agendada no calendário: até o início do curso (12/01/2027). Em janeiro, o Pix vai até setembro (9x); 10x é recusado com aviso.
+ if(enrollment.todaySP()<'2027-01-12'){
+  assert.equal(options[0].pix_primeira_limite,'2027-01-12');
+  const jan=await ok(await call('matricula/simular','POST',{plano:p1,forma:'pix',parcelas_pix:9,vencimento:10,primeira_parcela:'2027-01-12'}));
+  assert.deepEqual([jan.parcelas.length,jan.parcelas[0].due_on,jan.parcelas[8].due_on],[9,'2027-01-12','2027-09-10']);
+  const demais=await call('matricula/simular','POST',{plano:p1,forma:'pix',parcelas_pix:10,vencimento:10,primeira_parcela:'2027-01-12'});
+  assert.equal(demais.status,400);assert.match((await demais.json()).error,/em janeiro, o Pix vai até 9x.*Escolha até 9 vezes/);
+  assert.equal((await call('matricula/simular','POST',{plano:p1,forma:'pix',parcelas_pix:2,vencimento:10,primeira_parcela:'2027-01-13'})).status,400,'depois do início do curso');
+  assert.equal((await call('matricula/simular','POST',{plano:p1,forma:'pix',parcelas_pix:2,vencimento:10,primeira_parcela:plusDays(-1)})).status,400,'data no passado');
+ }
  const sim1=await ok(await call('matricula/simular','POST',{plano:p1,forma:'pix',parcelas_pix:1,primeira_parcela:plusDays(1)}));assert.deepEqual(sim1.parcelas.map(r=>[r.amount_cents,r.due_on]),[[480000,plusDays(1)]]);
  assert.equal((await call('matricula/simular','POST',{plano:p1,forma:'pix',parcelas_pix:2,primeira_parcela:plusDays(1)})).status,400,'2x sem dia de vencimento');
  assert.equal((await call('matricula/simular','POST',{plano:p2,forma:'pix',parcelas_pix:4,vencimento:10,primeira_parcela:plusDays(0)})).status,400,'plano de turma fora do site');
@@ -60,7 +76,7 @@ async function run(){
 
  // Validação pública.
  const base={turma:t1,plano:p1,parcelas_pix:4,vencimento:10,primeira_parcela:plusDays(0),forma:'pix',aluno:adult,aceite:true};
- for(const [bad,why] of [[{aluno:{...adult,cpf:'123.456.789-00'}},'CPF'],[{aluno:{...adult,nome:'Ana'}},'nome'],[{aluno:{...adult,rg:'12'}},'RG curto'],[{aluno:{...adult,rg:''}},'sem RG'],[{aluno:{...adult,uf:'XX'}},'UF'],[{aluno:{...adult,nascimento:'2999-01-01'}},'nascimento'],[{aceite:false},'aceite'],[{vencimento:31},'dia'],[{primeira_parcela:plusDays(4)},'primeira parcela em até 3 dias'],[{primeira_parcela:plusDays(-1)},'primeira parcela no passado'],[{forma:'cartao',parcelas_cartao:13,visita:notSunday(2)},'13x não existe'],[{forma:'cartao',parcelas_cartao:6,visita:plusDays(31)},'visita depois de 30 dias'],[{forma:'cartao',parcelas_cartao:6},'sem visita'],[{forma:'cartao',parcelas_cartao:6,visita:saturday()},'sábado não é dia útil'],[{forma:'boleto'},'boleto não é aceito'],[{forma:'dinheiro'},'forma'],[{plano:p2},'plano de outra turma'],[{aluno:{...adult,nome:'<b>Pessoa</b> Teste'}},'HTML']])assert.equal((await call('matricula','POST',{...base,...bad})).status,400,why);
+ for(const [bad,why] of [[{aluno:{...adult,cpf:'123.456.789-00'}},'CPF'],[{aluno:{...adult,nome:'Ana'}},'nome'],[{aluno:{...adult,rg:'12'}},'RG curto'],[{aluno:{...adult,rg:''}},'sem RG'],[{aluno:{...adult,uf:'XX'}},'UF'],[{aluno:{...adult,nascimento:'2999-01-01'}},'nascimento'],[{aceite:false},'aceite'],[{vencimento:31},'dia'],[{primeira_parcela:'2027-09-13'},'primeira parcela depois do fim do curso'],[{primeira_parcela:plusDays(-1)},'primeira parcela no passado'],[{forma:'cartao',parcelas_cartao:13,visita:notSunday(2)},'13x não existe'],[{forma:'cartao',parcelas_cartao:6,visita:plusDays(31)},'visita depois de 30 dias'],[{forma:'cartao',parcelas_cartao:6},'sem visita'],[{forma:'cartao',parcelas_cartao:6,visita:saturday()},'sábado não é dia útil'],[{forma:'boleto'},'boleto não é aceito'],[{forma:'dinheiro'},'forma'],[{plano:p2},'plano de outra turma'],[{aluno:{...adult,nome:'<b>Pessoa</b> Teste'}},'HTML']])assert.equal((await call('matricula','POST',{...base,...bad})).status,400,why);
  assert.equal((await call('matricula','POST',base,'https://evil.test')).status,403);
  await ok(await call('matricula','POST',{...base,website:'spam'}));assert.equal(db.prepare('SELECT COUNT(*) AS n FROM enrollments').get().n,0,'honeypot gravou');
 

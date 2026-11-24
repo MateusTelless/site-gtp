@@ -104,3 +104,6 @@
 .enroll-extra em{font-style:normal;font-weight:700;font-size:13px;color:#8a6e34}
 
 .enroll-extras{display:block}.enroll-extras .eyebrow{display:block;color:#8a6e34;font-size:12px;letter-spacing:1.6px;font-weight:700;margin:0}.enroll-extras h2{font-size:22px;line-height:1.25;color:#0c2340}.enroll-extra,.enroll-extra *{text-decoration:none!important}.enroll-extra b{color:#0c2340}.enroll-extra small{white-space:normal}
+#enroll .enroll-other{max-width:320px}
+#enroll .enroll-warn{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:#fff4e5;border:1px solid #f0c27a;color:#7a4a00;font-size:14px;line-height:1.45}
+#enroll .enroll-warn[hidden]{display:none}

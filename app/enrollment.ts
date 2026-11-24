@@ -8,7 +8,7 @@ export type Staff={email:string;role:Role};
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row=Record<string,any>;
 // Plano: valor à vista (base do Pix e do cartão), dias de vencimento do Pix, formas aceitas e a regra do cartão.
-type PlanRow={id:string;class_id:string;name:string;due_days:string;methods:string;active:number;cash_cents:number;card_max:number;card_rate_bp:number;class_ends_on?:string};
+type PlanRow={id:string;class_id:string;name:string;due_days:string;methods:string;active:number;cash_cents:number;card_max:number;card_rate_bp:number;class_ends_on?:string;class_starts_on?:string};
 type PersonIn={full_name:string;cpf:string;rg:string;birth_date:string;email:string;phone:string;cep:string;street:string;number:string;complement:string;district:string;city:string;state:string};
 
 const ROLES:Role[]=['admin','secretaria','financeiro','consulta'];
@@ -198,9 +198,18 @@ const intList=(raw:string)=>{try{const v=JSON.parse(raw);return Array.isArray(v)
 
 // Pix: o valor à vista dividido em parcelas iguais, sem juros e sem taxa de matrícula. A pessoa escolhe de 1x até o número de meses
 // entre o mês da primeira parcela e o mês em que o curso termina (ex.: começa em novembro, curso termina em julho = até 9x).
-// A primeira parcela vence na data escolhida, em até 3 dias; as outras, no dia escolhido de cada mês seguinte. Centavos que sobram vão na primeira.
+// A primeira parcela vence na data escolhida; as outras, no dia escolhido de cada mês seguinte. Centavos que sobram vão na primeira.
+// Data da primeira parcela (decisão do dono, 23/11/2026): em até 3 dias, ou outra data que a pessoa escolhe no calendário,
+// até o dia em que o curso começa; com o curso já começado, até o fim do mês em que ela está. Nunca depois do fim do curso.
 const PIX_FIRST_DAYS=3,CARD_VISIT_DAYS=30;
 export function pixMax(first:string,endsOn:string){const [fy,fm]=first.split('-').map(Number),[ey,em]=endsOn.split('-').map(Number);return Math.max(1,(ey*12+em)-(fy*12+fm)+1)}
+const endOfMonth=(d:string)=>{const [y,m]=d.split('-').map(Number);return new Date(Date.UTC(y,m,0)).toISOString().slice(0,10)};
+export function pixFirstLimit(today:string,startsOn:string|undefined,endsOn:string|undefined){
+ const quick=addDays(today,PIX_FIRST_DAYS),cal=startsOn&&today<startsOn?startsOn:endOfMonth(today);
+ let limit=quick>cal?quick:cal;if(endsOn&&endsOn>=today&&limit>endsOn)limit=endsOn;
+ return limit;
+}
+const monthName=(d:string)=>MONTHS[Number(d.slice(5,7))-1];
 export function pixSchedule(cash:number,n:number,dueDay:number,first:string){
  const base=Math.floor(cash/n),rows:{number:number;kind:string;amount_cents:number;due_on:string}[]=[];let [y,m]=first.split('-').map(Number);
  for(let i=1;i<=n;i++){let due=first;if(i>1){m++;if(m>12){m=1;y++}due=`${y}-${pad(m)}-${pad(dueDay)}`}rows.push({number:i,kind:'mensalidade',amount_cents:base+(i===1?cash-base*n:0),due_on:due})}
@@ -269,9 +278,11 @@ function docType(bytes:Uint8Array,declared:string){const t=(a:number[])=>a.every
 function paymentChoice(b:Row,plan:PlanRow,today:string){
  const method=String(b.forma||'');if(!METHODS.includes(method)||!intList(plan.methods).includes(method))fail('Escolha Pix ou cartão.');
  if(method==='pix'){
-  const first=String(b.primeira_parcela||'');if(!isDate(first)||first<today||first>addDays(today,PIX_FIRST_DAYS))fail('A primeira parcela precisa vencer em até 3 dias.');
+  const first=String(b.primeira_parcela||''),limit=pixFirstLimit(today,plan.class_starts_on,plan.class_ends_on);
+  if(!isDate(first)||first<today||first>limit)fail('A primeira parcela pode vencer de hoje até '+br(limit)+(plan.class_starts_on&&today<plan.class_starts_on?' (início do curso)':'')+'.');
   const max=plan.class_ends_on?pixMax(first,plan.class_ends_on):1,n=Number(b.parcelas_pix);
-  if(!(plan.cash_cents>0)||!Number.isInteger(n)||n<1||n>max)fail('No Pix, escolha de 1 a '+max+' parcela'+(max>1?'s':'')+' (até o mês em que o curso termina).');
+  if(!(plan.cash_cents>0)||!Number.isInteger(n)||n<1)fail('Escolha em quantas vezes no Pix.');
+  if(n>max)fail('Com a primeira parcela em '+monthName(first)+', o Pix vai até '+max+'x, porque o curso termina em '+monthName(plan.class_ends_on||first)+'. Escolha até '+max+' vez'+(max>1?'es':'')+'.');
   // Com uma parcela só, não há dia de vencimento mensal.
   const day=n===1?0:Number(b.vencimento);if(n>1&&(!Number.isInteger(day)||day<1||day>28))fail('Escolha o dia de vencimento das parcelas.');
   return {method,day,first,cardN:null as number|null,visit:null as string|null,rows:pixSchedule(plan.cash_cents,n,day,first)};
@@ -320,7 +331,7 @@ function audit(DB:D1Database,req:Request,staff:Staff|null,action:string,entity:s
 async function rateLimit(DB:D1Database,req:Request,scope:string,max:number){const hour=Math.floor(Date.now()/3600000);const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(scope+':'+(ip(req)||'local')+':'+hour)))).map(x=>x.toString(16).padStart(2,'0')).join('');const r=await DB.prepare('INSERT INTO limits(id,count,expires) VALUES(?,1,?) ON CONFLICT(id) DO UPDATE SET count=count+1 RETURNING count').bind(hash,Date.now()+7200000).first<{count:number}>();if((r?.count||0)>max)fail('Muitas tentativas. Tente novamente mais tarde.',429)}
 
 async function publicPlan(DB:D1Database,planId:unknown,classId?:unknown){
- const plan=await DB.prepare("SELECT p.*,c.ends_on AS class_ends_on FROM plans p JOIN classes c ON c.id=p.class_id WHERE p.id=? AND p.active=1 AND c.public=1 AND c.status='aberta'").bind(String(planId||'')).first<PlanRow>();
+ const plan=await DB.prepare("SELECT p.*,c.ends_on AS class_ends_on,c.starts_on AS class_starts_on FROM plans p JOIN classes c ON c.id=p.class_id WHERE p.id=? AND p.active=1 AND c.public=1 AND c.status='aberta'").bind(String(planId||'')).first<PlanRow>();
  if(!plan||(classId!==undefined&&plan.class_id!==classId))fail('Escolha uma turma e um plano disponíveis.');
  return plan;
 }
@@ -355,7 +366,7 @@ export async function enrollmentPublic(req:Request,path:string,DB:D1Database,syn
   const t=todaySP();
   // A página mostra só o valor de cada parcela. No Pix, o máximo de parcelas vale para a primeira parcela hoje; se ela cair no mês seguinte, a página tira a última opção.
   const pub=(p:PlanRow)=>({id:p.id,class_id:p.class_id,name:p.name,due_days:intList(p.due_days),methods:intList(p.methods).filter(m=>METHODS.includes(String(m))),pix:pixOptions(p,t),cartao:cardOptions(p).map(o=>({n:o.n,parcela_cents:o.parcela_cents}))});
-  return json({hoje:t,pix_primeira_ate:addDays(t,PIX_FIRST_DAYS),visita_ate:addDays(t,CARD_VISIT_DAYS),turmas:classes.map(({taken,seats,...c})=>({...c,vagas:!seats||taken<seats,planos:plans.filter(p=>p.class_id===c.id).map(pub)})).filter(c=>c.planos.length)});
+  return json({hoje:t,pix_primeira_ate:addDays(t,PIX_FIRST_DAYS),visita_ate:addDays(t,CARD_VISIT_DAYS),turmas:classes.map(({taken,seats,...c})=>({...c,vagas:!seats||taken<seats,pix_primeira_limite:pixFirstLimit(t,c.starts_on,c.ends_on),planos:plans.filter(p=>p.class_id===c.id).map(pub)})).filter(c=>c.planos.length)});
  }
  if(path==='matricula/simular'&&req.method==='POST'){
   const b=await readBody(req,1000),plan=await publicPlan(DB,b.plano),pay=paymentChoice(b,plan,todaySP());
