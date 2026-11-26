@@ -14,7 +14,9 @@ let exAluno=false,exChecked='',proof={kind:'',docs:{},sending:'',kin:'',mil:''};
 const KIN=['Filho(a)','Cônjuge','Companheiro(a)','Enteado(a)','Outro'];
 const proofParts=()=>proof.kind==='dependente_militar'?['frente','verso','vinculo']:['frente','verso'];
 const proofDone=()=>!!proof.kind&&proofParts().every(p=>proof.docs[p])&&(proof.kind!=='dependente_militar'||(KIN.includes(proof.kin)&&proof.mil.trim().split(/\s+/).length>1));
-const discReason=()=>exAluno?'ex_aluno':proofDone()?proof.kind:'';
+// Turma com preço de campanha (ex.: Black Friday): o desconto de 5% não se soma.
+const promo=()=>{const t=turmas.find(x=>x.id===val('turma'));return (t?.planos||[]).find(p=>p.campanha)?.campanha||null};
+const discReason=()=>promo()?'':exAluno?'ex_aluno':proofDone()?proof.kind:'';
 const off=c=>discReason()?Math.round(c*(100-PCT)/100):c;
 const fields=[['nome','Nome completo','text','name',120],['cpf','CPF','text','off',14,'numeric'],['rg','RG','text','off',20],['nascimento','Data de nascimento','date','bday'],['email','E-mail','email','email',254],['celular','Celular com DDD','tel','tel',16,'tel'],['cep','CEP','text','postal-code',9,'numeric'],['logradouro','Rua ou avenida','text','address-line1',150],['numero','Número','text','off',20],['complemento','Complemento (opcional)','text','address-line2',80],['bairro','Bairro','text','off',80],['cidade','Cidade','text','address-level2',80],['uf','Estado','select','address-level1']];
 document.querySelectorAll('[data-person]').forEach(box=>{const who=box.dataset.person;box.innerHTML=fields.map(([k,label,type,auto,max,mode])=>`<label>${label}${type==='select'?`<select name="${who}.${k}" autocomplete="${auto}"><option value="">Selecione</option>${UF.map(u=>`<option${u==='SP'?' selected':''}>${u}</option>`).join('')}</select>`:`<input name="${who}.${k}" type="${type}" autocomplete="${who==='aluno'?auto:'off'}"${max?` maxlength="${max}"`:''}${mode?` inputmode="${mode}"`:''}${k==='complemento'?'':' required'}>`}</label>`).join('')});
@@ -121,6 +123,7 @@ const discBody=()=>{const r=discReason();return r==='ex_aluno'?{desconto:'ex_alu
 // Quadro do desconto, no alto do pagamento: ex-aluno já reconhecido, ou a opção de militar/dependente com o documento.
 function drawDiscount(){
  const box=$('#discount');
+ const c=promo();if(c){box.innerHTML=`<div class="enroll-disc"><b>Valor de ${esc(c.nome)}</b><span>Os valores abaixo já estão com o preço promocional, que não se soma aos descontos de ex-aluno, militar ou dependente.</span></div>`;return}
  if(exAluno){box.innerHTML=`<div class="enroll-disc ok"><b>Você tem 5% de desconto no valor total</b><span>porque é ex-aluno do GETEPÊ. Os valores abaixo já estão com o desconto.</span></div>`;return}
  const k=proof.kind,dep=k==='dependente_militar';
  const LBL={frente:'Frente do documento militar',verso:'Verso do documento militar',vinculo:'Documento que mostra o vínculo (certidão de nascimento ou casamento, ou RG com o nome dos pais)'};

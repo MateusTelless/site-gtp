@@ -71,6 +71,8 @@ async function run(){
   assert.equal(pl[0].cartao.length,12);assert.deepEqual([pl[0].cartao[11].parcela_cents,pl[0].de.cartao[11].parcela_cents],[39265,47118],'12x no cartão: de/por');
   assert.equal((await call('matricula/simular','POST',{plano:p1,forma:'pix',parcelas_pix:1,primeira_parcela:plusDays(0)})).status,409,'plano normal recusado durante a campanha');
   assert.equal((await ok(await call('matricula/simular','POST',{plano:pBf,forma:'pix',parcelas_pix:1,primeira_parcela:plusDays(0)}))).total_cents,400000);
+  const semDesc=await ok(await call('matricula/simular','POST',{plano:pBf,forma:'pix',parcelas_pix:1,primeira_parcela:plusDays(0),desconto:'militar'}));
+  assert.deepEqual([semDesc.total_cents,semDesc.desconto],[400000,null],'preço de campanha não soma com os 5%');
   enrollment.useCampaigns(camp(false));
   pl=(await ok(await call('matricula/opcoes'))).turmas[0].planos;
   assert.deepEqual([pl.map(p=>p.id),pl[0].campanha],[[p1],undefined],'depois do fim volta o plano normal');

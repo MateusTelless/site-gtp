@@ -393,7 +393,8 @@ export async function enrollmentPublic(req:Request,path:string,DB:D1Database,syn
  if(path==='matricula/simular'&&req.method==='POST'){
   const b=await readBody(req,1000),plan=await publicPlan(DB,b.plano),pay=paymentChoice(b,plan,todaySP());
   // Simulação com desconto: ex-aluno é conferido de novo aqui; militar e dependente entram como "a conferir".
-  let reason='';if(b.desconto==='ex_aluno'){if(await exStudent(DB,validCpf(String(b.cpf||'')),isDate(b.nascimento)?b.nascimento:'',text(b.nome,5,120)||''))reason='ex_aluno'}else if(PROOF_KINDS.includes(String(b.desconto)))reason=String(b.desconto);
+  // Preço de campanha (ex.: Black Friday) não soma com os 5% de ex-aluno, militar ou dependente (decisão do dono, 26/11/2026).
+  let reason='';if(campaignState().active.has(plan.id)){/* sem desconto */}else if(b.desconto==='ex_aluno'){if(await exStudent(DB,validCpf(String(b.cpf||'')),isDate(b.nascimento)?b.nascimento:'',text(b.nome,5,120)||''))reason='ex_aluno'}else if(PROOF_KINDS.includes(String(b.desconto)))reason=String(b.desconto);
   const pct=reason?DISCOUNT_PCT:0,rows=withDiscount(pay.rows,pct),desconto=reason?{pct,motivo:reason,texto:DISCOUNT_LABEL[reason]}:null;
   if(pay.method==='cartao')return json({parcelas:rows.map(r=>({...r,amount_cents:undefined})),cartao:{n:pay.cardN,parcela_cents:Math.round(pay.cardParcela!*(100-pct)/100),visita:pay.visit},desconto});
   return json({parcelas:rows,total_cents:total(rows),desconto});
@@ -415,8 +416,11 @@ export async function enrollmentPublic(req:Request,path:string,DB:D1Database,syn
   // Desconto: ex-aluno é reconhecido pelo banco (aprovado na hora); militar ou dependente precisa do documento anexado (a equipe confere).
   let disc:{pct:number;reason:string;status:string;docs:string[];info:Row|null}={pct:0,reason:'',status:'',docs:[],info:null};
   // Reconhecido pelo nome no Lexus: o RA fica na matrícula para a equipe conferir se é a mesma pessoa.
-  const ex=await exStudent(DB,student.cpf,student.birth_date,student.full_name);
-  if(ex)disc={pct:DISCOUNT_PCT,reason:'ex_aluno',status:'aprovado',docs:[],info:ex.fonte==='lexus'?{fonte:'lexus',ra:ex.ra}:null};
+  // Preço de campanha não soma com o desconto: a matrícula sai sem desconto e sem pedir documento.
+  const promo=campaignState().active.has(plan.id);
+  const ex=promo?null:await exStudent(DB,student.cpf,student.birth_date,student.full_name);
+  if(promo){/* sem desconto */}
+  else if(ex)disc={pct:DISCOUNT_PCT,reason:'ex_aluno',status:'aprovado',docs:[],info:ex.fonte==='lexus'?{fonte:'lexus',ra:ex.ra}:null};
   else if(PROOF_KINDS.includes(String(b.desconto||''))){
    const kind=String(b.desconto),sent=(b.documentos&&typeof b.documentos==='object'?b.documentos:{}) as Row,need=kind==='dependente_militar'?DOC_PARTS:['frente','verso'];
    const label={frente:'a frente',verso:'o verso',vinculo:'o documento do vínculo'} as Record<string,string>,ids:string[]=[];
