@@ -45,7 +45,8 @@ const pixN=()=>Number(val('parcelas_pix'))||0;
 function age(birth){if(!birth)return 99;const b=new Date(birth+'T12:00:00'),n=new Date();return n.getFullYear()-b.getFullYear()-((n.getMonth()<b.getMonth()||(n.getMonth()===b.getMonth()&&n.getDate()<b.getDate()))?1:0)}
 // A etapa do responsável financeiro só existe para aluno menor de 18 anos.
 const minor=()=>age(val('aluno.nascimento'))<18,needsGuardian=minor;
-function fail(text){errorBox.textContent=text;errorBox.hidden=false;errorBox.focus?.()}
+// O aviso fica no fim do formulário: no celular ele pode estar fora da tela, então a página rola até ele.
+function fail(text){errorBox.textContent=text;errorBox.hidden=false;errorBox.scrollIntoView?.({behavior:'smooth',block:'center'});errorBox.focus?.({preventScroll:true})}
 async function api(path,data){const r=await fetch('/api/'+path,data?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}:{});const b=await r.json().catch(()=>({}));if(!r.ok)throw new Error(b.error||'Não foi possível concluir. Tente novamente.');return b}
 const addDays=(d,n)=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)};
 const weekday=d=>WEEK[new Date(d+'T12:00:00Z').getUTCDay()];
@@ -85,9 +86,10 @@ function drawPayment(){
  // Forma escolhida: ao lado da opção, uma coluna com o número de vezes e o valor de cada parcela.
  drawDiscount();
  // Em campanha (ex.: Black Friday), o valor normal de cada parcela aparece riscado ao lado do valor da campanha.
- const ncolOf=(name,label,opts,sel,one,old)=>`<div class="enroll-ncol" role="radiogroup" aria-label="${label}"><p>Em quantas vezes?${discReason()?'<small class="enroll-off">já com 5% de desconto</small>':''}</p>${opts.map(o=>{const was=(old||[]).find(x=>x.n===o.n);return `<label class="enroll-nrow"><input type="radio" name="${name}" value="${o.n}"${String(o.n)===sel?' checked':''}><b>${o.n}x</b><span>${was&&was.parcela_cents>o.parcela_cents?`<s class="enroll-was">${money(off(was.parcela_cents))}</s> `:''}${money(off(o.parcela_cents))}</span>${o.n===1?`<small>${one}</small>`:''}</label>`}).join('')}</div>`;
+ // Pix com a data da primeira parcela já escolhida: as vezes que passariam do mês em que o curso termina ficam apagadas.
+ const ncolOf=(name,label,opts,sel,one,old,maxN=Infinity)=>`<div class="enroll-ncol" role="radiogroup" aria-label="${label}"><p>Em quantas vezes?${discReason()?'<small class="enroll-off">já com 5% de desconto</small>':''}</p>${opts.map(o=>{const was=(old||[]).find(x=>x.n===o.n);return `<label class="enroll-nrow${o.n>maxN?' over':''}"><input type="radio" name="${name}" value="${o.n}"${String(o.n)===sel?' checked':''}${o.n>maxN&&String(o.n)!==sel?' disabled':''}><b>${o.n}x</b><span>${was&&was.parcela_cents>o.parcela_cents?`<s class="enroll-was">${money(off(was.parcela_cents))}</s> `:''}${money(off(o.parcela_cents))}</span>${o.n===1?`<small>${one}</small>`:''}</label>`}).join('')}</div>`;
  const pOpts=pixOpts();
- const ncol=m==='cartao'&&card?ncolOf('parcelas_cartao','Em quantas vezes no cartão',card.cartao,val('parcelas_cartao'),'sem juros',card.de?.cartao):m==='pix'&&pix?ncolOf('parcelas_pix','Em quantas vezes no Pix',pOpts,val('parcelas_pix'),'à vista',pix.de?.pix):'';
+ const ncol=m==='cartao'&&card?ncolOf('parcelas_cartao','Em quantas vezes no cartão',card.cartao,val('parcelas_cartao'),'sem juros',card.de?.cartao):m==='pix'&&pix?ncolOf('parcelas_pix','Em quantas vezes no Pix',pOpts,val('parcelas_pix'),'à vista',pix.de?.pix,firstDate()?pixMaxFor(firstDate()):Infinity):'';
  $('#methods').innerHTML=(pix?radio('forma','pix','Pix','Sem juros, de 1x até '+pOpts.length+'x, com a última parcela no máximo no mês em que o curso termina.',m==='pix'):'')+(card?radio('forma','cartao','Cartão de crédito','À vista sem juros ou em até '+card.cartao[card.cartao.length-1].n+'x. Você passa o cartão na unidade, em dia útil.',m==='cartao'):'')+ncol;
  $('#methods').classList.toggle('with-ncol',!!ncol);
  $('#pay-pix').hidden=m!=='pix';$('#pay-card').hidden=m!=='cartao';

@@ -107,6 +107,9 @@
 #enroll .enroll-other{max-width:320px}
 #enroll .enroll-warn{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:#fff4e5;border:1px solid #f0c27a;color:#7a4a00;font-size:14px;line-height:1.45}
 #enroll .enroll-warn[hidden]{display:none}
+#enroll .enroll-nrow.over{opacity:.4;cursor:not-allowed}
+#enroll .enroll-nrow.over:has(input:checked){opacity:1;background:#fff4e5;color:#7a4a00;box-shadow:0 0 0 2px #f0c27a inset}
+#enroll .enroll-nrow.over:has(input:checked) b,#enroll .enroll-nrow.over:has(input:checked) span,#enroll .enroll-nrow.over:has(input:checked) small{color:#7a4a00}
 .enroll-campaign{position:relative;overflow:hidden;background:radial-gradient(120% 160% at 15% 0%,#0d3566 0,#082649 45%,#061b35 100%);color:#fff;border-radius:16px;padding:18px 22px;margin:0 0 18px}
 .enroll-campaign::after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;right:-80px;top:-95px;border:1px solid rgba(211,180,118,.35);box-shadow:0 0 0 30px rgba(211,180,118,.06),0 0 0 31px rgba(211,180,118,.18)}
 .enroll-campaign b{position:relative;z-index:1;font-family:Manrope,Arial,sans-serif;font-weight:800;font-size:30px;line-height:1;letter-spacing:-.5px}
