@@ -330,9 +330,26 @@ function audit(DB:D1Database,req:Request,staff:Staff|null,action:string,entity:s
 }
 async function rateLimit(DB:D1Database,req:Request,scope:string,max:number){const hour=Math.floor(Date.now()/3600000);const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(scope+':'+(ip(req)||'local')+':'+hour)))).map(x=>x.toString(16).padStart(2,'0')).join('');const r=await DB.prepare('INSERT INTO limits(id,count,expires) VALUES(?,1,?) ON CONFLICT(id) DO UPDATE SET count=count+1 RETURNING count').bind(hash,Date.now()+7200000).first<{count:number}>();if((r?.count||0)>max)fail('Muitas tentativas. Tente novamente mais tarde.',429)}
 
+// Campanhas de preço (ex.: Black Friday). Durante o período, o plano da campanha (uma linha comum em plans, com o preço novo)
+// substitui no site o plano normal da turma, e a página mostra o preço normal riscado. Fora do período, o plano da campanha some
+// e o normal volta sozinho. Quem se matriculou na campanha continua com o preço dela (fica gravado na matrícula).
+export type Campaign={nome:string;inicio:string;fim:string;planos:Record<string,string>};// plano da campanha -> plano normal
+let CAMPAIGNS:Campaign[]=[
+ // Black Friday APMBB janeiro: R$ 4.800 por R$ 4.000 (decisão do dono, 26/11/2026).
+ {nome:'Black Friday',inicio:'2026-11-26T00:00:00-03:00',fim:'2026-11-30T23:59:59-03:00',planos:{'bf2026-apmbb27manha':'6f1c2a10-0011-4a00-8000-planomanha27','bf2026-apmbb27noite':'6f1c2a10-0012-4a00-8000-planonoite27'}}
+];
+export function useCampaigns(list:Campaign[]){CAMPAIGNS=list}
+function campaignState(now=Date.now()){
+ const off=new Set<string>(),replaced=new Map<string,string>(),active=new Map<string,{campaign:Campaign;normal:string}>();
+ for(const c of CAMPAIGNS){const on=now>=Date.parse(c.inicio)&&now<=Date.parse(c.fim);
+  for(const [promo,normal] of Object.entries(c.planos)){if(on){replaced.set(normal,promo);active.set(promo,{campaign:c,normal})}else off.add(promo)}}
+ return {off,replaced,active};
+}
 async function publicPlan(DB:D1Database,planId:unknown,classId?:unknown){
  const plan=await DB.prepare("SELECT p.*,c.ends_on AS class_ends_on,c.starts_on AS class_starts_on FROM plans p JOIN classes c ON c.id=p.class_id WHERE p.id=? AND p.active=1 AND c.public=1 AND c.status='aberta'").bind(String(planId||'')).first<PlanRow>();
  if(!plan||(classId!==undefined&&plan.class_id!==classId))fail('Escolha uma turma e um plano disponíveis.');
+ const st=campaignState(),promo=st.replaced.get(plan.id);
+ if(st.off.has(plan.id)||(promo&&await DB.prepare('SELECT 1 FROM plans WHERE id=? AND active=1').bind(promo).first()))fail('O valor desta turma mudou. Recarregue a página para ver o valor atualizado.',409);
  return plan;
 }
 const total=(rows:{amount_cents:number}[])=>rows.reduce((s,r)=>s+r.amount_cents,0);
@@ -366,7 +383,12 @@ export async function enrollmentPublic(req:Request,path:string,DB:D1Database,syn
   const t=todaySP();
   // A página mostra só o valor de cada parcela. No Pix, o máximo de parcelas vale para a primeira parcela hoje; se ela cair no mês seguinte, a página tira a última opção.
   const pub=(p:PlanRow)=>({id:p.id,class_id:p.class_id,name:p.name,due_days:intList(p.due_days),methods:intList(p.methods).filter(m=>METHODS.includes(String(m))),pix:pixOptions(p,t),cartao:cardOptions(p).map(o=>({n:o.n,parcela_cents:o.parcela_cents}))});
-  return json({hoje:t,pix_primeira_ate:addDays(t,PIX_FIRST_DAYS),visita_ate:addDays(t,CARD_VISIT_DAYS),turmas:classes.map(({taken,seats,...c})=>({...c,vagas:!seats||taken<seats,pix_primeira_limite:pixFirstLimit(t,c.starts_on,c.ends_on),planos:plans.filter(p=>p.class_id===c.id).map(pub)})).filter(c=>c.planos.length)});
+  // Campanha: o plano normal sai do site enquanto o da campanha existir; o da campanha leva os valores normais para a página riscar.
+  const st=campaignState(),ids=new Map(plans.map(p=>[p.id,p]));
+  const shown=plans.filter(p=>!st.off.has(p.id)&&!(st.replaced.has(p.id)&&ids.has(st.replaced.get(p.id)!)));
+  const withCampaign=(p:PlanRow)=>{const a=st.active.get(p.id),n=a&&ids.get(a.normal);
+   return a&&n?{...pub(p),campanha:{nome:a.campaign.nome,fim:a.campaign.fim},de:{pix:pixOptions(n,t),cartao:cardOptions(n).map(o=>({n:o.n,parcela_cents:o.parcela_cents}))}}:pub(p)};
+  return json({hoje:t,pix_primeira_ate:addDays(t,PIX_FIRST_DAYS),visita_ate:addDays(t,CARD_VISIT_DAYS),turmas:classes.map(({taken,seats,...c})=>({...c,vagas:!seats||taken<seats,pix_primeira_limite:pixFirstLimit(t,c.starts_on,c.ends_on),planos:shown.filter(p=>p.class_id===c.id).map(withCampaign)})).filter(c=>c.planos.length)});
  }
  if(path==='matricula/simular'&&req.method==='POST'){
   const b=await readBody(req,1000),plan=await publicPlan(DB,b.plano),pay=paymentChoice(b,plan,todaySP());

@@ -54,7 +54,9 @@ const params=new URLSearchParams(location.search),course=(params.get('curso')||'
 const courseName=(params.get('nome')||'').slice(0,60),phoneParam=params.get('whatsapp')||'',phone=/^55\d{10,11}$/.test(phoneParam)?phoneParam:'5511971920102';
 const whatsapp=text=>`https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 // Na escolha de período, o turno vem em destaque; nos outros casos, o nome da turma.
-const classCard=(t,input,byShift)=>`<label class="enroll-option${t.vagas?'':' full'}">${input}<b>${esc(byShift?t.shift:t.name)}</b>${byShift?`<span>${esc(t.name)}</span>`:`<span>${esc(t.exam)} · ${esc(t.unit)} · ${esc(t.shift)}</span>`}<span>${esc(t.schedule)}</span><span>De ${date(t.starts_on)} a ${date(t.ends_on)}</span>${t.vagas?'':'<em>Vagas esgotadas</em>'}</label>`;
+// Em campanha, o cartão da turma ganha um selo dourado com o nome e o valor à vista (ex.: "Black Friday · R$ 4.000").
+const campaignTag=t=>{const p=(t.planos||[]).find(x=>x.campanha&&x.pix?.length);return p?`<span class="enroll-campaign-tag">${esc(p.campanha.nome)} · ${money(p.pix[0].parcela_cents).replace(/,00$/,'')}</span>`:''};
+const classCard=(t,input,byShift)=>`<label class="enroll-option${t.vagas?'':' full'}">${input}<b>${esc(byShift?t.shift:t.name)}</b>${byShift?`<span>${esc(t.name)}</span>`:`<span>${esc(t.exam)} · ${esc(t.unit)} · ${esc(t.shift)}</span>`}<span>${esc(t.schedule)}</span><span>De ${date(t.starts_on)} a ${date(t.ends_on)}</span>${campaignTag(t)}${t.vagas?'':'<em>Vagas esgotadas</em>'}</label>`;
 function drawClasses(){
  const box=$('#classes'),title=$('[data-step="1"] h2');
  if(course){
@@ -80,9 +82,10 @@ function drawPayment(){
  const m=method(),pix=pixPlan(),card=cardPlan();
  // Forma escolhida: ao lado da opção, uma coluna com o número de vezes e o valor de cada parcela.
  drawDiscount();
- const ncolOf=(name,label,opts,sel,one)=>`<div class="enroll-ncol" role="radiogroup" aria-label="${label}"><p>Em quantas vezes?${discReason()?'<small class="enroll-off">já com 5% de desconto</small>':''}</p>${opts.map(o=>`<label class="enroll-nrow"><input type="radio" name="${name}" value="${o.n}"${String(o.n)===sel?' checked':''}><b>${o.n}x</b><span>${money(off(o.parcela_cents))}</span>${o.n===1?`<small>${one}</small>`:''}</label>`).join('')}</div>`;
+ // Em campanha (ex.: Black Friday), o valor normal de cada parcela aparece riscado ao lado do valor da campanha.
+ const ncolOf=(name,label,opts,sel,one,old)=>`<div class="enroll-ncol" role="radiogroup" aria-label="${label}"><p>Em quantas vezes?${discReason()?'<small class="enroll-off">já com 5% de desconto</small>':''}</p>${opts.map(o=>{const was=(old||[]).find(x=>x.n===o.n);return `<label class="enroll-nrow"><input type="radio" name="${name}" value="${o.n}"${String(o.n)===sel?' checked':''}><b>${o.n}x</b><span>${was&&was.parcela_cents>o.parcela_cents?`<s class="enroll-was">${money(off(was.parcela_cents))}</s> `:''}${money(off(o.parcela_cents))}</span>${o.n===1?`<small>${one}</small>`:''}</label>`}).join('')}</div>`;
  const pOpts=pixOpts();
- const ncol=m==='cartao'&&card?ncolOf('parcelas_cartao','Em quantas vezes no cartão',card.cartao,val('parcelas_cartao'),'sem juros'):m==='pix'&&pix?ncolOf('parcelas_pix','Em quantas vezes no Pix',pOpts,val('parcelas_pix'),'à vista'):'';
+ const ncol=m==='cartao'&&card?ncolOf('parcelas_cartao','Em quantas vezes no cartão',card.cartao,val('parcelas_cartao'),'sem juros',card.de?.cartao):m==='pix'&&pix?ncolOf('parcelas_pix','Em quantas vezes no Pix',pOpts,val('parcelas_pix'),'à vista',pix.de?.pix):'';
  $('#methods').innerHTML=(pix?radio('forma','pix','Pix','Sem juros, de 1x até '+pOpts.length+'x, com a última parcela no máximo no mês em que o curso termina.',m==='pix'):'')+(card?radio('forma','cartao','Cartão de crédito','À vista sem juros ou em até '+card.cartao[card.cartao.length-1].n+'x. Você passa o cartão na unidade, em dia útil.',m==='cartao'):'')+ncol;
  $('#methods').classList.toggle('with-ncol',!!ncol);
  $('#pay-pix').hidden=m!=='pix';$('#pay-card').hidden=m!=='cartao';
@@ -203,5 +206,10 @@ const MASK={cpf:v=>group(v.replace(/\D/g,'').slice(0,11),[3,3,3,2],['.','.','-']
  celular:v=>{const d=v.replace(/\D/g,'').slice(0,11);return d.length<3?d:'('+d.slice(0,2)+') '+(d.length>10?group(d.slice(2),[5,4],['-']):group(d.slice(2),[4,4],['-']))}};
 form.addEventListener('input',e=>{const k=String(e.target.name||'').split('.').pop(),f=MASK[k];if(!f||!e.target.value)return;const v=f(e.target.value);if(v!==e.target.value)e.target.value=v});
 $('[data-step-label="3"]').hidden=true;$('#back').hidden=true;
-api('matricula/opcoes').then(r=>{turmas=r.turmas;meta={hoje:r.hoje,pix_primeira_ate:r.pix_primeira_ate,visita_ate:r.visita_ate};drawClasses()}).catch(e=>{$('#classes').innerHTML='<p>'+esc(e.message)+'</p>'});
+// Faixa da campanha no topo (só o nome, ex.: "Black Friday"), quando alguma turma da página está com preço de campanha.
+function drawCampaign(){const c=turmas.flatMap(t=>t.planos).find(p=>p.campanha)?.campanha;if(!c||$('.enroll-campaign'))return;
+ const el=document.createElement('div');el.className='enroll-campaign';el.setAttribute('role','note');
+ const w=c.nome.split(' ');el.innerHTML=`<b>${esc(w[0])}${w.length>1?` <span>${esc(w.slice(1).join(' '))}</span>`:''}</b>`;
+ $('.guide-intro').after(el)}
+api('matricula/opcoes').then(r=>{turmas=r.turmas;meta={hoje:r.hoje,pix_primeira_ate:r.pix_primeira_ate,visita_ate:r.visita_ate};drawClasses();drawCampaign()}).catch(e=>{$('#classes').innerHTML='<p>'+esc(e.message)+'</p>'});
 })();

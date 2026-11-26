@@ -4,7 +4,7 @@ const db=new DatabaseSync(':memory:');for(const f of fs.readdirSync('drizzle').f
 const statement=(sql,args=[])=>({bind(...values){return statement(sql,values)},async first(){return db.prepare(sql).get(...args)||null},async all(){return {results:db.prepare(sql).all(...args)}},async run(){if(/^SELECT/i.test(sql))return {results:db.prepare(sql).all(...args)};const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes)}}}});
 const DB={prepare:statement,async batch(list){db.exec('BEGIN');try{const out=[];for(const s of list)out.push(await s.run());db.exec('COMMIT');return out}catch(e){db.exec('ROLLBACK');throw e}}};
 const strip=f=>stripTypeScriptTypes(fs.readFileSync(f,'utf8').replace(/export /g,''));
-const enrollment=new Function(strip('app/enrollment.ts')+';return {enrollmentPublic,enrollmentAdmin,staffRole,docusealWebhook,pixSchedule,pixMax,pixFirstLimit,validCpf,todaySP,cardOptions,nameKey,nameHash}')();
+const enrollment=new Function(strip('app/enrollment.ts')+';return {enrollmentPublic,enrollmentAdmin,staffRole,docusealWebhook,pixSchedule,pixMax,pixFirstLimit,useCampaigns,validCpf,todaySP,cardOptions,nameKey,nameHash}')();
 const backups=new Function(strip('app/backups.ts')+';return {makeBackup,listBackups,verifyBackup,recoverBackup,exportBackup}')();
 let user=null;const team='owner@example.test,fin@example.test,sec@example.test,ver@example.test';const apiEnv={DB,BUCKET:{files:new Map(),async put(k,v,o){this.files.set(k,{bytes:v,type:o?.httpMetadata?.contentType,meta:o?.customMetadata})},async get(k){const x=this.files.get(k);return x?{body:x.bytes,httpMetadata:{contentType:x.type},customMetadata:x.meta}:null},async head(k){const x=this.files.get(k);return x?{customMetadata:x.meta}:null},async list(){return {objects:[],truncated:false}}},ADMIN_EMAILS:team};
 let source=fs.readFileSync('app/api/[...path]/route.ts','utf8').replace(/^import .*;\r?\n/gm,'').replace(/export \{safe as GET,safe as POST,safe as PUT,safe as DELETE\};/,'');
@@ -59,6 +59,25 @@ async function run(){
  assert.deepEqual(po.map(o=>o.n),Array.from({length:pixMaxHoje},(_,i)=>i+1));assert.deepEqual(po[0],{n:1,parcela_cents:480000});
  assert.equal((await call('matricula/simular','POST',{plano:p1,forma:'pix',parcelas_pix:pixMaxHoje+1,vencimento:10,primeira_parcela:plusDays(0)})).status,400,'Pix além do fim do curso');
  assert.equal((await call('matricula/simular','POST',{plano:p1,forma:'pix',parcelas_pix:0,vencimento:10,primeira_parcela:plusDays(0)})).status,400,'Pix sem número de parcelas');
+ // Campanha de preço: no período, o plano da campanha substitui o normal no site (com os valores normais para riscar); fora dele, volta o normal.
+ {
+  enrollment.useCampaigns([]);
+  as('owner@example.test');const pBf=(await ok(await call('admin/planos','POST',{...planBody,nome:'Black Friday',valor_a_vista:400000}))).id;as(null);
+  const agora=Date.now(),camp=on=>[{nome:'Black Friday',inicio:new Date(agora-(on?1:3)*864e5).toISOString(),fim:new Date(agora+(on?1:-2)*864e5).toISOString(),planos:{[pBf]:p1}}];
+  enrollment.useCampaigns(camp(true));
+  let pl=(await ok(await call('matricula/opcoes'))).turmas[0].planos;
+  assert.deepEqual(pl.map(p=>p.id),[pBf],'no período só o plano da campanha aparece');
+  assert.equal(pl[0].campanha.nome,'Black Friday');assert.deepEqual([pl[0].pix[0].parcela_cents,pl[0].de.pix[0].parcela_cents],[400000,480000]);
+  assert.equal(pl[0].cartao.length,12);assert.deepEqual([pl[0].cartao[11].parcela_cents,pl[0].de.cartao[11].parcela_cents],[39265,47118],'12x no cartão: de/por');
+  assert.equal((await call('matricula/simular','POST',{plano:p1,forma:'pix',parcelas_pix:1,primeira_parcela:plusDays(0)})).status,409,'plano normal recusado durante a campanha');
+  assert.equal((await ok(await call('matricula/simular','POST',{plano:pBf,forma:'pix',parcelas_pix:1,primeira_parcela:plusDays(0)}))).total_cents,400000);
+  enrollment.useCampaigns(camp(false));
+  pl=(await ok(await call('matricula/opcoes'))).turmas[0].planos;
+  assert.deepEqual([pl.map(p=>p.id),pl[0].campanha],[[p1],undefined],'depois do fim volta o plano normal');
+  assert.equal((await call('matricula/simular','POST',{plano:pBf,forma:'pix',parcelas_pix:1,primeira_parcela:plusDays(0)})).status,409,'plano da campanha recusado fora do período');
+  as('owner@example.test');await ok(await call('admin/planos','POST',{...planBody,id:pBf,nome:'Black Friday',valor_a_vista:400000,ativo:false}));as(null);
+  enrollment.useCampaigns([]);
+ }
  // 1ª parcela agendada no calendário: até o início do curso (12/01/2027). Em janeiro, o Pix vai até setembro (9x); 10x é recusado com aviso.
  if(enrollment.todaySP()<'2027-01-12'){
   assert.equal(options[0].pix_primeira_limite,'2027-01-12');
