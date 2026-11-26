@@ -54,8 +54,8 @@ const params=new URLSearchParams(location.search),course=(params.get('curso')||'
 const courseName=(params.get('nome')||'').slice(0,60),phoneParam=params.get('whatsapp')||'',phone=/^55\d{10,11}$/.test(phoneParam)?phoneParam:'5511971920102';
 const whatsapp=text=>`https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 // Na escolha de período, o turno vem em destaque; nos outros casos, o nome da turma.
-// Em campanha, o cartão da turma ganha um selo dourado com o nome e o valor à vista (ex.: "Black Friday · R$ 4.000").
-const campaignTag=t=>{const p=(t.planos||[]).find(x=>x.campanha&&x.pix?.length);return p?`<span class="enroll-campaign-tag">${esc(p.campanha.nome)} · ${money(p.pix[0].parcela_cents).replace(/,00$/,'')}</span>`:''};
+// Em campanha, o cartão da turma ganha um selo dourado só com o nome (ex.: "Black Friday"); o valor aparece no pagamento.
+const campaignTag=t=>{const p=(t.planos||[]).find(x=>x.campanha);return p?`<span class="enroll-campaign-tag">${esc(p.campanha.nome)}</span>`:''};
 const classCard=(t,input,byShift)=>`<label class="enroll-option${t.vagas?'':' full'}">${input}<b>${esc(byShift?t.shift:t.name)}</b>${byShift?`<span>${esc(t.name)}</span>`:`<span>${esc(t.exam)} · ${esc(t.unit)} · ${esc(t.shift)}</span>`}<span>${esc(t.schedule)}</span><span>De ${date(t.starts_on)} a ${date(t.ends_on)}</span>${campaignTag(t)}${t.vagas?'':'<em>Vagas esgotadas</em>'}</label>`;
 function drawClasses(){
  const box=$('#classes'),title=$('[data-step="1"] h2');
