@@ -1,4 +1,4 @@
-// Campanha Black Friday do APMBB online. Fora do período (inicio/fim, horário de Brasília) nada aparece e o
+// Campanha Black Friday do APMBB online (e link de Black Friday do Soldado PMESP). Fora do período (inicio/fim, horário de Brasília) nada aparece e o
 // curso volta sozinho para o link normal da Hotmart. app.js usa GTP_CAMPANHA.linkDe() para trocar o link.
 (function(){
  const C={
@@ -11,8 +11,13 @@
   parcelado:'ou 12x de R$ 61,74 no cartão',
   validade:'30/11 às 23h59'
  };
+ // Outros cursos online com link de Black Friday no mesmo período (só troca o link; o pop-up continua só do APMBB).
+ const OUTROS={'soldado-pm':{url:'https://pay.hotmart.com/K55441423L?off=xkegeofa',texto:'Oferta de Black Friday até '+C.validade+'.'}};
  const ativa=()=>{const t=Date.now();return t>=C.inicio&&t<=C.fim};
- window.GTP_CAMPANHA={ativa,linkDe:id=>ativa()&&id===C.curso?C.url:'',texto:'Black Friday: '+C.avista+' à vista ('+C.parcelado.replace(/^ou /,'')+').'};
+ const texto='Black Friday: '+C.avista+' à vista ('+C.parcelado.replace(/^ou /,'')+').';
+ window.GTP_CAMPANHA={ativa,texto,
+  linkDe:id=>!ativa()?'':id===C.curso?C.url:(OUTROS[id]?.url||''),
+  textoDe:id=>id===C.curso?texto:(OUTROS[id]?.texto||texto)};
  if(!ativa()||/^\/admin/.test(location.pathname))return;
  const KEY='gtp-popup-'+C.id;
  try{if(localStorage.getItem(KEY))return}catch{}
